@@ -70,7 +70,7 @@
     - 결과는 bs/매핑 비율로 거의 정해진다. 비율이 같으면 대역폭이 3 % 안에서 같고 WAF 도 같다(예: 16K/8K 217.3 vs 32K/16K 219.6 MiB/s, WAF 5.90 vs 5.96).
     - bs ≥ 매핑 10 조합은 416–486 MiB/s(매핑 4K 대비 −12.6 ~ +0.02 %), bs < 매핑 5 조합은 같은 매핑의 bs = 매핑 값의 0.16–0.52 배다.
   - sudoers 는 22:11 에 사용자가 다시 설치했고, 23:08 KST 에 사용자가 제거했다(10.5 절). 지금 서버에 sudoers 규칙은 없다.
-  - 기록 검증(9.3 절)까지 마쳤다. 순차 쓰기와 이 실험의 결과·문서는 커밋 c9dfb23 = 태그 **ksc2026-v2** 에 있다. GitHub push 여부는 10.5 절 끝을 본다(23:22 KST 시도는 ssh-agent 가 없어 실패했고, 그때 GitHub main 은 cd1fe2b 였다). 랜덤 쓰기 주 데이터셋만 담은 앞선 태그는 ksc2026-final(c742c67)이다.
+  - 기록 검증(9.3 절)까지 마쳤다. 순차 쓰기와 이 실험의 결과·문서는 커밋 c9dfb23 = 태그 **ksc2026-v2** 에 있고, 23:24 KST 에 GitHub 에 push 했다(main = 2f5902f 이후, 확인은 10.5 절 끝). 랜덤 쓰기 주 데이터셋만 담은 앞선 태그는 ksc2026-final(c742c67)이다.
 - **추가 실험 — 순차 쓰기 (seq3x3_20261008; 19:53 KST 사용자 요청, 20:23 KST 시작)**. 지시·결정은 1.13–1.18 절, 코드는 5.6 절, 설계는 6.6 절, 사전 점검은 7.1 절, 발견은 8.5–8.7 절, 코드 검토는 9.1 절, 진행은 10.4 절, 전체 수치는 11.3 절(자동 생성)에 있다.
   - 설계: 매핑 4K·16K·32K × fio bs 4K·16K·32K × 3 회 × 모델 {wbuffix, merge}. fio rw=write(순차), 페이지 캐시 nodrop 만, 블록 계층 병합 끔(nomerges=2). 54 회. 결과 폴더 `results/seq3x3_20261008/{wbuffix,merge}/`.
   - wbuffix = 랜덤 쓰기 주 데이터셋과 같은 모듈 파일(SHA-256 같음). merge = wbuffix + 쓰기 버퍼 병합(WBUF_MERGE=1, 이 세션에서 새로 만든 코드, 커밋 66446ea). 매핑 단위보다 작은 쓰기를 파티션마다 열린 매핑 단위 하나에 모았다가, 가득 차면 flash 에 쓴다.
@@ -1009,8 +1009,14 @@ dccearth ALL=(root) NOPASSWD: /usr/sbin/insmod, /usr/sbin/rmmod, /usr/bin/fio, /
 - 23:21 KST 커밋 c9dfb23(순차 쓰기·랜덤 bs 8K·64K 결과와 문서 최종본, 검증 반영)과 주석 태그 ksc2026-v2(→ c9dfb23)를 만들었다. 둘 다 로컬이다.
 - 23:22 KST GitHub push 시도 실패: `git@github.com: Permission denied (publickey)`. forwarded ssh-agent 소켓이 없었다. 사용자의 23:08 SSH 세션(pts/0)은 접속 직후 끝났다(`last`: 14:08–14:08 UTC).
   - 이 시점 GitHub 상태(`git ls-remote https://github.com/Sangwon8799/nvmevirt.git`): main = cd1fe2b, 태그 ksc2026-final = c742c67. 즉 GitHub 에는 18:36 KST 상태(랜덤 쓰기 주 데이터셋)까지만 있고, 66446ea·a86fc87·403a6ae·c9dfb23 과 태그 ksc2026-v2 는 아직 없다.
-  - docx 4.3 절의 `git checkout ksc2026-v2` 와 10 장 표의 「GitHub main 과 태그 ksc2026-v2 로 push」 문구는 push 직전에 만든 것이다. push 가 끝나기 전에는 사실이 아니다. push 결과는 이 항목 아래 줄에 적는다(줄이 없으면 아직 push 전이다).
+  - docx 4.3 절의 `git checkout ksc2026-v2` 와 10 장 표의 「GitHub main 과 태그 ksc2026-v2 로 push」 문구는 push 직전에 만든 것이다. push 가 끝나기 전에는 사실이 아니다. push 는 아래의 23:24 항목에서 끝났으므로 지금은 사실이다.
   - 묶음의 repo.gitbundle 에는 위 커밋과 태그가 모두 들어 있으므로, 묶음을 받은 쪽은 GitHub 와 무관하게 전부 볼 수 있다.
+- 23:22:48 KST 인계 묶음 ksc2026_handoff_20261008_2322_v2.tgz(67 MB)를 만들었다(push 전 상태를 담은 판; 다음 묶음이 대체한다). 검증 전 묶음(…2238_seq_randbs_wip)은 지웠다.
+- **23:24 KST GitHub push 성공.** 사용자가 23:23 에 `ssh -A` 로 다시 접속했고(메시지 「접속했어」), Claude 가 그 agent 소켓(/tmp/ssh-H9UcLKiirg/agent.185301)으로 `git push origin main ksc2026-v2` 를 실행했다(`cd1fe2b..2f5902f main -> main`, `[new tag] ksc2026-v2`).
+  - 확인(`git ls-remote https://github.com/Sangwon8799/nvmevirt.git`): refs/heads/main = 2f5902f, 태그 ksc2026-v2(태그 객체 341cc3a) → c9dfb23, 태그 ksc2026-final → c742c67.
+  - 커밋 순서: … cd1fe2b → 66446ea(병합 모델·순차 스크립트) → a86fc87(순차 결과·랜덤 bs 스크립트) → 403a6ae(랜덤 bs 결과·순차 기록 검증 반영) → c9dfb23(최종 기록, = ksc2026-v2) → 2f5902f(이 파일만: push 대기 기록).
+  - 그 뒤 main 에는 이 파일만 고친 커밋(push 결과·최종 묶음 기록)이 하나 더 올라간다. docx 4.3 절의 `git checkout ksc2026-v2` 는 c9dfb23 이다.
+- 23:2x KST 최종 인계 묶음(라벨 v2_final)을 이 파일과 같은 내용으로 만들었다. 묶음 이름과 시각은 묶음의 README_FIRST.txt 첫 줄에 있다.
 
 ---------------------------------------------------------------------------------------------------
 
@@ -6578,3 +6584,4 @@ wbuffix 32k 64k r3 | 5.973 | 2130 2125 2115 2124 2120 1609 147 150 167 182 190 1
 - 21:34 순차 쓰기 실험 후 sudoers 제거(사용자). 22:08 사용자 요청으로 랜덤 쓰기 bs 8K·64K 실험을 추가했다(1.20, 6.7). 22:11:48 커밋 a86fc87(순차 쓰기 결과·랜덤 bs 스크립트; 검증 반영 전). 22:12–22:17 순차 쓰기 기록 검증 워크플로의 지적 39 건을 반영했다(9.2; 커밋 403a6ae 에 들어감).
 - 22:11–22:33 랜덤 쓰기 bs 8K·64K 실험(10.5). 22:3x 결과 반영: 0 절, 8.8, 10.5, 11.4·11.5(자동 생성), docx 9 장(랜덤 bs 8K·64K; 「실험 후 상태와 정리」는 10 장이 됨).
 - 23:08 sudoers 제거(사용자), ssh -A 재접속. 23:1x 랜덤 bs 8K·64K 기록 검증 워크플로의 지적 30 건 반영(9.3; make_handoff.sh 이력 검사 fail-open 수정 포함). 23:2x 최종 docx(92 쪽), 커밋, 태그 ksc2026-v2, push, 최종 인계 묶음(10.5 절 끝).
+- 23:22 push 1 차 시도 실패(agent 없음) → 23:24 사용자 재접속 뒤 push 성공(main, 태그 ksc2026-v2 = c9dfb23). 최종 인계 묶음 v2_final.
