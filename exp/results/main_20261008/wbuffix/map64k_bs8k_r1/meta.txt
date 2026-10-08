@@ -1,0 +1,15 @@
+variant:      wbuffix
+map_unit:     64k (65536 B)
+bs:           8k (8192 B)
+rep:          1
+device:       /dev/nvme1n1  size=12040984064 B  model=CSL_Virt_MN_01
+module:       9d7d4c70a16a42d71de173e01f4557e94c3803070169623227f1fd68212136e2  nvmev_map64k.ko
+insmod:       insmod nvmev_map64k.ko memmap_start=12G memmap_size=12G cpus=3,4,5
+fio:          fio --output-format=json --output=fio.json job.fio
+loadavg:      3.04 3.02 2.98 4/247 38611
+git_head:     2a462a3a518915e37fa313716bc9721801501e28
+start:        2026-10-08T06:18:34+00:00
+end:          2026-10-08T06:19:43+00:00
+fio_exit:     0
+chmodel_msgs: 0   (NVMeVirt '[chmodel_request]' errors seen by dmesg -W: NAND backlog beyond the channel-model window)
+kernel_warn:  0   (kernel.log lines matching WARNING|almost full|timeout|reset|Oops|BUG|I/O error|Disk read failed, excluding chmodel/KSC2026 lines)

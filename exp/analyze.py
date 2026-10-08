@@ -221,7 +221,7 @@ def write_csv(path, rows):
         wr = csv.DictWriter(f, fieldnames=cols)
         wr.writeheader()
         for r in rows:
-            wr.writerow({k: (f"{v:.6g}" if isinstance(v, float) else v) for k, v in r.items()})
+            wr.writerow({k: (repr(v) if isinstance(v, float) else v) for k, v in r.items()})   # full precision
 
 
 def style(ax):
@@ -445,6 +445,7 @@ def cache_compare(rows, out):
                              "mean_diff_pct": mean, "sd_diff": sd, "ci95_low_pct": mean - half, "ci95_high_pct": mean + half,
                              "paired_t": t, "p_two_sided": t_two_sided_p(t, len(v) - 1)})
     if summ:
+        out.mkdir(parents=True, exist_ok=True)
         write_csv(out / "cache_compare.csv", summ)
         write_csv(out / "cache_pairs.csv", pair_rows)
     return summ

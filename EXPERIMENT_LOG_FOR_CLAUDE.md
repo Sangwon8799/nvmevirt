@@ -3,32 +3,106 @@
 이 파일은 다른 Claude 세션이 이 논문 실험의 진행 상황을 완전하고 정확하게 이해하도록 쓴 기록이다. 사람이 읽기 좋은 형식보다 정확성과 빠짐없음을 우선한다. 사실은 파일 경로·커밋·로그 줄·숫자로 근거를 붙였다. 「추정」으로 표시하지 않은 문장은 확인된 사실이다.
 
 - 작성: Claude Code (모델 Claude Opus 5.5, 세션 ID 13edeb42-0011-48bf-800d-a7f7e0251b76). 작업 디렉터리 /home/dccearth/jsw. 서버 dccearth.
-- 작성 시작: 2026-10-08 05:40 UTC (서버 시계 UTC, +00:00). 마지막 갱신: 맨 아래 「갱신 이력」 참고.
+- 작성 시작: 2026-10-08 14:40 KST. **이 파일의 시각은 모두 KST(UTC+9)다.** 서버 시계와 원자료(run.log, meta.txt, kernel.log, 파일 시각)는 UTC 이므로 원자료를 볼 때는 9 시간을 더한다(사용자 지시 1.9). 마지막 갱신: 맨 아래 「갱신 이력」 참고.
 - 사용자: GitHub 계정 Sangwon8799 (git user.email ekfghfl@naver.com). 사용자를 지칭할 때는 they/them.
-- 사용자 선호: 2026-10-08 05:21경 「앞으로는 한국어로만 답변해주고 보고해줘.」 → 모든 응답·보고는 한국어. 메모리 파일 /home/dccearth/.claude/projects/-home-dccearth-jsw/memory/korean-only-replies.md 에 저장됨.
+- 사용자 선호: 2026-10-08 14:19경 「앞으로는 한국어로만 답변해주고 보고해줘.」 → 모든 응답·보고는 한국어. 메모리 파일 /home/dccearth/.claude/projects/-home-dccearth-jsw/memory/korean-only-replies.md 에 저장됨(묶음의 claude_memory/ 에 사본).
+
+---------------------------------------------------------------------------------------------------
+
+## H. 이 파일을 받은 Claude 에게 — 인계 묶음(.tgz) 사용법
+
+- 너는 실험 서버(dccearth)와 다른 서버에 있으며, 실험 서버의 디렉터리를 직접 볼 수 없다. 사용자가 실험 서버에서 만든 인계 묶음 `ksc2026_handoff_<KST 시각>[_라벨].tgz` 를 너에게 전달한다. 이 파일은 그 묶음의 맨 위에 있는 EXPERIMENT_LOG_FOR_CLAUDE.md 다.
+- 묶음은 그때까지의 전부를 담은 완결본이다. 이름의 시각이 가장 늦은 묶음이 최신이며 앞 묶음을 대체한다. 실험이 진행 중일 때 만든 묶음은 결과가 일부만 들어 있다(server_state/state.txt 에 진행률).
+- 묶음 구조:
+  - EXPERIMENT_LOG_FOR_CLAUDE.md — 이 파일(진입점)
+  - README_FIRST.txt — 짧은 안내
+  - MANIFEST.txt — 모든 파일의 sha256·크기
+  - repo/ — 실험 서버 저장소의 작업 트리(묶음 시점, 커밋 안 된 것 포함). .git·exp/.venv·*.ko 는 빠져 있다.
+    - repo/nvmevirt/ (NVMeVirt 소스), repo/exp/ (스크립트), repo/exp/results/ (모든 원자료·분석 CSV·그림), repo/exp/report/ (보고서 생성기, 감사 결과)
+  - repo.gitbundle — 전체 git 이력. `git clone repo.gitbundle repo_git` 으로 풀면 커밋·diff 를 볼 수 있다. git_log.txt 는 `git log --stat --all` 사본이다.
+  - materials/ — 논문 PDF 4 개, 산출물/(NVMeVirt 설정조사 보고서 docx/pdf/pptx/csv), text/(모든 자료의 텍스트 추출본)
+    - 연구 계획 흐름.docx 는 서버 로그인 정보가 들어 있어 넣지 않았다. 그 줄을 지운 텍스트본 materials/text/「연구 계획 흐름 (redacted).txt」만 있다.
+  - deliverables/ — 실험 기록 Word 문서(KSC2026_NVMeVirt_매핑단위_실험기록.docx). 생성된 뒤의 묶음에만 있다.
+  - server_state/ — 묶음 시점의 서버 상태: state.txt(tmux, 모듈, sudoers, 결과 폴더별 DONE/FAILED 수, 실행 로그 끝), proc_cmdline.txt
+  - claude_memory/ — 실험 서버의 Claude 메모리 노트(사용자 선호 등)
+- 서버 경로 → 묶음 경로:
+  - `/home/dccearth/jsw/KSC2026/nvmevirt/` (실험 당시) = `/home/dccearth/jsw/nvmevirt/` (17:06 KST 이후) → `repo/`
+  - `…/nvmevirt/exp/results/<EXP>/` → `repo/exp/results/<EXP>/`
+  - `/home/dccearth/jsw/KSC2026/*.pdf`, `산출물/` → `materials/`
+  - `/home/dccearth/.claude/projects/-home-dccearth-jsw/memory/` → `claude_memory/`
+  - 감사 워크플로 기록(서버의 ~/.claude/…/workflows/…/journal.jsonl) → 묶음에는 원본이 없고 정리본 `repo/exp/report/audit_result.json`, `audit_summary_ko.txt` 가 있다.
+  - Claude 세션의 scratchpad(`/tmp/claude-1000/…/scratchpad`) → 묶음에 없다(임시 파일). 필요한 것은 모두 repo/ 나 materials/text/ 로 옮겼다.
+- 이 파일에 나오는 서버 경로와 명령(tmux, sudo, insmod 등)은 기록이자 실험 서버에서의 재현 방법이다. 너의 서버에서 실행하라는 뜻이 아니다. 단, 분석·그래프는 묶음만으로 다시 만들 수 있다:
+  ```
+  cd repo/exp && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+  .venv/bin/python analyze.py results/main3x3_20261008        # CSV·그림 재생성
+  .venv/bin/python plot.py all --exp results/main3x3_20261008  # 그래프 묶음 → results/main3x3_20261008/plots/
+  ```
+- 원자료 읽는 법:
+  - 회차 폴더 = repo/exp/results/<EXP>/<변형>/map<단위>_bs<크기>_r<회>/
+  - fio.json = fio 결과
+  - fio_*.1.log = 0.5 s 시계열
+  - meta.txt / cache.txt / kernel.log / dmesg_*.txt
+  - DONE = 정상 종료, FAILED = fio 실패(원인 줄 포함)
+- 묶음 생성 스크립트: repo/exp/report/make_handoff.sh. 묶음마다 credential 문자열이 없는지(파일 전체와 git 이력) 검사한 뒤에만 쓴다. 검사 패턴은 실행할 때 서버의 연구 계획 .docx(묶음에는 넣지 않음)에서 뽑아 메모리에서만 쓰므로, 스크립트와 묶음에는 credential 이 없다(19 시경부터; 그 전 판의 문제는 「갱신 이력」 참고).
 
 ---------------------------------------------------------------------------------------------------
 
 ## 0. 현재 상태 요약 (STATUS)
 
-- 상태: 본 실험(main_20261008)이 실행 중 또는 완료. 정확한 상태는 다음으로 확인한다.
-  - `tmux ls` (세션 ksc2026)
-  - `tail /home/dccearth/jsw/KSC2026/nvmevirt/exp/results/run_all_main_20261008.log`
-  - `ls /home/dccearth/jsw/KSC2026/nvmevirt/exp/results/main_20261008/{base,wbuffix}/ | grep -c _r` (각 108 이면 완료)
-- 실험 행렬: 매핑 단위 {4k,8k,16k,32k,64k,128k} × fio bs {4k,8k,16k,32k,64k,128k} × 3 회. 변형 2 개(base, wbuffix) → 216 회. 회차당 약 70 s, 전체 약 4.2 시간.
-- 일정: 2026-10-08 05:20:28 UTC 시작(모듈 빌드). base 측정 1 회차 05:21:02. base 21 회차(map32k_bs16k_r1)에서 장치 실패로 05:46:57 중단 → 스크립트 수정 후 05:49:13 재개. 재개 순서는 wbuffix 108 회 → base 나머지 87 회(10 절). wbuffix 종료 약 07:55, base 종료는 실패 회차 수에 따라 약 09:40–10:30 UTC 로 예상.
+- 묶음을 받았다면 먼저 server_state/state.txt 로 묶음 시점의 진행률을 확인한다. 이 절은 최종 갱신 시점의 요약이다.
+- **최종 상태(17:10 KST 이후)**:
+  - 주 데이터셋 실험 완료: 16:00:35–17:03:57 KST, 54/54 회 DONE, FAILED 0. 분석·그래프 완료.
+  - 실험 후 정리(사용자 지시 1.6):
+    - 저장소를 /home/dccearth/jsw/KSC2026/nvmevirt → **/home/dccearth/jsw/nvmevirt** 로 옮겼다(17:06 KST).
+    - /home/dccearth/jsw/exp 를 내용물째 삭제했다.
+    - 저장소 안 upstream_tmp/ 를 지우고 exp/.venv 를 다시 만들었다.
+    - KSC2026/EXPERIMENT_LOG_FOR_CLAUDE.md 는 ../nvmevirt/EXPERIMENT_LOG_FOR_CLAUDE.md 를 가리키는 링크로 바꿨다.
+  - 이 파일의 서버 경로 중 「/home/dccearth/jsw/KSC2026/nvmevirt」 는 실험 당시 위치다. 지금은 /home/dccearth/jsw/nvmevirt 이고, 묶음에서는 repo/ 다.
+  - 원자료(meta.txt, run.log 등)에 적힌 경로도 실험 당시 위치 그대로다.
+- **진행 상태(17:24 KST 기준, 이후 경과는 10.3 절)**:
+  - 실험·분석·그래프 완료.
+  - 실험 기록 .docx 1 차본 완료: deliverables/ 와 repo/exp/report/, 63 쪽. LibreOffice 로 PDF 렌더링해 확인했다.
+  - 문서 검증 워크플로(wf_7f78deeb-8ce, 17:09 시작)가 진행 중이다. 검증 결과로 .docx·이 파일이 고쳐질 수 있으니, 최종본은 다음 묶음(라벨 final)을 기준으로 한다.
+  - (최종) 실험·분석·검증·문서·정리 모두 완료. 결과·문서는 GitHub main 과 태그 ksc2026-final 에 있다. sudoers 규칙은 18:33 KST 에 제거했다.
+  - GitHub push: 처음 쓰던 SSH agent 소켓(/tmp/ssh-UN8QkXPn5f/agent.4695, 사용자 pts/0 세션)은 그 세션이 16:31 KST 에 끝나며 사라졌고, 17:09 KST 에 push 하려다 발견했다. 17:19 KST 에 사용자가 다시 접속해 새 소켓(/tmp/ssh-i3drMOKMuH/agent.76661)이 생겼다. 최종 push 결과는 10.3 절 끝에 적는다.
+  - sudoers 규칙: 제거 시각과 확인은 10.3 절 끝에 적는다.
+- **핵심 결과(주 데이터셋, 3 회 평균; 상세는 11 절, 근거 파일은 repo/exp/results/main3x3_20261008/analysis/*.csv)**:
+  - 페이지 캐시 drop(sync; echo 3 > /proc/sys/vm/drop_caches)은 결과에 영향이 없다. 27 쌍(9 조합 × 3 회)의 대역폭 차이는 평균 +0.009 %(95 % CI −0.084 ~ +0.101 %, p = 0.85)이고, 조합별 차이도 −0.21 ~ +0.39 %(모든 p > 0.15)다. IOPS·평균/p99 지연·GC 전후 대역폭·WAF 도 유의한 차이가 없다.
+  - drop 조건에서 일관되게 달라진 것은 fio 시작 표지부터 첫 GC 까지의 시간뿐이다. 23–36 ms(+0.51 %, p < 1e-12) 늦은데, 캐시를 비운 뒤 sudo·fio 실행 파일을 디스크에서 다시 읽느라 fio 시작이 늦어진 것으로 보인다. 장치 성능과는 무관하다.
+  - bs ≥ 매핑 단위에서는 60 s 평균 대역폭이 416–482 MiB/s 로 매핑 단위에 따른 차이가 작다. bs 16K 는 매핑 4K 481.0, 16K 420.4 MiB/s(−12.6 %)이고, bs 32K 는 매핑 4K 482.3, 16K 441.6, 32K 424.6 MiB/s(−8.4 %, −11.9 %)다.
+  - bs < 매핑 단위에서는 성능이 크게 떨어진다. 매핑 16K·bs 4K 는 129.7 MiB/s 로 매핑 4K·bs 4K(416.0) 대비 −68.8 %, 매핑 32K·bs 4K 는 68.3 MiB/s(−83.6 %), 매핑 32K·bs 16K 는 219.6 MiB/s 로 매핑 4K·bs 16K(481.0) 대비 −54.3 % 다.
+  - 그 원인은 쓰기 증폭이다. WAF_total(NAND 바이트 ÷ 호스트 바이트)은 bs ≥ 매핑에서 3.1–3.5 인데, 16K/4K 8.8, 32K/4K 17.1, 32K/16K 6.0 이다. 이는 매핑 단위/bs 배의 부분 쓰기 증폭(4·8·2 배)에 GC 증폭(2.1–3.0)이 곱해진 값이다.
+  - GC 이전 구간의 대역폭은 NAND 프로그램 한계로 정해진다. bs ≥ 매핑에서는 2,001–2,218 MiB/s 로, 16 die 합 한계 2,233 MiB/s 의 90–99 % 다. bs < 매핑에서는 그 한계 × bs/매핑에 가깝다(16K/4K 535.6 = 한계 × 1/4 의 96 %, 32K/4K 256.1 = × 1/8 의 92 %, 32K/16K 1,026.9 = × 1/2 의 92 %).
+  - 장치가 빈 상태에서 시작하므로 모든 조합에서 첫 GC 는 5.7–6.3 s 에 시작한다(물리 공간의 380/384 line 이 찼을 때). 60 s 평균에는 GC 이전 약 6 s(약 2 GB/s)가 크게 반영된다. GC 이후 구간 평균은 bs ≥ 매핑에서 240–307 MiB/s, bs < 매핑에서 47–130 MiB/s 다.
+  - GC 이후 대역폭은 fio 의 randommap 주기를 따라 출렁인다. bs ≥ 매핑에서는 GC 시작 직후 약 130 MiB/s 까지 떨어졌다가 회복하고, 장치를 한 바퀴 다 쓸 무렵(약 37–52 s) 1,500–1,900 MiB/s 로 치솟은 뒤 다시 떨어진다. bs < 매핑에서는 치솟지 않고 계속 떨어진다. 그래서 마지막 20 s 평균은 조합에 따라 순서가 바뀐다(예: bs 16K 에서 매핑 4K 244.8 < 매핑 16K 323.4 MiB/s). 결과를 비교할 때는 60 s 평균과 GC 이후 구간 평균을 함께 보아야 한다.
+  - 평균 완료 지연은 IOPS 와 반비례한다(iodepth 32 고정, Little 의 법칙). 4K/4K 299 µs, 16K/4K 963 µs, 32K/4K 1,829 µs 다. p99 지연은 모든 조합에서 13–18 ms 로, GC 로 쓰기 버퍼가 막히는 구간이 결정한다.
+  - 반복 간 대역폭 편차는 매우 작다. 변동계수 평균 0.15 %, 최대 0.37 %(4K/4K, nodrop; drop 은 0.35 %)다. fio 난수 순서가 고정이라(randrepeat=1) 1–3 회차의 시계열이 거의 겹친다.
+  - L2P 매핑 표 크기(물리 12 GiB 의 전체 FTL 페이지 × 항목 8 B, NVMeVirt maptbl 기준)는 매핑 4K 24 MiB, 16K 6 MiB, 32K 3 MiB 로 매핑 단위에 반비례한다(논리 11.2 GiB 장치 기준으로 계산하면 22.4/5.6/2.8 MiB). 다만 NVMeVirt 에는 매핑 캐시(DRAM) 모델이 없어 이 이득은 성능 수치에 나타나지 않는다.
+  - 보조 데이터셋에서 bs ≥ 매핑 단위 조합은 base 와 wbuffix 의 차이가 −0.5 ~ +1.2 % 로 반복 편차 수준이었다(같은 코드 경로). bs < 매핑 단위 조합은 wbuffix 가 base 보다 18.7–26.3 % 낮았는데(base 가 높게 나옴), 쓰기 버퍼 과다 반환으로 타이밍 모델이 정상 범위를 벗어난 값이다. base 의 매핑 32K·bs 16K 는 장치가 멈췄다.
+  - 해석 시 한계: NVMeVirt 는 부분 쓰기의 read-modify-write(옛 데이터 읽기)를 모델링하지 않으므로, bs < 매핑 단위의 불이익은 실제 SSD 보다 작게 나올 수 있다. 쓰기 조기 완료라 NAND·GC 비용은 쓰기 버퍼가 찰 때만 호스트에 보인다. 지우기 지연은 0 이다.
+- **최종 실험 설계(주 데이터셋)**: `results/main3x3_20261008/` — 선배의 요청(1.7 절)에 따라 바꾼 설계다.
+  - 매핑 단위 {4k,16k,32k} × fio bs {4k,16k,32k} × 3 회
+  - 모델은 wbuffix(쓰기 버퍼 수정)만 쓴다. 사용자 선택(1.7 절).
+  - OS 페이지 캐시: 회차마다 drop(`sync; echo 3 > /proc/sys/vm/drop_caches`) / nodrop 을 연달아 측정한다. 순서는 반복마다 바뀐다.
+  - 9 × 3 × 2 = 54 회. 결과 폴더는 `wbuffix_nodrop/`, `wbuffix_drop/`. 2026-10-08 16:00:35 KST 시작, 약 65 분.
+- **첫 설계(보조 데이터셋, 미완료)**: `results/main_20261008/` — 매핑 6 × bs 6 × 3 회 × {base, wbuffix}.
+  - 14:20–15:51 실행. 설계 변경으로 15:51:23 에 회차 경계에서 중단했다.
+  - 남은 것: base 완료 20 + FAILED 1(map32k_bs16k_r1, 장치 멈춤), wbuffix 완료 53(rep1 36 개 전부 + rep2 17 개).
+  - base 의 문제(8 절)를 보여 주는 근거이자 6×6 전체 경향 참고용이다.
+- 사전 점검 결과: `results/pre_smoke_test/`, `pre_gcstats_ab/` (7 절), `pre_cache_test/` (1.7 절)
 - 최종 산출물(완료 후):
-  - 실험 기록 Word 문서: `/home/dccearth/jsw/KSC2026/nvmevirt/exp/report/KSC2026_NVMeVirt_매핑단위_실험기록.docx`. 같은 파일을 /home/dccearth/jsw/KSC2026/산출물/ 에도 복사할 예정.
-  - 결과 CSV: `exp/results/main_20261008/analysis/summary_runs.csv`(회차별), `summary_agg.csv`(조합별 평균·표준편차·최소·최대)
-  - 그림: `exp/results/main_20261008/analysis/fig_*.png` (analyze.py), `exp/results/main_20261008/plots/*.png` (plot.py all)
-  - GitHub: git@github.com:Sangwon8799/nvmevirt.git, 브랜치 main
-- 이 파일 맨 아래 「11. 결과」에는 실험이 끝난 뒤 자동 생성한 전체 수치가 들어간다(AUTO-RESULTS 표지 사이).
+  - 실험 기록 Word 문서: deliverables/ 와 repo/exp/report/
+  - 결과 CSV: `repo/exp/results/main3x3_20261008/analysis/summary_runs.csv`(회차별), `summary_agg.csv`(조합별), `cache_compare.csv`(drop vs nodrop 쌍 비교), `cache_pairs.csv`
+  - 그림: analysis/fig_*.png, plots/*.png
+  - GitHub: git@github.com:Sangwon8799/nvmevirt.git main (사용자 저장소)
+- 이 파일의 「11. 결과」에는 실험이 끝난 뒤 자동 생성한 전체 수치가 들어간다(AUTO-RESULTS 표지 사이).
 
 ---------------------------------------------------------------------------------------------------
 
 ## 1. 사용자 지시 원문과 이행 상태 (시간순, 이 세션)
 
-### 1.1 첫 지시 (2026-10-08 04:4x UTC) — 원문 그대로
+### 1.1 첫 지시 (2026-10-08 13:4x KST) — 원문 그대로
 
 ```
 논문에 작성할 실험 데이터를 쌓을거야. 논문에 대한 자세한 내용은 KSC2026 폴더의 자료들을 확인해. 우선 NVMeVirt를 GitHub에서 fork해와서 해당 폴더에 nvmevirt 라는 이름으로 둬. 그리고 내부 파일들을 다시 nvmevirt라는 서브 폴더를 만들어서(즉 동일한 이름의 폴더) 그 안에 전부 두고, 실험 환경 세팅용 폴더는 exp로 만들어서 둬줘. 이후 처음에 만든 nvmevirt 폴더를 내 GitHub repo에 올려줘(Sangwon8799). mapping size는 4k, 8k, 16k, 32k, 64k, 128k 단위로 실험을 진행할거고, 서버 RAM 크기가 24GB이고 하위 12GB부터 24GB까지 총 12GB를 NVMeVirt 용량으로 사용할거야. CPU는 1개를 dispatcher, 나머지 2개 총 3개를 사용할거야. ioengine은 libaio를 사용할거야. 매 실험마다 rmmod를 써서 NVMeVirt 스토리지를 초기화한 후 다시 진행하도록 하고, rand_time은 0으로 해서 GC가 실행되기 전 데이터도 함께 측정해줘. 각 실행 시간은 1분으로 해주고, 한 실험 당 3번씩 반복 진행해서 데이터를 쌓아줘. ssd_config.h에서 BLK 크기가 2MiB가 되도록 해줘(아마 384로 쓰면 됨). mapping size 64k 이후부터는 page 크기 때문에 assert 통과가 안 되므로 page 크기가 mapping size와 동일하도록 해줘. iodepth는 32로 해줘. 그 외에는 NVMeVirt 설정조사 자료들을 보고 해당 값들을 기본값으로 설정해줘. 실험의 시작부터 결과를 얻기 까지 전 과정을 기록해서 `.docx` 파일로 만들어줘. 서버의 환경, 어떤 버전, fio의 어떤 버전, NVMeVirt 무슨 버전을 사용하는지 등등 상세하게 기록해주고, 데이터를 얻을 때 사용한 스크립트가 있으면 해당 스크립트 코드 전문도 함께 적어줘. 실험 전 세팅과 실험 후 세팅과 같은 기록도 넣어줘. 즉 실험을 진행하면서 변경한 설정값, 데이터 등 모든 것을 기록해서 실험 환경을 다른 사람이 봐서 진행해도 동일하게 진행할 수 있으면 돼. 궁금한거 있으면 물어봐.
@@ -43,8 +117,8 @@
 | NVMeVirt fork → 「해당 폴더」에 nvmevirt 로 | 「해당 폴더」를 KSC2026 폴더로 해석했다. upstream snu-csl/nvmevirt 를 clone 해 /home/dccearth/jsw/KSC2026/nvmevirt 로 두고 원본 git 이력을 유지했다(remote upstream). GitHub 에서는 사용자가 빈 저장소 Sangwon8799/nvmevirt 를 직접 만들었다(1.3 의 답). GitHub의 'fork' 관계(네트워크)는 없지만 원본 이력이 그대로 들어 있다. | 완료 |
 | 내부 파일을 nvmevirt/nvmevirt 서브폴더로 | 커밋 d508610 "Move NVMeVirt sources into nvmevirt/ subdirectory". `git mv` 만 했다(42 파일, 내용 변경 0). .gitignore 와 .clang-format 도 함께 옮겼다. | 완료 |
 | 실험 세팅 폴더 exp | /home/dccearth/jsw/KSC2026/nvmevirt/exp (스크립트, fio 틀, 결과, 보고서 생성기) | 완료 |
-| 처음 만든 nvmevirt 폴더를 GitHub 에 | origin = git@github.com:Sangwon8799/nvmevirt.git, main 에 push 했다(05:20 경, 커밋 5769378 까지). 결과·문서는 실험 후 추가로 push 한다. | 코드 완료, 결과는 완료 후 |
-| mapping size 4k–128k | `make MAPPING_UNIT=<bytes>` 로 매핑 단위별 모듈을 빌드한다. ssd.c 의 secs_per_pg = MAPPING_UNIT / LBA_SIZE | 완료 |
+| 처음 만든 nvmevirt 폴더를 GitHub 에 | origin = git@github.com:Sangwon8799/nvmevirt.git. 14:20 KST 에 main 을 5769378 까지 push 했다. 그 뒤 커밋(949ae38 = 옛 2a462a3, e598e75 = 옛 a93ef76)과 결과·문서·생성기 커밋은 실험·검증이 끝난 뒤 main 과 태그 ksc2026-final 로 push 했다(10.3 절 끝에 결과). | 10.3 절 |
+| mapping size 4k–128k | `make MAPPING_UNIT=<bytes>` 로 매핑 단위별 모듈을 빌드한다. ssd.c 의 secs_per_pg = MAPPING_UNIT / LBA_SIZE. 6 종 모두 빌드했다(exp/modules/base, exp/modules/wbuffix). 측정은 1.7 의 설계 변경으로 주 데이터셋(main3x3_20261008)에서 4k·16k·32k 만 했다. 8k·64k·128k 는 보조 데이터셋(main_20261008)에만 있다: 8k 는 base rep1·wbuffix rep1–2, 64k·128k 는 wbuffix rep1 만 있다(base 의 32k/32k·64k·128k 는 32k/16k 실패 뒤 실행되지 않음). | 빌드 완료, 측정 범위는 1.7 에서 변경 |
 | RAM 24GB, 상위 12–24GB 를 NVMeVirt 로 | GRUB memmap=12G$12G 는 이미 설정되어 있었다(이 세션 이전). insmod memmap_start=12G memmap_size=12G | 완료 |
 | CPU 3 개 (디스패처 1 + 2) | isolcpus=3-5 는 이미 설정되어 있었다. insmod cpus=3,4,5 (첫 값 = 디스패처) | 완료 |
 | ioengine libaio | fio 작업 파일 ioengine=libaio | 완료 |
@@ -55,32 +129,32 @@
 | 64k 이상은 page = mapping size | ssd_config.h: MAPPING_UNIT > 32768 이면 FLASH_PAGE_SIZE = MAPPING_UNIT, 아니면 KB(32) | 완료 |
 | iodepth 32 | iodepth=32 | 완료 |
 | 그 외 설정조사 자료 기본값 | 970 Pro 묶음 기본값을 유지했다(설정조사 보고서 부록 A 와 일치하는지 확인). 보고서의 추천 중 용량 64 GiB, 코어 5, 300 s 사전 채움은 사용자 지시로 대체되었다. | 완료 |
-| 전 과정 .docx 기록 | exp/report/make_report.py 가 결과로부터 docx 를 생성한다. 실험 후 최종 생성·렌더링 확인 예정 | 진행 중 |
-| fio 블록 크기 | 지시에 명시되지 않았다. 연구 계획 문서의 「randwrite 4k, 8k, 16k, 32k, 64k, 128k」에 따라 6 개 모두 측정하기로 결정했다(묻지 않음). | 완료 |
+| 전 과정 .docx 기록 | exp/report/make_report.py 가 결과로부터 docx 를 생성한다. 17:07 KST 1 차본, 17:08 LibreOffice 렌더링 확인(PDF 63 쪽), 17:09–18:25 검증 워크플로(지적 89 건 확인) → 18:2x–19 시경 반영해 최종본 생성(10.3 절). | 완료(10.3 절) |
+| fio 블록 크기 | 지시에 명시되지 않았다. 처음에는 연구 계획 문서의 「randwrite 4k, 8k, 16k, 32k, 64k, 128k」에 따라 6 개 모두 측정하기로 정했다(묻지 않음). 1.7 의 설계 변경으로 주 데이터셋은 4k·16k·32k 로 바뀌었다. 6 개 bs 의 결과는 보조 데이터셋(main_20261008)에 일부만 있다. | 1.7 에서 변경 |
 
-### 1.2 Claude 가 물은 것과 사용자의 답 (AskUserQuestion, 04:5x UTC)
+### 1.2 Claude 가 물은 것과 사용자의 답 (AskUserQuestion, 13:5x KST)
 
 - Q1 sudo 방식 → 사용자 답: 「NOPASSWD 규칙 추가 (Recommended)」
 - Q2 GitHub 인증(서버에 키·gh 없음) → 답 원문: 「ssh config에 agent forwarding으로 github 정보를 보내고 있어. 이거 활용할 수 있어?」
   - 확인 결과 /tmp/ssh-UN8QkXPn5f/agent.4695 (사용자의 pts/0 SSH 세션)에 ed25519 키 2 개가 있었다. 하나는 ekfghfl@naver.com, 다른 하나는 dccearth_gateway_key. `SSH_AUTH_SOCK=/tmp/ssh-UN8QkXPn5f/agent.4695 ssh -T git@github.com` → "Hi Sangwon8799! You've successfully authenticated". Claude 의 Bash 환경에는 SSH_AUTH_SOCK 이 없으므로 git 명령마다 SSH_AUTH_SOCK=<소켓> 을 붙여야 한다. 소켓 경로는 사용자가 다시 접속하면 바뀐다(`ls /tmp/ssh-*/agent.*` 로 찾는다).
-- Q3 push 대상(공개 목록에 Sangwon8799/nvmevirt 없음) → 답 원문: 「nvmevirt 이름으로 새로 만들게. 이전 기록은 잊어.」 → 사용자가 빈 저장소를 만들었다. `git ls-remote` 결과가 비어 있어(exit 0) 빈 저장소임을 확인한 뒤 main 을 push 했다. 예전 저장소의 map4k–map128k 브랜치 이력(2.3 절)은 무시한다.
+- Q3 push 대상(공개 목록에 Sangwon8799/nvmevirt 없음) → 답 원문: 「nvmevirt 이름으로 새로 만들게. 이전 기록은 잊어.」 → 사용자가 빈 저장소를 만들었다. `git ls-remote` 결과가 비어 있어(exit 0) 빈 저장소임을 확인한 뒤 main 을 push 했다. 예전 저장소의 map4k–map128k 브랜치 이력(2.2 절)은 무시한다.
 
-### 1.3 두 번째 메시지 (05:0x UTC)
+### 1.3 두 번째 메시지 (14:0x KST)
 
-- 원문: 「sudo 비밀번호 줄테니 그냥 알아서 진행해. 비밀번호 <생략> 이야.」 — **비밀번호는 어디에도 기록하지 않는다**(이 파일·스크립트·메모리 모두). 사용처는 sudoers 규칙 설치 2 번(05:06, 05:10)과 dmidecode 실행 1 번(DIMM 정보 기록, 05:2x)뿐이다. `sudo -S` 로 stdin 에 넘긴 뒤 바로 `sudo -k` 했다. 나머지 판단(base/wbuffix 두 변형 실행, GC_STATS 계측 사용)은 이 「알아서 진행」 지시에 따라 Claude 가 정했다.
+- 원문: 「sudo 비밀번호 줄테니 그냥 알아서 진행해. 비밀번호 <생략> 이야.」 — **비밀번호는 이 파일·저장소·인계 묶음·메모리 어디에도 기록하지 않는다**(예외였던 make_handoff.sh 의 쪼갠 검사 문자열은 18:2x KST 에 없앴다 — 「갱신 이력」). 사용처: sudoers 규칙 설치 3 번(14:06 최초 설치, 14:08 /dev/kmsg 추가, 15:55 drop_caches 추가 — 1.7 절), dmidecode(DIMM 정보 기록, 14:21–14:22), 그리고 실험 후 sudoers 제거(10.3 절). `sudo -S` 로 stdin 에 넘긴 뒤 바로 `sudo -k` 했다. 나머지 판단(base/wbuffix 두 변형 실행, GC_STATS 계측 사용)은 이 「알아서 진행」 지시에 따라 Claude 가 정했다.
 
-### 1.4 세 번째 메시지 (05:21경)
+### 1.4 세 번째 메시지 (14:19경)
 
 - 원문: 「앞으로는 한국어로만 답변해주고 보고해줘.」 → 메모리에 저장했다.
 
-### 1.5 네 번째 메시지 (05:3x UTC) — 이 파일을 만든 계기
+### 1.5 네 번째 메시지 (14:3x KST) — 이 파일을 만든 계기
 
 - 원문: 「그래프로 확인할 수 있도록 하는 코드도 만들어주고, 다른 Claude가 이 논문의 진행 상황을 완전하고 정확하게 이해할 수 있도록 아주 상세한 기록을 적은 `.md` 파일도 만들어줘. 길이 제한은 없고, 내가 지시한 것을 포함하여 실험의 시작과 끝까지 진행되면서 측정한 것, 설정을 바꾼 것, 결과 등등 모든 것들을 아주 상세히 기록해줘. 사람이 볼 게 아니기 때문에 가독성은 신경쓰지 말고 내용을 정확히 전달할 수 있도록 해줘.」
 - 이행:
-  - exp/plot.py — 명령줄 그래프 도구(8 절)
+  - exp/plot.py — 명령줄 그래프 도구(12 절)
   - 이 파일 — /home/dccearth/jsw/KSC2026/nvmevirt/EXPERIMENT_LOG_FOR_CLAUDE.md, git 으로 관리하며 push 된다.
 
-### 1.6 다섯 번째 메시지 (2026-10-08 06:3x UTC, 본 실험 진행 중)
+### 1.6 다섯 번째 메시지 (2026-10-08 15:42 KST, 본 실험 진행 중)
 
 - 원문: 「실험이 끝나면 nvmevirt 폴더 위치를 ~/jsw로 옮겨주고 ~/jsw에 있는 ~/jsw/exp 폴더는 내용물을 포함해서 모두 삭제해줘.」
 - 계획(실험 종료 후):
@@ -88,7 +162,65 @@
   - /home/dccearth/jsw/exp(2.2 절의 이전 작업 폴더) 전체 삭제. 삭제 전에 그 안의 iodepth 결과 수치를 2.2 절에 옮겨 적는다.
   - 저장소 안 upstream_tmp/ 삭제, exp/.venv 재생성(절대경로), KSC2026/EXPERIMENT_LOG_FOR_CLAUDE.md 심볼릭 링크 갱신
   - 문서의 경로를 갱신하고 이동 사실을 기록한다.
-- 이행 결과는 「갱신 이력」과 14 절에 적는다.
+- 이행 결과는 「갱신 이력」과 10.3 절에 적는다.
+
+### 1.7 여섯 번째 메시지 (2026-10-08 15:5x KST) — 실험 설계 변경(선배 요청)
+
+- 원문:
+```
+데이터 쌓는 중간에 미안한데 실험 내용 좀 조정할 수 있을까? 선배님한테 여쭤봤을 때 다음과 같이 실험 데이터 셋을 조정해달라고 하셨어.
+* mapping size는 4k, 16k, 32k 단위로만 측정
+* host의 block size도 마찬가지로 4k, 16k, 32k로 측정
+* 선배님께서 echo 3 > cache drop 명령어를 사용했는지 안 했는지에 따라 결과 차이가 나는지 여쭤보셨어(NVMeVirt가 아닌 OS 자체의 Page Cache를 포맷하는 거라 결과에 영향이 있을 수 있다고 하시네).
+```
+- Claude 의 조치:
+  - 15:51:23 진행 중이던 6×6 실험을 회차 경계에서 멈췄다(tmux kill 은 다음 회차의 '===' 줄이 나온 직후, insmod 전에 했다). 반쯤 만든 회차 폴더(wbuffix/map16k_bs128k_r2, kernel.log 만 있음)는 지웠다. run.log 에 STOPPED 줄을 남기고 env_after_stop 스냅샷을 찍었다.
+  - 사용자에게 drop_caches 이론을 설명했다: fio direct=1(O_DIRECT)로 블록 장치에 쓰므로 데이터 경로가 페이지 캐시를 거치지 않는다. NVMeVirt 저장 공간은 memmap 으로 커널 관리에서 빠진 메모리이고, 회차마다 장치를 새로 만든다. 따라서 영향이 없어야 하며, 실측으로 확인하기로 했다.
+- AskUserQuestion 1 차:
+  - 변형 선택 → 사용자 답 「bs와 wbuffix의 차이가 뭐야?」. base 를 bs 로 오타 낸 것으로 보고 base vs wbuffix 차이를 설명했다.
+    - 설명 내용: 쓰기 버퍼의 역할(조기 완료 + 프로그램 완료 시 반납 = NAND/GC 가 호스트에 보이는 유일한 통로), base 의 할당 bs·반납 매핑 단위 불균형(주차장 비유), 결과(채널 모델 오류 폭주·장치 멈춤), wbuffix 의 한 줄 수정, bs ≥ 매핑에서는 같음, 실측 예(16K/4K 1 회차 base 167.9 MiB/s·오류 676 만 줄 vs wbuffix 129.9 MiB/s·오류 0), RMW 미모델 한계.
+  - drop 비교 방식 → 「회차마다 drop/no-drop 교대 (Recommended)」
+- AskUserQuestion 2 차: 변형 → 「wbuffix만 (Recommended)」
+- 15:55 sudoers 에 `/usr/bin/tee /proc/sys/vm/drop_caches` 를 추가했다(sudoers 설치 3 번째). 시험 drop 때 Cached 가 10,227,884 kB → 245,072 kB 로 줄었다. 그 전 base 회차들의 수천만 줄 오류 로그가 journald 파일로 디스크에 쓰이면서 페이지 캐시가 10 GB 쌓였던 것으로 추정한다.
+- 15:57–15:59 사전 시험 `results/pre_cache_test/` (wbuffix, 매핑 4k·16k × bs 4k, 8 s, 2 회, drop/nodrop):
+  - 4k/4k: nodrop 1553.2·1553.2, drop 1550.6·1552.2 MiB/s
+  - 16k/4k: nodrop 431.4·430.8, drop 431.3·430.8 MiB/s
+  - 차이 −0.12 % / −0.005 %
+- 16:00 커밋 1d6cd03:
+  - CACHE_MODES 구현
+  - run_all.sh 를 새 설계로 바꾸고, 첫 설계는 run_all_6x6.sh 로 보존
+  - analyze.py 에 쌍 비교(cache_compare.csv) 추가, plot.py 일반화
+- 16:00:35 `bash run_all.sh main3x3_20261008` (tmux ksc2026). 모듈은 다시 빌드하지 않고 14:20 에 빌드한 exp/modules/wbuffix 를 쓴다(main_20261008 wbuffix 회차와 같은 바이너리).
+
+### 1.8 일곱 번째 메시지 (2026-10-08 16:0x KST) — 인계 방식
+
+- 원문: 「다른 클로드가 보는 설명서를 만들 때 해당 클로드는 다른 서버에 상주하고 있어서 현 서버의 실제 디렉토리 내부를 볼 수 없어. 다만 결과물을 만들어주면 전달하는 것은 가능해. 따라서 중간 중간 결과를 .tgz 파일로 복사해서 넣어주면 내가 그걸 전달할게. 그리고 그에 맞게 설명의 내용도 수정해줘.」
+- 조치:
+  - exp/report/make_handoff.sh 를 만들었다. 실험 서버의 `~/jsw/handoff/ksc2026_handoff_<시각>[_라벨].tgz` (이름의 시각은 KST. 16:03·16:05 KST 에 만든 첫 묶음 2 개(ksc2026_handoff_20261008_0703_mid.tgz, ksc2026_handoff_20261008_0705_mid.tgz)는 이름의 시각이 UTC 였고 지웠다) 와 `LATEST.tgz` 링크를 생성한다.
+  - 이 파일에 H 절(묶음 사용법)을 추가하고 0 절을 묶음 기준으로 고쳤다.
+  - 메모리 handoff-tgz-for-remote-claude.md 를 추가했다.
+  - 묶음은 실험 진행 중(중간)과 끝난 뒤(최종)에 만든다.
+
+### 1.9 여덟 번째 메시지 (2026-10-08 16:08 KST) — 시각 기준
+
+- 원문: 「시간 계산은 KST로 변환해서 적용해줘. 그리고 보고 및 답변할 때도 KST를 기준으로 알려줘. 서버 시계 자체는 바꾸지말고 변환해서 알려주기만 해줘.」
+- 조치:
+  - 서버 시계·시간대는 그대로(UTC) 둔다.
+  - 이 파일의 서술 부분 시각을 모두 KST 로 변환했다(UTC+9, 자동 변환 74 곳 + 손 검토). 원문 로그·파일 내용을 인용할 때도 시각은 KST 로 바꾸고 원문 UTC 표기를 함께 적는다(사용자 지시 1.10).
+  - 자동 생성 결과 절(11)·docx·묶음 이름은 KST 로 쓰도록 생성기를 고쳤다.
+  - 메모리 kst-times.md 를 추가했다.
+
+### 1.10 아홉 번째 메시지 (2026-10-08 16:09 KST)
+
+- 원문: 「handoff 파일에 쓰는 시간도 KST로 적어줘.」
+- 조치(make_handoff.sh, make_md_results.py):
+  - 묶음 이름·README·state.txt 의 시각을 KST 로 쓴다. tmux 생성 시각은 epoch 에서 KST 로 변환한다.
+  - run_all 로그 끝부분은 KST 로 변환해 싣는다. 전체 로그의 KST 변환본은 server_state/run_all_<EXP>.KST.log 로 넣는다.
+  - git_log.txt 는 `TZ=Asia/Seoul git log --date=iso-local` 로 만든다.
+  - 이 파일 11 절의 run.log 인용 줄은 시각을 KST 로 바꾼다.
+  - 메모리 노트의 시각도 KST 로 바꿨다.
+  - repo/ 안의 원자료 파일(run.log, meta.txt, kernel.log, fio 로그)은 측정 기록이라 수정하지 않는다(UTC 그대로).
+  - UTC 이름으로 만든 16:05 KST 묶음(ksc2026_handoff_20261008_0705_mid.tgz)은 지우고 KST 이름으로 다시 만들었다.
 
 ---------------------------------------------------------------------------------------------------
 
@@ -110,11 +242,11 @@
 
 ### 2.2 이 세션 이전에 서버에 있던 작업 흔적 (참고만, 이번 실험에 쓰지 않음)
 
-- /home/dccearth/jsw/before.txt, after.txt — insmod 전후 `ls -l /dev/nvme*` (after 에 /dev/nvme1, /dev/nvme1n1 이 생김). 2026-10-07 작성. 06:4x 확인 때 두 파일이 /home/dccearth/jsw 에 없었다(디렉터리 mtime 06:42). Claude 가 지운 것이 아니며 사용자가 정리한 것으로 보인다. 내용(세션 시작 때 읽음):
+- /home/dccearth/jsw/before.txt, after.txt — insmod 전후 `ls -l /dev/nvme*` (after 에 /dev/nvme1, /dev/nvme1n1 이 생김). 2026-10-07 작성. 15:4x 확인 때 두 파일이 /home/dccearth/jsw 에 없었다(디렉터리 mtime 15:42). Claude 가 지운 것이 아니며 사용자가 정리한 것으로 보인다. 내용(세션 시작 때 읽음):
   - before.txt: /dev/nvme0 (241,0), /dev/nvme0n1 (259,0), nvme0n1p1 (259,1), nvme0n1p2 (259,2), /dev/nvme-fabrics (10,261) — 날짜 Sep 30/Oct 1
-  - after.txt: 위 + /dev/nvme1 (241,1, Oct 7 12:28), /dev/nvme1n1 (259,3, Oct 7 12:28)
-- /home/dccearth/jsw/exp/ (이전 실험 폴더, KSC2026 밖에 있음. 이번 실험과 별개이며 그대로 두었다):
-  - jobs/randwrite.fio, results/iodepth_test/ (iodepth 1–128, 매핑 4K, bs 4K, ramp_time 10, runtime 60, 모듈 재적재 없이 연속 실행 → GC 정상 상태, filename=/dev/nvme1n1, 2026-10-08 02:33–02:41 UTC). iodepth_summary.csv 에 따르면 QD32 에서 64,041 IOPS, 250.2 MiB/s, clat 평균 498.8 µs, p99 14,352 µs이고, QD 1–128 모두 약 59–66K IOPS 다. 이 폴더는 사용자 지시(1.6)로 실험 후 삭제되므로 CSV 전문을 여기에 옮겨 둔다:
+  - after.txt: 위 + /dev/nvme1 (241,1, Oct 7 21:28 KST), /dev/nvme1n1 (259,3, Oct 7 21:28 KST) (ls 시각을 KST 로 변환)
+- /home/dccearth/jsw/exp/ (이전 실험 폴더, KSC2026 밖에 있었다. 이번 실험과 별개였고, 사용자 지시(1.6)로 17:06 KST 에 삭제했다 — 10.3 절):
+  - jobs/randwrite.fio, results/iodepth_test/ (iodepth 1–128, 매핑 4K, bs 4K, ramp_time 10, runtime 60, 모듈 재적재 없이 연속 실행 → GC 정상 상태, filename=/dev/nvme1n1, 2026-10-08 11:33–11:41 KST). iodepth_summary.csv 에 따르면 QD32 에서 64,041 IOPS, 250.2 MiB/s, clat 평균 498.8 µs, p99 14,352 µs이고, QD 1–128 모두 약 59–66K IOPS 다. 이 폴더는 사용자 지시(1.6)로 17:06 KST 에 삭제했으므로, 삭제 전에 CSV 전문을 여기에 옮겨 두었다:
 ```
 iodepth,n,iops,iops_std,bw_MiBps,bw_MiBps_std,clat_mean_us,clat_mean_us_std,clat_p99_us,clat_p99_us_std
 1,1,63305.478242,0.0,247.28702354431152,0.0,14.575670484,0.0,9.024,0.0
@@ -131,7 +263,7 @@ iodepth,n,iops,iops_std,bw_MiBps,bw_MiBps_std,clat_mean_us,clat_mean_us_std,clat
   - .venv (numpy, matplotlib)
 - ~/.bash_history 기록(2026-10-06–07):
   - 사용자가 Sangwon8799/nvmevirt(예전 저장소)에 map4k·map8k·map16k·map32k·map64k·map128k 브랜치와 "init: Block Size = 2MiB (NVMeVirt Capacity = 12GiB)" 커밋을 만들었고, GRUB 를 memmap=12G$12G isolcpus=3-5 로 설정했다(update-grub, reboot). `sudo insmod ./nvmev.ko memmap_start=12G memmap_size=12G cpus=3,4,5` 로 시험했다.
-  - 그 저장소는 이번 세션 시점에 공개 API 에서 보이지 않았고, 사용자 지시(「이전 기록은 잊어」)에 따라 새 저장소로 대체되었다. 로컬 사본(/home/dccearth/jsw/nvmevirt)도 이미 없었다.
+  - 그 저장소는 이번 세션 시점에 공개 API 에서 보이지 않았고, 사용자 지시(「이전 기록은 잊어」)에 따라 새 저장소로 대체되었다. 예전 저장소의 로컬 사본(당시 경로 /home/dccearth/jsw/nvmevirt)도 이번 세션 시작 때 이미 없었다. 지금 같은 경로에 있는 것은 17:06 KST 에 /home/dccearth/jsw/KSC2026/nvmevirt 에서 옮겨 온 이번 실험 저장소(묶음의 repo/)이며, 예전 저장소와는 다르다.
   - ~/.ssh 의 jsw_github_key 는 사용자가 지웠다(현재 ~/.ssh 에는 authorized_keys, 빈 config, known_hosts 만 있다).
 
 ---------------------------------------------------------------------------------------------------
@@ -140,10 +272,10 @@ iodepth,n,iops,iops_std,bw_MiBps,bw_MiBps_std,clat_mean_us,clat_mean_us_std,clat
 
 - 호스트명 dccearth. 메인보드 Micro-Star International Co., Ltd. MAG B760M MORTAR (MS-7E01), BIOS M.30 (05/16/2023).
 - CPU: 13th Gen Intel Core i5-13600K. OS 에 보이는 CPU 는 6 개(0–5), 코어당 스레드 1, 소켓 1, NUMA 노드 1. max 5100 MHz, min 800 MHz. L1d 288 KiB, L2 12 MiB, L3 24 MiB. 원래 13600K 는 P 6 + E 8 이지만 OS 에는 6 개만 보인다(BIOS 에서 E-core/HT 를 끈 것으로 추정 — 확인 안 함).
-- 메모리: DDR5-5600. Controller0-DIMMA2 8 GB Samsung M323R1GB4DB0-CWMOL, Controller1-DIMMB2 16 GB Samsung M323R2GA3DB0-CWMOL (DIMMA1·DIMMB1 은 비어 있음). 합계 24 GB, 최대 128 GB, 슬롯 4. (sudo dmidecode -t memory, env_before/12_dimm.txt — 실험 시작 후 05:2x 에 기록. 정적 정보다.)
+- 메모리: DDR5-5600. Controller0-DIMMA2 8 GB Samsung M323R1GB4DB0-CWMOL, Controller1-DIMMB2 16 GB Samsung M323R2GA3DB0-CWMOL (DIMMA1·DIMMB1 은 비어 있음). 합계 24 GB, 최대 128 GB, 슬롯 4. (sudo dmidecode -t memory, env_before/12_dimm.txt — 실험 시작 후 14:2x 에 기록. 정적 정보다.)
 - free -h: total 11Gi (memmap 으로 12 GiB 가 빠짐), swap 8 GiB.
-- 물리 주소 맵(/proc/iomem, 4 GiB 위): 100000000-2ffffffff System RAM (4–12 GiB) / **300000000-5ffffffff Reserved (12–24 GiB, NVMeVirt 저장 공간)** / 600000000-67f7fffff System RAM (24–25.99 GiB, PCI hole 재배치분). e820 user map: [mem 0x0000000300000000-0x00000005ffffffff] reserved.
-- OS Ubuntu 24.04.4 LTS (noble). 커널 6.8.0-142-generic (#142-Ubuntu SMP PREEMPT_DYNAMIC Wed Sep 2 14:24:27 UTC 2026), x86_64-linux-gnu-gcc-13 13.3.0 로 빌드됨.
+- 물리 주소 맵(/proc/iomem, 4 GiB 위): 100000000-2ffffffff System RAM (4–12 GiB) / **300000000-5ffffffff Reserved (12–24 GiB, NVMeVirt 저장 공간)** / 600000000-67f7fffff System RAM (24–25.99 GiB, PCI hole 재배치분). e820 user map: [mem 0x0000000300000000-0x00000005ffffffff] reserved (스냅샷 아님 — 14:06 KST 에 sudo dmesg 로 직접 확인; env_before/05_memory.txt 의 dmesg grep 은 링 버퍼가 덮여 비어 있음).
+- OS Ubuntu 24.04.4 LTS (noble). 커널 6.8.0-142-generic (#142-Ubuntu SMP PREEMPT_DYNAMIC, 빌드 시각 2026-09-02 23:24:27 KST; /proc/version 원문 표기는 "Wed Sep 2 14:24:27 UTC 2026"), x86_64-linux-gnu-gcc-13 13.3.0 로 빌드됨.
 - 커널 명령줄: `BOOT_IMAGE=/boot/vmlinuz-6.8.0-142-generic root=UUID=bb1b37f9-0806-4044-a2bf-5ff988ecb286 ro memmap=12G$12G isolcpus=3-5`
 - /etc/default/grub: `GRUB_CMDLINE_LINUX="memmap=12G\\\$12G isolcpus=3-5"`, `GRUB_CMDLINE_LINUX_DEFAULT=""`. /sys/devices/system/cpu/isolated = 3-5.
 - CPU 주파수: intel_pstate active(HWP), 모든 CPU 가 governor powersave · EPP balance_performance · no_turbo=0 (터보 켜짐), 800–5100 MHz. 바꾸지 않았다.
@@ -155,18 +287,21 @@ iodepth,n,iops,iops_std,bw_MiBps,bw_MiBps_std,clat_mean_us,clat_mean_us_std,clat
 
 ---------------------------------------------------------------------------------------------------
 
-## 4. 저장소 (/home/dccearth/jsw/KSC2026/nvmevirt)
+## 4. 저장소 (실험 당시 /home/dccearth/jsw/KSC2026/nvmevirt → 17:06 KST 이후 /home/dccearth/jsw/nvmevirt)
 
 - remote: origin = git@github.com:Sangwon8799/nvmevirt.git (push 용), upstream = https://github.com/snu-csl/nvmevirt.git
 - 커밋(시간순):
   - 61c90f7758cbd9545b4a4727e89377bf88eab060 — upstream main HEAD, 2026-05-21 11:05:11 +0900 "Merge pull request #72 from duckhanson/fix/zns-append-return-slba". 모듈 버전 문자열 "NVMeVirt: Version 1.10 for >> Samsung 970 Pro SSD <<". upstream 에는 multi-instance 브랜치도 있다(사용 안 함).
-  - d5086101c43d0414aa073579dbae4c7516f832a1 — 2026-10-08 04:54:03 "Move NVMeVirt sources into nvmevirt/ subdirectory" (순수 rename)
-  - c02b9fda3aefeaab306a3bd6f00853b240a04c6c — 05:20:15 "nvmevirt: KSC2026 mapping-unit configuration" (Kbuild, ssd.c, ssd_config.h, conv_ftl.c, conv_ftl.h)
-  - 5769378d46821c45595585c932522e4f76538fc6 — 05:20:15 "exp: scripts for the KSC2026 mapping-unit experiment". **본 실험(main_20261008)은 이 커밋에서 빌드·실행되었다**(exp/results/main_20261008/base/git_head.txt).
-  - 이후 커밋(결과, plot.py, 보고서 생성기, 이 파일, 스크립트 수정)은 실험 후에 추가되며 11 절과 「갱신 이력」에 적는다.
+  - d5086101c43d0414aa073579dbae4c7516f832a1 — 2026-10-08 13:54:03 "Move NVMeVirt sources into nvmevirt/ subdirectory" (순수 rename)
+  - c02b9fda3aefeaab306a3bd6f00853b240a04c6c — 14:20:15 "nvmevirt: KSC2026 mapping-unit configuration" (Kbuild, ssd.c, ssd_config.h, conv_ftl.c, conv_ftl.h)
+  - 5769378d46821c45595585c932522e4f76538fc6 — 14:20:15 "exp: scripts for the KSC2026 mapping-unit experiment". 보조 데이터셋 main_20261008 의 모듈 빌드(14:20; 이 바이너리를 주 데이터셋까지 그대로 썼다)와 base 1–21 회차(DONE 20 + map32k_bs16k_r1 FAILED)는 이 커밋에서 실행되었다(exp/results/main_20261008/base/git_head.txt).
+  - 949ae38 (원래 2a462a3a518915e37fa313716bc9721801501e28) — 14:49:13 "exp: keep going when a run fails; plot tool; report generators". main_20261008 wbuffix 53 회차는 이 커밋(옛 해시 2a462a3)에서 실행되었다(wbuffix/git_head.txt, 각 meta.txt 의 git_head).
+  - e598e75 (원래 a93ef76bbf990eafd1d0a5a9484a27a1b709ed9d, 그 전 1d6cd036893f06bfe8aa8f6bb4327239bc4b720f) — 작성 16:00:07, 재작성 16:04:44 "exp: final 3x3 design with OS page-cache comparison". 주 데이터셋 main3x3_20261008 54 회차는 이 코드로 실행되었다(meta.txt: 처음 4 회 1d6cd03, 나머지 50 회 a93ef76).
+  - 해시가 두 번 바뀐 이유(모두 첫 push 전, 코드는 같고 이 파일만 다름): 16:04 KST 1d6cd03 → a93ef76 (이 파일의 credential 문자열 줄), 18:3x KST 2a462a3 → 949ae38·a93ef76 → e598e75 (이 파일 머리말의 사용자 Claude 계정 이메일 제거). 「갱신 이력」 참고.
+  - 그 뒤 결과·문서·생성기·analyze.py 수정 커밋과 태그 ksc2026-final 은 10.3 절 끝에 적는다.
 - 커밋 작성자: Sangwon8799 <ekfghfl@naver.com> (전역 git config), 메시지 끝에 "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>".
 - 저장소에 넣지 않는 것(exp/.gitignore): modules/*/*.ko (SHA256SUMS 는 넣음), .venv/, __pycache__/. nvmevirt/.gitignore 는 원본 그대로(`.*`, *.ko, *.o 등). .git/info/exclude 에 upstream_tmp/ 를 넣었다.
-- /home/dccearth/jsw/KSC2026/nvmevirt/upstream_tmp/ — 감사 워크플로가 읽은 원본 사본(커밋 61c90f7, 수정 없음). 저장소에 포함되지 않으며, 실험 후 지워도 된다.
+- /home/dccearth/jsw/KSC2026/nvmevirt/upstream_tmp/ — 감사 워크플로가 읽은 원본 사본(커밋 61c90f7, 수정 없음). 저장소에는 넣지 않았고(.git/info/exclude), 17:06 KST 에 삭제했다(10.3 절).
 - 서버에서 push 하려면 `SSH_AUTH_SOCK=$(ls /tmp/ssh-*/agent.* | head -1) git push origin main`. 사용자의 SSH 세션이 연결되어 있어야 한다.
 
 ---------------------------------------------------------------------------------------------------
@@ -236,23 +371,31 @@ NVMEV_INFO("KSC2026: mapping unit=%u B, flash page=%u B, oneshot page=%u B, pgs_
 - wbuffix = `GC_STATS=1 WBUF_FIX=1`
 - plain = (추가 인자 없음) — GC_STATS 영향 확인용, 사전 점검에만 썼다
 - 6 개 매핑 단위 모두 경고 없이 빌드된다. 경고는 "the compiler differs from the one used to build the kernel" 하나뿐이다. 커널은 x86_64-linux-gnu-gcc-13 13.3.0, 모듈은 gcc 13.3.0 으로, 바이너리 이름만 다르고 버전은 같다.
-- 모듈과 SHA-256: exp/modules/<변형>/nvmev_map<단위>.ko, SHA256SUMS, build_info.txt (srcversion, vermagic "6.8.0-142-generic SMP preempt mod_unload modversions"). .ko 는 git 에 넣지 않는다. base 와 wbuffix 모듈은 run_all.sh 가 05:20:28 부터 다시 빌드했으므로, 결과 폴더의 modules_SHA256SUMS 를 참조한다.
+- 모듈과 SHA-256: exp/modules/<변형>/nvmev_map<단위>.ko, SHA256SUMS, build_info.txt (srcversion, vermagic "6.8.0-142-generic SMP preempt mod_unload modversions"). .ko 는 git 에 넣지 않는다. base 와 wbuffix 모듈은 run_all.sh 가 14:20:28 부터 다시 빌드했으므로, 결과 폴더의 modules_SHA256SUMS 를 참조한다.
 
 ---------------------------------------------------------------------------------------------------
 
 ## 6. 실험 설계와 스크립트 동작 (정확한 사양)
 
 ### 6.1 matrix / 순서
-- MAPS = 4k 8k 16k 32k 64k 128k. BSS = 4k 8k 16k 32k 64k 128k. REPS = 3. 변형 = base, wbuffix (run_all.sh 가 base 108 회를 먼저 끝낸 뒤 wbuffix 108 회를 실행한다).
-- 순서: for rep in 1..3 { for map in MAPS { for bs in BSS } }. 반복을 가장 바깥에 둔다.
-- 회차 폴더: exp/results/main_20261008/<변형>/map<MAP>_bs<BS>_r<REP>/
+- 첫 설계(main_20261008, run_all_6x6.sh):
+  - MAPS = 4k 8k 16k 32k 64k 128k, BSS = 4k 8k 16k 32k 64k 128k, REPS = 3, 변형 = base, wbuffix(base 108 회 → wbuffix 108 회).
+  - 순서: for rep in 1..3 { for map in MAPS { for bs in BSS } }. 반복을 가장 바깥에 둔다.
+  - 회차 폴더: exp/results/main_20261008/<변형>/map<MAP>_bs<BS>_r<REP>/
+  - 실제로는 10 절처럼 중단·재개·조기 종료되었다.
+- 최종 설계(main3x3_20261008, run_all.sh):
+  - MAPS = 4k 16k 32k, BSS = 4k 16k 32k, REPS = 3, 변형 = wbuffix, CACHE_MODES = "nodrop drop"
+  - 순서: for rep { for map { for bs { for cache in (rep 홀수: nodrop, drop / 짝수: drop, nodrop) } } }
+  - 회차 폴더: exp/results/main3x3_20261008/wbuffix_<nodrop|drop>/map<MAP>_bs<BS>_r<REP>/
+  - run.log 는 두 폴더에 같은 내용이 들어간다(tee). 54 회.
 
 ### 6.2 회차 하나 (run_experiment.sh run_one)
 1. DONE 이 있으면 건너뛴다(이어서 하기). 없으면 폴더를 지우고 다시 만든다.
 2. nvmev 가 적재되어 있으면 rmmod(마운트 확인 후). 최대 30 s 기다리고 2 s 쉰다.
 3. 커널 로그 기록을 시작한다: `sudo -n dmesg -W 2>&1 > >(awk … > kernel.log) &`. awk 는 '[chmodel_request]' 줄을 세고 처음 20 줄만 남긴다. 그 수는 END 에서 chmodel_msgs.txt 에 쓴다. 0.5 s 기다린다.
 4. `echo "KSC2026-MARK <회차> insmod <ns>" | sudo -n tee /dev/kmsg` → `sudo -n insmod <ko> memmap_start=12G memmap_size=12G cpus=3,4,5`
-5. /sys/block/nvme*n*/device/model 이 CSL_Virt 로 시작하는 장치를 최대 30 s(0.5 s × 60) 기다린다. 1 s 쉰 뒤, 표지 이후의 링 버퍼 dmesg 를 dmesg_load.txt 에 저장하고 "KSC2026: mapping unit=<bytes> B" 가 있는지 확인한다(없으면 die).
+5. (아래 6 단계 뒤, 최종 설계에서만) cache.txt 에 meminfo(MemFree/Buffers/Cached/Dirty/Writeback)를 적고, drop 모드면 `sync; echo 3 | sudo -n tee /proc/sys/vm/drop_caches` 후 다시 적는다. SETTLE 5 s 뒤 fio 직전에 pre_fio 줄을 하나 더 적는다. nodrop 모드는 적기만 한다. meta.txt 에 cache_mode 가 들어간다.
+5'. /sys/block/nvme*n*/device/model 이 CSL_Virt 로 시작하는 장치를 최대 30 s(0.5 s × 60) 기다린다. 1 s 쉰 뒤, 표지 이후의 링 버퍼 dmesg 를 dmesg_load.txt 에 저장하고 "KSC2026: mapping unit=<bytes> B" 가 있는지 확인한다(없으면 die).
 6. check_target_dev: 모델이 CSL_Virt*, 크기 11 GiB ≤ size ≤ 12 GiB, 파티션 없음, 마운트 없음, 루트 FS 장치 아님. 하나라도 어긋나면 die.
 7. jobs/randwrite.fio.in 의 @DEV@ @BS@ @IODEPTH@ @RUNTIME@ @RAMP@ @LOG_MSEC@ @LOG_PREFIX@ 를 sed 로 채워 job.fio 를 만든다. meta.txt 를 쓴다.
 8. SETTLE_SEC=5 s 쉬고, "KSC2026-MARK <회차> fio-start <ns>" 를 남긴 뒤 `sudo -n fio --output-format=json --output=fio.json job.fio`(stdout/stderr 는 fio_stdout.txt). 끝나면 "fio-end" 표지를 남긴다.
@@ -260,8 +403,8 @@ NVMEV_INFO("KSC2026: mapping unit=%u B, flash page=%u B, oneshot page=%u B, pgs_
 10. kernel.log 를 표지로 나눈다: fio-start ~ rmmod 표지 = dmesg_run.txt (chmodel 줄 제외), rmmod 표지 이후 = dmesg_unload.txt. meta.txt 에 end, fio_exit, chmodel_msgs, kernel_warn 을 더한다.
 11. fio 종료 코드가 0 이고 fio.json jobs[0].error == 0 이면 결과 1 줄을 출력하고 DONE 을 만든다. 아니면 FAILED 표지를 만들고 계속한다(커밋 2a462a3 부터. 그 전 5769378 에서는 die 했다 — 10 절 첫 중단). fio 는 백그라운드로 실행하고 감시 타이머(RUNTIME+180 s SIGTERM, +60 s SIGKILL)가 지킨다.
 - 시작할 때: sudo -n -l 로 insmod·rmmod·fio·dmesg·"tee /dev/kmsg" 권한 확인, /proc/cmdline 에 memmap=12G$12G 확인, 모든 .ko 존재 확인, sha256sum -c 확인. 그 뒤 env_before 스냅샷(없을 때만), modules_SHA256SUMS·modules_build_info.txt·randwrite.fio.in·git_head.txt·nvmevirt_vs_upstream.diff·nvmevirt_uncommitted.diff 를 <변형>/ 에 복사한다. 끝날 때: unload, env_after_<변형> 스냅샷.
-- **알려진 결함 1**: run_experiment.sh 가 만든 `nvmevirt_vs_upstream.diff` 는 `git diff -M 61c90f7 HEAD -- nvmevirt` 라서, pathspec 때문에 rename 을 찾지 못하고 모든 파일을 새 파일로 표시한다(수천 줄). 올바른 diff 는 `git diff d508610 HEAD -- nvmevirt` 다. 실험이 실행 중이라 스크립트를 고치지 못했다. bash 는 스크립트를 실행 중에 조금씩 읽으므로, 실행 중인 run_experiment.sh·run_all.sh 를 같은 inode 로 덮어쓰면 위험하다. 실험이 끝난 뒤 고치고 결과 폴더의 파일도 다시 만들 것이다(갱신 이력에 기록).
-- **알려진 결함 2**: meta.txt 의 kernel_warn 은 kernel.log 에서 chmodel 이 아닌 줄을 세려 했지만, 처음 20 개 chmodel 표본 줄 중 "No free entry" 줄도 셌다. analyze.py 는 kernel.log 에서 '[chmodel_request]' 와 'KSC2026' 줄을 빼고 WARNING|almost full|timeout|reset|Oops|BUG|Disk read failed|I/O error 를 다시 센다. CSV 의 kernel_warn 은 이렇게 다시 센 값이다.
+- **알려진 결함 1 (커밋 2a462a3=949ae38, 14:49 에서 수정)**: 커밋 5769378 의 run_experiment.sh 는 `nvmevirt_vs_upstream.diff` 를 `git diff -M 61c90f7 HEAD -- nvmevirt` 로 만들어, pathspec 때문에 rename 을 찾지 못하고 모든 파일을 새 파일로 표시했다(수천 줄). 2a462a3 부터는 `git diff d508610 HEAD -- nvmevirt`(변수 MOVE_COMMIT)를 쓴다. main_20261008/wbuffix/ 와 main3x3_20261008/wbuffix_drop/, wbuffix_nodrop/ 의 nvmevirt_vs_upstream.diff(각 200 줄)는 올바르다. main_20261008/base/nvmevirt_vs_upstream.diff(12,840 줄, 14:21 KST 생성)만 옛 형식으로 남아 있다(base 는 14:49 이후 다시 실행되지 않았고, 이 파일은 다시 만들지 않았다). 올바른 diff 는 `git diff d508610 e598e75 -- nvmevirt` 다(200 줄).
+- **알려진 결함 2 (커밋 2a462a3=949ae38 에서 수정, main_20261008/base 1–21 회 meta.txt 에만 해당)**: 커밋 5769378 의 run_experiment.sh 는 meta.txt 의 kernel_warn 을 셀 때 KSC2026 줄만 빼서, 처음 20 개 chmodel 표본 줄 중 "No free entry" 줄도 셌다. 22 회 이후 base·wbuffix 와 main3x3_20261008 의 meta.txt 는 chmodel 줄을 뺀 값이다. analyze.py 는 kernel.log 에서 '[chmodel_request]' 와 'KSC2026' 줄을 빼고 WARNING|almost full|timeout|reset|Oops|BUG|Disk read failed|I/O error 를 다시 센다. CSV 의 kernel_warn 은 이렇게 다시 센 값이다.
 
 ### 6.3 fio 작업 (exp/jobs/randwrite.fio.in → <회차>/job.fio)
 ```
@@ -289,13 +432,14 @@ log_avg_msec=500
 - fio 를 특정 CPU 에 고정하지 않았다. isolcpus 때문에 CPU 0–2 에서만 돈다.
 - 로그 파일: fio_bw.1.log(KiB/s), fio_iops.1.log, fio_lat.1.log, fio_clat.1.log, fio_slat.1.log(ns). 열은 ms, 값, 방향(1=write), bs, offset 이다.
 
-### 6.4 권한 (/etc/sudoers.d/nvmevirt-exp, 0440 root:root) — 05:06 설치, 05:10 /dev/kmsg 추가
+### 6.4 권한 (/etc/sudoers.d/nvmevirt-exp, 0440 root:root) — 14:06 설치, 14:08 /dev/kmsg 추가, 15:55 drop_caches 추가
 ```
 # KSC2026 NVMeVirt mapping-unit experiment — remove after the experiment:
 #   sudo rm /etc/sudoers.d/nvmevirt-exp
-dccearth ALL=(root) NOPASSWD: /usr/sbin/insmod, /usr/sbin/rmmod, /usr/bin/fio, /usr/bin/dmesg, /usr/sbin/nvme, /usr/bin/cat /proc/iomem, /usr/bin/tee /dev/kmsg, /usr/bin/chown -R dccearth\:dccearth /home/dccearth/jsw/KSC2026/nvmevirt/exp/*
+dccearth ALL=(root) NOPASSWD: /usr/sbin/insmod, /usr/sbin/rmmod, /usr/bin/fio, /usr/bin/dmesg, /usr/sbin/nvme, /usr/bin/cat /proc/iomem, /usr/bin/tee /dev/kmsg, /usr/bin/tee /proc/sys/vm/drop_caches, /usr/bin/chown -R dccearth\:dccearth /home/dccearth/jsw/KSC2026/nvmevirt/exp/*
 ```
-- 사본: exp/report/nvmevirt-exp.sudoers. insmod·fio 권한은 사실상 root 와 같다. 실험 후 지우기로 사용자에게 말했다(7 절의 정리 단계 참조).
+- 사본: exp/report/nvmevirt-exp.sudoers. insmod·fio 권한은 사실상 root 와 같다. 실험 후 지우기로 사용자에게 말했다(10.3 절).
+- 마지막 chown 항목은 실험 당시 경로(/home/dccearth/jsw/KSC2026/nvmevirt/exp/*)와 사용자(dccearth)에 묶여 있다. 17:06 KST 이후 위치(/home/dccearth/jsw/nvmevirt)나 다른 clone 에서 재현하려면 `/usr/bin/chown -R <USER>\:<USER> <REPO>/exp/*` 로(맨 앞 사용자 이름도 <USER> 로) 바꿔 다시 설치해야 한다. 맞지 않으면 run_experiment.sh 가 첫 회차 끝의 `sudo -n chown` 에서 실패해(set -euo pipefail) DONE 없이 멈춘다. 사전 점검(PRIV)은 chown 을 검사하지 않고, `sudo -n -l` 은 `(ALL : ALL) ALL` 항목 때문에 성공하므로 미리 알 수 없다. docx 4.3 절에 바꾸는 sed 명령이 있다.
 
 ### 6.5 분석 (exp/analyze.py results/<EXP>)
 - 회차별 지표: bw_MiBps(= fio write.bw/1024), iops, written_GiB, fill_ratio(= io_bytes/장치 크기), clat_mean/p50/p99/p999_us, lat_mean_us, slat_mean_us, runtime_s, bw_first10s_MiBps(t ≤ 10 s), bw_last20s_MiBps(t > 마지막 시각 − 20 s), dev_bytes, chmodel_msgs, kernel_warn.
@@ -306,34 +450,34 @@ dccearth ALL=(root) NOPASSWD: /usr/sbin/insmod, /usr/sbin/rmmod, /usr/bin/fio, /
 
 ---------------------------------------------------------------------------------------------------
 
-## 7. 사전 점검 기록 (시간순, UTC)
+## 7. 사전 점검 기록 (시간순, KST)
 
-- 04:46 upstream clone → /home/dccearth/jsw/KSC2026/nvmevirt/upstream_tmp (감사용으로 그대로 둠)
-- 04:49 감사 워크플로 시작(wf_b41bb861-a42; 9 절)
-- 04:53 스테이징 clone(/home/dccearth/jsw/KSC2026/.nvmevirt_stage) → git mv → 04:54:03 커밋 d508610
-- 04:5x 소스 수정. 6 개 매핑 단위 시험 빌드 모두 OK(경고는 compiler differs 하나). WBUF_FIX/GC_STATS 4 가지 조합 × 4K·128K 시험 빌드도 모두 OK.
-- 05:06 sudoers 설치. 이때 /proc/iomem 과 e820 으로 예약 영역을 확인했다(3 절).
-- 05:07 스테이징 저장소를 /home/dccearth/jsw/KSC2026/nvmevirt 로 옮겼다. 그래서 exp/.venv 를 다시 만들었다(venv 경로가 절대경로라).
-- 05:07:51 스모크 테스트 1 차는 실패했다. 원인: dmesg 를 /proc/uptime 기준 시각으로 잘랐는데 printk 시계가 CLOCK_BOOTTIME 보다 약 1 s 이상 늦어서 적재 로그를 놓쳤다. 모듈 자체는 정상 적재되었다. → /dev/kmsg 표지 방식으로 바꾸고 sudoers 에 tee /dev/kmsg 를 추가했다(05:10).
-- 05:08:48 스모크 테스트 2 차(base, 매핑 4k·128k × bs 4k·128k, 10 s, 1 회):
+- 13:46 upstream clone → /home/dccearth/jsw/KSC2026/nvmevirt/upstream_tmp (감사용으로 그대로 둠)
+- 13:49 감사 워크플로 시작(wf_b41bb861-a42; 9 절)
+- 13:53 스테이징 clone(/home/dccearth/jsw/KSC2026/.nvmevirt_stage) → git mv → 13:54:03 커밋 d508610
+- 13:5x 소스 수정. 6 개 매핑 단위 시험 빌드 모두 OK(경고는 compiler differs 하나). WBUF_FIX/GC_STATS 4 가지 조합 × 4K·128K 시험 빌드도 모두 OK.
+- 14:06 sudoers 설치. 이때 /proc/iomem 과 e820 으로 예약 영역을 확인했다(3 절).
+- 14:07 스테이징 저장소를 /home/dccearth/jsw/KSC2026/nvmevirt 로 옮겼다. 그래서 exp/.venv 를 다시 만들었다(venv 경로가 절대경로라).
+- 14:07:51 스모크 테스트 1 차는 실패했다. 원인: dmesg 를 /proc/uptime 기준 시각으로 잘랐는데 printk 시계가 CLOCK_BOOTTIME 보다 약 1 s 이상 늦어서 적재 로그를 놓쳤다. 모듈 자체는 정상 적재되었다. → /dev/kmsg 표지 방식으로 바꾸고 sudoers 에 tee /dev/kmsg 를 추가했다(14:08).
+- 14:08:48 스모크 테스트 2 차(base, 매핑 4k·128k × bs 4k·128k, 10 s, 1 회):
   - 4k/4k 1273.2 MiB/s 325,927 IOPS clat 97.2 µs
   - 4k/128k 1297.5 MiB/s 10,380 IOPS clat 3078.3 µs
   - 128k/4k 101.8 MiB/s 26,065 IOPS clat 1226.1 µs
   - 128k/128k 1481.2 MiB/s 11,850 IOPS clat 2696.6 µs
   - 128k/4k 회차의 dmesg_run 이 비어 있었다. 원인: '[chmodel_request] Need to increase array size' 오류가 넘쳐 256 KiB(CONFIG_LOG_BUF_SHIFT=18) 링 버퍼가 덮어쓰였다. → 회차마다 `dmesg -W` 로 실시간 기록하도록 바꿨다.
   - 이 스모크 결과의 GC 통계(rmmod 시): 4k/4k host_pgs ≈ 815K/파티션, gc_pgs ≈ 356K, 첫 GC 6.3 s(host_pgs=778240/파티션에서). 128k/128k 첫 GC 3.86 s(host_pgs 24320/파티션에서). 128k/4k host_pgs ≈ 65K/파티션(= 7.9 GiB/파티션 NAND 쓰기, 호스트 약 1 GiB) → 매핑 128K 에 4K 쓰기면 NAND 쓰기 32 배.
-- 05:12–05:14 스모크 3 차(base·wbuffix 각 4 조합, 10 s, kernel.log 전체 저장 방식):
+- 14:12–14:14 스모크 3 차(base·wbuffix 각 4 조합, 10 s, kernel.log 전체 저장 방식):
   - base: 4k/4k 1272.9, 4k/128k 1297.5, 128k/4k 101.6 (chmodel 오류 1,665,207 줄, kernel.log.gz 16 MB), 128k/128k 1482.0 MiB/s
   - wbuffix: 4k/4k 1272.4, 4k/128k 1297.5, 128k/4k 77.0 (19,724 IOPS, clat 1621.0 µs, 오류 0), 128k/128k 1482.3 MiB/s
-  - → 60 s 실행이면 회차당 약 100 MB 가 되므로, awk 로 세기만 하고 20 줄만 남기도록 바꿨다(05:15).
-- 05:15:12 스모크 4 차(base 128k/4k, 10 s): 101.6 MiB/s 26,006 IOPS clat 1227.9 µs, chmodel_msgs 1,859,673. kernel.log 는 79 줄(6.8 KB). systemd-journald: "/dev/kmsg buffer overrun, some messages lost. (Dropped 93506 similar message(s))". 첫 GC 는 2.2 s(host_pgs=24320/파티션에서). 이 결과가 exp/results/pre_smoke_test/ 에 남아 있다(앞선 스모크 결과는 지웠다. 수치는 위 기록이 전부다).
-- 05:15:50–05:18:36 GC_STATS A/B(매핑 4k, bs 4k, 20 s, 3 회, SETTLE 3 s), exp/results/pre_gcstats_ab/:
+  - → 60 s 실행이면 회차당 약 100 MB 가 되므로, awk 로 세기만 하고 20 줄만 남기도록 바꿨다(14:15).
+- 14:15:12 스모크 4 차(base 128k/4k, 10 s): 101.6 MiB/s 26,006 IOPS clat 1227.9 µs, chmodel_msgs 1,859,673. kernel.log 는 79 줄(6.8 KB). systemd-journald: "/dev/kmsg buffer overrun, some messages lost. (Dropped 93506 similar message(s))". 첫 GC 는 2.2 s(host_pgs=24320/파티션에서). 이 결과가 exp/results/pre_smoke_test/ 에 남아 있다(앞선 스모크 결과는 지웠다. 수치는 위 기록이 전부다).
+- 14:15:50–14:18:36 GC_STATS A/B(매핑 4k, bs 4k, 20 s, 3 회, SETTLE 3 s), exp/results/pre_gcstats_ab/:
   - plain(GC_STATS 끔): 724.1 / 721.9 / 722.1 MiB/s (185,361 / 184,807 / 184,868 IOPS, clat 171.6 / 172.1 / 172.1 µs)
   - base(GC_STATS 켬): 724.3 / 726.0 / 724.4 MiB/s (185,428 / 185,864 / 185,444 IOPS, clat 171.5 / 171.1 / 171.5 µs)
   - 평균 722.7 vs 724.9 (+0.3 %, 반복 편차 수준) → 계측 영향 없음
   - (첫 시도는 Claude 셸의 grep 래퍼 문제로 파이프가 끊겨 run.log 만 남았다. 지우고 다시 실행했다.)
-- 05:20:15 커밋 c02b9fd, 5769378 → push(main, 신규 브랜치)
-- 05:20:28 run_all.sh main_20261008 시작(tmux 세션 ksc2026, 로그 exp/results/run_all_main_20261008.log). 05:20:28–05:20:4x 에 base 와 wbuffix 모듈 12 개를 빌드했다. 05:21:02 env_before 스냅샷, 1/108 회차 시작.
+- 14:20:15 커밋 c02b9fd, 5769378 → push(main, 신규 브랜치)
+- 14:20:28 run_all.sh main_20261008 시작(tmux 세션 ksc2026, 로그 exp/results/run_all_main_20261008.log). 14:20:28–14:21:02 에 base 와 wbuffix 모듈 12 개를 빌드했다(base 6 개 14:20:28–14:20:45, wbuffix 6 개 14:20:45–14:21:02). 14:21:02 env_before 스냅샷, 1/108 회차 시작.
 
 ---------------------------------------------------------------------------------------------------
 
@@ -348,9 +492,9 @@ dccearth ALL=(root) NOPASSWD: /usr/sbin/insmod, /usr/sbin/rmmod, /usr/bin/fio, /
 - 결과:
   - 쓰기 버퍼가 호스트를 붙잡지 못한다. WRITE_EARLY_COMPLETION=1 이라 호스트 완료 시각은 nsecs_xfer_completed(버퍼+PCIe)이고, NAND·GC 지연이 호스트에 전달되는 통로는 버퍼가 찼을 때의 재시도뿐인데 그 통로가 사라진다.
   - LUN 의 next_lun_avail_time 이 실제 시간보다 계속 앞서 나간다. 채널 모델(channel_model.c)의 시간 창 NR_CREDIT_ENTRIES 96K × UNIT_TIME_INTERVAL 4 µs ≈ 393 ms 를 넘으면, `NVMEV_ERROR("[chmodel_request] Need to increase array size …")` 를 찍고 request_time 을 그대로 돌려준다(채널 전송 시간 0). 창이 꽉 차면 "No free entry" 오류도 난다.
-  - 이 오류는 rate limit 없는 pr_err 다. 디스패처(cpu3) 핫패스에서 요청마다 찍히고, 콘솔 loglevel 4 라 tty0 콘솔과 journald 에도 간다. 측정값: 128k/4k 10 s 에 약 170–186 만 줄, 8k/4k 60 s 에 8,242,206 줄.
+  - 이 오류는 rate limit 없는 pr_err 다. 디스패처(cpu3) 핫패스에서 요청마다 찍히고, 콘솔 loglevel 4 라 tty0 콘솔과 journald 에도 간다. 측정값: 128k/4k 10 s 에 약 167–186 만 줄(스모크 3 차 1,665,207 줄, 4 차 1,859,673 줄), 8k/4k 60 s 에 8,242,206 줄.
   - 따라서 base 의 bs < 매핑 단위 결과는 「채널 시간이 빠져 빨라짐」과 「printk·콘솔 부담으로 느려짐」이 섞인 값이다. 타이밍 모델이 정상 범위를 벗어났다.
-- 수정: WBUF_FIX=1 (5.4 절). 감사 에이전트 2 개(wbuf-write-path, geometry-init)가 독립적으로 blocker 로 판정했고 같은 수정을 제안했다. 검증 에이전트도 확인했다(9 절).
+- 수정: WBUF_FIX=1 (5.4 절). 감사 에이전트 3 개(wbuf-write-path, geometry-init, gc-timing)가 모두 독립적으로 blocker 로 판정했고 같은 수정을 제안했다. 검증 에이전트도 확인했다(9 절).
 - 스모크 비교(10 s, 128k/4k): base 101.6–101.8 MiB/s(오류 수십만~186 만 줄), wbuffix 77.0 MiB/s(오류 0). 감사의 시뮬레이션(ftlsim)은 수정 후 128k/4k 를 GC 전 약 43.5K IOPS(NAND 한계 47.0K pages/s)로 예측했다. GC 후에는 10 s 에 9.8K, 30 s 에 5.0K IOPS 로 떨어진다는 예측이다.
 
 ### 8.2 64K·128K 의 flash page 변경은 NAND 성능도 바꾼다 (사용자 지시에 따른 것, 바꾸지 않음)
@@ -364,10 +508,10 @@ dccearth ALL=(root) NOPASSWD: /usr/sbin/insmod, /usr/sbin/rmmod, /usr/bin/fio, /
   - GC 는 디스패처 스레드에서 동기로 실행된다(conv_write → check_and_refill_write_credit → foreground_gc → do_gc, line 1 개씩).
   - GC 의 NAND 비용은 LUN 시간만 점유하고, 호스트에는 버퍼가 찰 때만 보인다(GC 쓰기는 버퍼를 쓰지 않는다).
   - 지우기 지연은 0 이다. GC 읽기→쓰기 의존이 강제되지 않고, GC 는 '지금' 시각에 시작한다.
-- 활성 I/O 워커 1 개: nvmev.h 의 `#define CONFIG_NVMEV_IO_WORKER_BY_SQ` 때문에 워커 = (sqid−1) % nr_io_workers 다. 가상 장치가 MSI-X 없이 레거시 IO-APIC IRQ 15 하나(/proc/interrupts: "15: … IR-IO-APIC 15-edge nvme1q0, nvme1q1")만 받아 I/O 큐가 1 개("nvme nvme1: 1/0/0 default/read/poll queues")다. 그래서 모든 요청이 sqid 1 → cpu4 의 워커 0 만 쓰이고, fio 가 어느 CPU 에 있든 같다. 워커 1(cpu5)은 I/O 없이 폴링만 한다. /proc/irq/15/effective_affinity_list = 5 (smp_affinity_list 0-5, irqbalance inactive)라서 호스트 nvme 완료 인터럽트는 cpu5 에서 처리된다(06:2x 확인, IRQ 15 누적 112,040,881 회 전부 CPU5). 논문에는 「디스패처 1 + 워커 2(활성 1)」로 적는 것이 정확하다.
+- 활성 I/O 워커 1 개: nvmev.h 의 `#define CONFIG_NVMEV_IO_WORKER_BY_SQ` 때문에 워커 = (sqid−1) % nr_io_workers 다. 가상 장치가 MSI-X 없이 레거시 IO-APIC IRQ 15 하나(/proc/interrupts: "15: … IR-IO-APIC 15-edge nvme1q0, nvme1q1")만 받아 I/O 큐가 1 개("nvme nvme1: 1/0/0 default/read/poll queues")다. 그래서 모든 요청이 sqid 1 → cpu4 의 워커 0 만 쓰이고, fio 가 어느 CPU 에 있든 같다. 워커 1(cpu5)은 I/O 없이 폴링만 한다. /proc/irq/15/effective_affinity_list = 5 (smp_affinity_list 0-5, irqbalance 미설치 — dpkg-query 결과 없음)라서 호스트 nvme 완료 인터럽트는 cpu5 에서 처리된다(15:2x 확인, IRQ 15 누적 112,040,881 회 전부 CPU5). 논문에는 「디스패처 1 + 워커 2(활성 1)」로 적는 것이 정확하다.
 - 매핑 표가 호스트 메모리 배열(DFTL 캐시 모델 없음)이라 L2P 크기 효과는 성능에 나타나지 않는다. L2P 크기는 계산으로 따로 보고한다: 전체 FTL 페이지 × 8 B = 4K 24 MiB, 8K 12, 16K 6, 32K 3, 64K 1.5, 128K 0.75 MiB. rmap 도 같은 크기다.
 - GC 문턱: free line ≤ 2 (gc_thres_lines = gc_thres_lines_high = 2). 쓰기 크레딧(pgs_per_line)을 다 쓸 때마다 검사한다. 처음 free line 은 파티션당 382 개(384 − 사용자·GC 쓰기 포인터 2). 첫 GC 는 파티션당 380 line = 장치 전체 12,160 MiB 의 페이지 쓰기 뒤에 온다. 측정에서도 첫 GC 시점의 host_pgs = 778,240/파티션(4K 매핑, = 380 × 2048) — 정확히 일치한다.
-- fio randommap 의 주기 현상(05:3x 에 시계열로 확인):
+- fio randommap 의 주기 현상(14:3x 에 시계열로 확인):
   - 첫 바퀴(논리 11.21 GiB)는 모든 LBA 를 한 번씩 써서 무효 페이지가 없다. 물리 12 GiB 가 차는 순간(약 0.67 GiB 덮어쓰기 후) GC 가 시작되는데, 그때 victim line 에 무효 페이지가 거의 없어 대역폭이 크게 떨어진다(4k/4k: 약 2,000 → 120–250 MiB/s).
   - 둘째 바퀴가 진행될수록 무효 페이지가 늘어 서서히 회복된다.
   - 둘째 바퀴가 끝날 무렵에는 첫 바퀴에 쓴 line 이 모두 무효라 GC 비용이 0 에 가까워져 대역폭이 치솟는다(4k/4k 약 51 s 에 1,400 MiB/s, 4k/128k·8k/128k 약 36 s 에 1,700 MiB/s). 그 뒤 셋째 바퀴에서 다시 떨어진다.
@@ -401,14 +545,14 @@ dccearth ALL=(root) NOPASSWD: /usr/sbin/insmod, /usr/sbin/rmmod, /usr/bin/fio, /
 - 스크립트: /home/dccearth/.claude/projects/-home-dccearth-jsw-KSC2026-nvmevirt-upstream-tmp/13edeb42-0011-48bf-800d-a7f7e0251b76/workflows/scripts/ksc2026-nvmevirt-understand-audit-wf_b41bb861-a42.js. 기록은 /home/dccearth/.claude/projects/-home-dccearth-jsw/13edeb42-0011-48bf-800d-a7f7e0251b76/subagents/workflows/wf_b41bb861-a42/journal.jsonl 에 있다.
 - 단계: Read(설정조사 보고서 → 설정 사양, 논문 → 연구 맥락) / Audit(렌즈 3 개: wbuf-write-path, geometry-init, gc-timing) / Verify(blocker·high·medium 주장마다 반박 시도 2 개: 코드 경로 추적, 수치 예시 대조).
 - 주요 주장(심각도):
-  - [blocker] 쓰기 버퍼 과다 반환(8.1) — 두 렌즈가 독립적으로 찾았다.
+  - [blocker] 쓰기 버퍼 과다 반환(8.1) — 세 렌즈 모두 독립적으로 찾았다(검증 6 회 모두 핵심 확인).
   - [high] 그 결과로 NAND 대기열이 끝없이 늘어 io-worker 큐(16384) 고갈, 393 ms 채널 창 초과, O(N) 비용이 생긴다.
   - [high] 64K/128K flash page 변경에 따른 NAND 대역폭·버퍼 변화(8.2).
   - [high] 조기 완료 때문에 GC 가 버퍼 정체로만 보인다.
   - [high] 장치는 모델명으로 찾아야 한다(루트가 nvme0n1). 이미 반영했다.
   - [medium] RMW 미모델, DFTL 없음, 60 s 창에서 GC 시작 시점이 달라 GC 전후 구간이 섞임(시계열·GC 시각 기록으로 대응), 워커 1 개만 활성(fio 고정 권고 — 고정은 하지 않음. 큐가 1 개라 워커가 바뀌지 않는다), 64K/128K 에서 FLASH_PAGE_SIZE 를 안 바꾸면 assert(이미 반영).
   - [info] assert 전부 통과, 블록 2 MiB·용량·OP 가 모든 매핑에서 같음, MAX_CH_XFER_SIZE 는 쓰기에 무관, MDTS 로 128k 가 분할되지 않음, rmmod/insmod 가 FTL 을 완전히 초기화(저장 데이터는 남음), 4KB 전용 상수(ssd.c 394, conv_ftl.c 867)는 쓰기 전용 실험에 무관.
-- 워크플로 완료: 06:22 UTC, 에이전트 51 개(오류 0), 하위 에이전트 토큰 약 4.94 M, 소요 약 92 분.
+- 워크플로 완료: 15:22 KST, 에이전트 51 개(오류 0), 하위 에이전트 토큰 약 4.94 M, 소요 약 92 분.
   - 결과 원본: exp/report/audit_result.json (spec = 설정조사 보고서에서 뽑은 기본값 전체, ctx = 논문 맥락, audit = 렌즈별 주장·검증 판정)
   - 한국어 요약: exp/report/audit_summary_ko.txt (docx 부록 E)
 - 검증 판정 요약: 핵심 주장은 하나도 뒤집히지 않았다. 「refuted」로 표시된 판정은 모두 세부 정정이다. 주요 정정:
@@ -421,11 +565,13 @@ dccearth ALL=(root) NOPASSWD: /usr/sbin/insmod, /usr/sbin/rmmod, /usr/bin/fio, /
 
 ---------------------------------------------------------------------------------------------------
 
-## 10. 본 실험 진행 기록 (main_20261008)
+## 10. 본 실험 진행 기록
 
-- 05:20:28 시작. base 1/108 05:21:02.
+### 10.1 첫 설계 main_20261008 (보조 데이터셋)
+
+- 14:20:28 시작. base 1/108 14:21:02.
 - base 첫 회차들(60 s): 4k/4k r1 418.4 MiB/s 107,109 IOPS clat 297.7 µs, 첫 GC 6.30 s, WAF_gc 3.14 / 4k/8k r1 433.6 MiB/s / 4k/128k r1 496.8 MiB/s 3,974 IOPS clat 8047.2 µs / 8k/4k r1 chmodel_msgs 8,242,206, kernel_warn 1(그 회차의 "No free entry" 표본 줄), rmmod 때 파티션 읽기 실패 4 줄.
-- **05:44:22–05:46:57 첫 중단**: base 21/108 회차 map32k_bs16k_r1 에서 fio 가 I/O 오류(fio error 5 = EIO, exit 1)로 실패했다. run_experiment.sh(당시 커밋 5769378)가 die 하면서 run_all.sh(set -e)도 끝났고, tmux 세션 ksc2026 이 종료되었다.
+- **14:44:22–14:46:57 첫 중단**: base 21/108 회차 map32k_bs16k_r1 에서 fio 가 I/O 오류(fio error 5 = EIO, exit 1)로 실패했다. run_experiment.sh(당시 커밋 5769378)가 die 하면서 run_all.sh(set -e)도 끝났고, tmux 세션 ksc2026 이 종료되었다.
   - 시간선(fio-start 표지 기준, 해당 회차 kernel.log 에서 추출):
     - +5.64 s 첫 GC
     - +24.97 s `WARNING: CPU: 3 PID: 30089 at …/nvmevirt/io.c:302 __allocate_work_queue_entry+0x8a/0xb0 [nvmev]` — "IO queue is almost full" WARN_ON_ONCE. 쓰기 버퍼 과다 반환으로 NAND 완료 시각이 먼 미래인 internal operation 이 io-worker 작업 큐(16384 항목)를 채운 것이다(감사 WB-2/C2 예측과 같음).
@@ -435,34 +581,2901 @@ dccearth ALL=(root) NOPASSWD: /usr/sbin/insmod, /usr/sbin/rmmod, /usr/bin/fio, /
     - +146.76 s 이후 `I/O error, dev nvme1n1 … op 0x1:(WRITE)` 10 줄 → fio 종료(runtime 146,507 ms, 그때까지 평균 114.4 MiB/s, 7,319 IOPS, 16.36 GiB). udev 의 파티션 읽기 Buffer I/O error / attempt to access beyond end of device.
     - rmmod 정상("Virtual NVMe device closed"). GC 통계: 파티션별 host_pgs 약 268K, gc_pgs 약 839K, gc_cnt 약 3,946. chmodel_msgs 10,038,918.
   - 판단: 요청 설정 그대로인 base 모델이 bs < 매핑 단위에서 무너지는 현상이므로 그 자체를 결과로 남긴다.
-  - 조치(커밋 2a462a3, 05:49):
+  - 조치(커밋 2a462a3, 14:49):
     - run_experiment.sh 가 fio 실패 회차에 FAILED 표지(첫 줄 `fio_exit=… fio_json_error=… kernel_warn=… chmodel_msgs=…`, 그 뒤 관련 커널 줄 최대 20 개)를 남기고 다음 회차로 넘어가도록 바꿨다. 다시 실행해도 FAILED 회차는 건너뛴다.
     - fio 감시 타이머: RUNTIME + FIO_GRACE(180 s) 에 SIGTERM, 60 s 뒤 SIGKILL. sudo 프로세스로 보내면 sudo 가 fio 에 전달한다.
-    - meta.txt 에 git_head 를 추가했다. git_head.txt 는 실행마다 한 줄씩 덧붙인다(base 의 git_head.txt 첫 줄은 손으로 시각을 붙였다: "2026-10-08T05:21:02+00:00 5769378…").
+    - meta.txt 에 git_head 를 추가했다. git_head.txt 는 실행마다 한 줄씩 덧붙인다(base 의 git_head.txt 첫 줄은 손으로 시각을 붙였다: 2026-10-08 14:21:02 KST (파일에는 "2026-10-08T05:21:02+00:00 5769378…" 로 UTC 표기)).
     - nvmevirt_vs_upstream.diff 를 rename 커밋 기준으로 고쳤다.
     - kernel_warn 집계에서 chmodel 표본 줄을 뺐다.
     - analyze.py 가 failed_runs.csv 를 쓰도록 했다(t_gc_s, t_queue_full_warn_s, t_nvme_timeout_s, t_reset_s, t_disable_s, t_first_io_error_s).
     - plot.py, 보고서 생성기, 이 파일도 같은 커밋에 넣었다.
   - map32k_bs16k_r1 은 손으로 FAILED 표지를 만들어 보존했다(첫 줄에 "marked by hand" 명시).
-- **05:49:13 재개**(tmux ksc2026): `bash run_experiment.sh main_20261008 wbuffix` → 이어서 `bash run_experiment.sh main_20261008 base`(완료된 20 회와 FAILED 1 회는 건너뜀) → `analyze.py`. 로그는 같은 run_all_main_20261008.log 에 이어 쓴다.
+- **14:49:13 재개**(tmux ksc2026): `bash run_experiment.sh main_20261008 wbuffix` → 이어서 `bash run_experiment.sh main_20261008 base`(완료된 20 회와 FAILED 1 회는 건너뜀) → `analyze.py`. 로그는 같은 run_all_main_20261008.log 에 이어 쓴다.
   - 순서를 바꾼 이유: 유효한 데이터셋(wbuffix)을 먼저 확보하기 위해서다.
-  - 모듈은 다시 빌드하지 않았다. 05:20 에 빌드한 exp/modules/{base,wbuffix} 를 그대로 써서 base 의 앞 20 회와 같은 바이너리다(sha256 검사).
-  - 따라서 실제 실행 순서는 run_all.sh(빌드 → base → wbuffix)와 다르다. base 회차는 1–20(커밋 5769378 스크립트)과 22–108(커밋 2a462a3 스크립트)이다. NVMeVirt 소스와 모듈은 같고, 스크립트 차이는 실패 처리·기록 방식뿐이라 측정 절차는 같다.
-- 진행 중 이상은 이 절에 이어서 적는다(완료 후 갱신).
+  - 모듈은 다시 빌드하지 않았다. 14:20 에 빌드한 exp/modules/{base,wbuffix} 를 그대로 써서 base 의 앞 20 회와 같은 바이너리다(sha256 검사).
+  - 따라서 실제 실행은 run_all.sh(빌드 → base → wbuffix)와 다르다. base 는 1–20 회(DONE)와 21 번째 map32k_bs16k_r1(FAILED)만 커밋 5769378 스크립트로 실행되었다. 재개 계획이던 base 22–108 회는 wbuffix 도중 15:51:23 설계 변경(1.7)으로 실험을 멈춰 실행되지 않았다. wbuffix 1–53 회는 커밋 2a462a3(→ 18:3x 에 949ae38 로 다시 만듦) 스크립트로 실행되었다. NVMeVirt 소스와 모듈은 같고, 스크립트 차이는 실패 처리·기록 방식뿐이라 측정 절차는 같다.
+- 15:51:23 설계 변경(1.7)으로 중단했다. wbuffix 53/108 회차까지 완료(map16k_bs128k_r2 직전). 남은 상태는 0 절과 같다.
+
+### 10.2 최종 설계 main3x3_20261008 (주 데이터셋)
+- 16:00:35 시작(tmux ksc2026, 로그 exp/results/run_all_main3x3_20261008.log, 커밋 1d6cd03).
+- 16:00:35–17:03:57 KST 54 회 모두 DONE, FAILED 0, 채널 모델 오류 0, kernel_warn 0. 17:03:57 env_after_wbuffix 스냅샷, analyze.py 완료("54 runs, 0 failed").
+- 처음 4 회차(map4k_bs4k_r1·map4k_bs16k_r1 의 nodrop·drop, 16:00:36–16:04:08 시작)는 meta.txt git_head 가 1d6cd03 이다. 16:04:44 의 커밋 재작성 뒤 5 번째 회차(wbuffix_nodrop/map4k_bs32k_r1, 16:05:18 시작)부터 50 회의 meta.txt git_head 는 a93ef76 이다. 두 커밋은 코드가 같다. a93ef76 은 18:3x KST 에 e598e75 로 다시 만들어졌다(「갱신 이력」).
+- 실험 중 다른 작업(md 편집, 묶음 생성, 문서 생성기 수정)은 nice -n 19 / ionice -c3 로 낮은 우선순위로 했다. fio 는 CPU 0–2, NVMeVirt 는 CPU 3–5 다.
+
+### 10.3 실험 후 정리 기록 (KST)
+- 17:04 실험·분석 완료 확인(54/54, FAILED 0). nvmev 모듈은 내려가 있고 tmux 세션은 종료됨.
+- 17:05 `plot.py all` 로 두 데이터셋의 표준 그림 25 장씩을 만들었다(results/<EXP>/plots/). findings_ko.txt(결과 해석)를 작성하고 수치를 CSV 와 하나씩 대조했다.
+- 17:06 사용자 지시(1.6) 이행:
+  - `rm -rf /home/dccearth/jsw/KSC2026/nvmevirt/upstream_tmp`
+  - `mv /home/dccearth/jsw/KSC2026/nvmevirt /home/dccearth/jsw/nvmevirt`
+  - `rm -rf /home/dccearth/jsw/exp` (180 MB: 이전 iodepth 결과, 예전 스크립트, .venv. 수치는 2.2 절에 보존)
+  - `ln -sfn ../nvmevirt/EXPERIMENT_LOG_FOR_CLAUDE.md /home/dccearth/jsw/KSC2026/EXPERIMENT_LOG_FOR_CLAUDE.md`
+  - exp/.venv 다시 만들기(requirements.txt)
+  - 메모리의 저장소 경로 갱신
+- 17:07 `make_report.py results/main3x3_20261008 --supp results/main_20261008` 로 .docx 를 생성했다(주 = main3x3, 보조 = main_20261008).
+- 17:08 렌더링을 확인했다.
+  - 서버에는 LibreOffice 가 없다. 그래서 LibreOffice AppImage 25.8(still)을 scratchpad 에 풀었다.
+  - 모자란 라이브러리(libcairo2, libcups2t64, libx11-xcb1, libxinerama1, libpixman, libxcb-render/shm, libxrender, libavahi)와 fonts-nanum 은 `apt-get download` 로 받아 사용자 공간에 풀었다(시스템 변경 없음).
+  - PDF 63 쪽을 그림으로 훑어보았다.
+  - 고친 것: 감사 요약의 시각을 UTC → KST 로 바꾸고, 원자료 표의 변형 열 너비를 넓혔다.
+  - 목차는 Word 필드라 Word 에서 '필드 업데이트' 를 해야 채워진다(LibreOffice 변환본에서는 빈칸).
+- 17:09 검증 워크플로 wf_7f78deeb-8ce 를 시작했다.
+  - 검사자 5 개: 수치, docx 서술, md 서술, 재현성, 보안·KST.
+  - 각 지적마다 반박 검증 1 회를 거친다.
+- 17:09 GitHub push 를 시도하기 전에 확인해 보니 /tmp/ssh-*/agent.* 소켓이 없었다(사용자 SSH 세션 종료로 추정). 사용자에게 `ssh -A` 로 다시 접속해 달라고 요청했다.
+- 17:24 사용자 요청 「지금까지 나온 상태를 handoff 파일에 갱신해줘」 → 이 파일을 갱신하고 묶음(라벨 postexp)을 만들었다(검증 전 문서 포함).
+- 18:25 검증 워크플로 완료(에이전트 98 개, 오류 0): 지적 93 건 중 89 건 확인(high 8, medium 24, low 57), 4 건 기각. 원본은 서버 scratchpad 의 verify_result.json 이다(묶음에는 없음).
+  - 주요 확인 사항:
+    - 수치: 반올림 −54.4→−54.3 %, CV 최대 0.38→0.37 %, WAF 범위 3.6→3.5. CSV 가 %.6g 라 일부 칸의 끝자리가 틀렸다.
+    - 시각: sudoers 14:10→14:08 / 15:53→15:55, amend 16:06→16:04, 메시지 시각 몇 곳.
+    - 낡거나 모순된 문장: base 22–108 회가 실행된 것처럼 쓴 문장, 이미 지운 폴더, 절 번호 참조.
+    - 재현 단계: sudoers chown 경로가 옮기기 전 경로, 패키지 설치, https clone, 사전 점검 명령, tee 로그.
+    - 보안: make_handoff.sh 검사 패턴에 쪼갠 비밀번호, .git 에 남은 옛 blob, 이 파일 머리말의 사용자 Claude 계정 이메일.
+- 18:2x 보안 조치:
+  - 16:10·17:24 KST 묶음을 지웠다. 그 안의 repo/exp/report/make_handoff.sh 에 sudo 비밀번호와 서버 IP 앞부분이 쪼갠 문자열로 들어 있었다.
+  - make_handoff.sh 는 검사 패턴을 실행할 때 연구 계획 .docx 에서 뽑도록 바꿨다(스크립트·묶음에 credential 없음).
+  - 18:27 KST 에 .git 의 옛 blob 0abc072 를 지웠다(resolve-undo 정리 → gc). 모든 git 객체를 검사해 credential 이 없음을 확인했다.
+  - 18:3x KST 에 미push 커밋 2a462a3·a93ef76 을 머리말의 사용자 이메일 문구만 뺀 내용으로 다시 만들었다(plumbing: mktree/commit-tree, 원래 작성자·시각·메시지 유지).
+    - 2a462a3 → 949ae38, a93ef76 → e598e75. 코드·스크립트는 같다.
+    - 원자료(meta.txt·git_head.txt)의 옛 해시 대응은 4 절에 있다.
+  - 사용자에게, 지운 묶음을 이미 전달했다면 서버 비밀번호를 바꾸라고 권했다.
+- 18:3x 수정 반영:
+  - analyze.py 가 CSV 를 최대 정밀도(repr)로 쓰게 하고 두 데이터셋 분석을 다시 돌렸다.
+  - findings_ko.txt, make_report.py(위 지적 전부), audit_summary_ko.txt, 이 파일, README.md(GitHub 첫 화면: 존재하지 않는 exp/README.md 링크, 빌드 변형, results 설명)를 고쳤다.
+- 18:33 KST sudoers 규칙 제거: `sudo rm /etc/sudoers.d/nvmevirt-exp`(비밀번호 사용). /etc/sudoers.d 에는 README 만 남았고 `sudo -n -l` 은 비밀번호를 요구한다.
+- 18:3x 최종 .docx 를 생성했다(KSC_SUDOERS_REMOVED=18:33, KSC_PUSH_TAG=ksc2026-final). md 결과 절(11)과 plot.py 그림도 다시 만들었다. .docx 를 KSC2026/산출물/ 에 복사했다.
+- 18:3x 결과(exp/results, 약 25 MB)·모듈 기록(exp/modules/*/SHA256SUMS·build_info·build 로그, .ko 제외)·문서·생성기를 커밋했다. 태그 ksc2026-final 을 붙여 main 과 함께 push 했다(새 agent 소켓 사용). 확인 결과는 바로 아래 줄에 적는다.
 
 ---------------------------------------------------------------------------------------------------
 
 ## 11. 결과
 
 <!-- AUTO-RESULTS-BEGIN -->
-(실험 완료 후 exp/report/make_md_results.py 가 이 자리를 채운다)
+(이 절의 시각은 모두 KST 다. 서버 로그의 UTC 시각을 +9 시간 변환했다.)
+자동 생성: exp/report/make_md_results.py results/main3x3_20261008 results/main_20261008 (첫 번째 = 주 데이터셋)
+
+## 11.1 main3x3_20261008  (묶음 경로 repo/exp/results/main3x3_20261008/)
+
+### 11.1.1 회차 목록
+- wbuffix_drop: 완료 회차 27 (DONE 있음). run.log 첫 시각 2026-10-08 16:00:35 KST, 마지막 시각 2026-10-08 17:03:57 KST. chmodel 오류 줄 합계 0. chmodel>0 회차 0. kernel_warn>0 회차 0.
+  - 미완료/없음 0: -
+- wbuffix_nodrop: 완료 회차 27 (DONE 있음). run.log 첫 시각 2026-10-08 16:00:35 KST, 마지막 시각 2026-10-08 17:03:57 KST. chmodel 오류 줄 합계 0. chmodel>0 회차 0. kernel_warn>0 회차 0.
+  - 미완료/없음 0: -
+
+### 11.1.2 조합별 행렬 (행 = 매핑 단위, 열 = fio bs). 칸 = mean ± std [min..max], n = 그 조합의 완료 회차 수(보통 3)
+#### main3x3_20261008 · wbuffix_drop · bw_MiBps
+| map\bs | 4K | 16K | 32K |
+|---|---|---|---|
+| 4K | 417.603 ± 1.452 [415.944..418.642] | 480.826 ± 0.176 [480.630..480.972] | 482.302 ± 0.130 [482.184..482.441] |
+| 16K | 129.852 ± 0.317 [129.584..130.202] | 420.331 ± 0.844 [419.476..421.164] | 440.637 ± 0.565 [440.205..441.276] |
+| 32K | 68.256 ± 0.107 [68.141..68.352] | 219.511 ± 0.140 [219.352..219.610] | 424.263 ± 0.442 [423.780..424.648] |
+
+#### main3x3_20261008 · wbuffix_drop · iops
+| map\bs | 4K | 16K | 32K |
+|---|---|---|---|
+| 4K | 106906.563 ± 371.717 [106481.802..107172.397] | 30772.891 ± 11.311 [30760.319..30782.244] | 15433.686 ± 4.154 [15429.895..15438.126] |
+| 16K | 33242.094 ± 81.310 [33173.580..33331.945] | 26901.225 ± 54.054 [26846.441..26954.517] | 14100.404 ± 18.083 [14086.565..14120.865] |
+| 32K | 17473.609 ± 27.370 [17444.046..17498.067] | 14048.746 ± 8.916 [14038.555..14055.110] | 13576.439 ± 14.149 [13560.992..13588.769] |
+
+#### main3x3_20261008 · wbuffix_drop · clat_mean_us
+| map\bs | 4K | 16K | 32K |
+|---|---|---|---|
+| 4K | 298.296 ± 1.041 [297.548..299.484] | 1038.409 ± 0.373 [1038.101..1038.823] | 2071.488 ± 0.546 [2070.895..2071.971] |
+| 16K | 961.535 ± 2.350 [958.946..963.535] | 1188.032 ± 2.378 [1185.685..1190.439] | 2267.517 ± 2.898 [2264.240..2269.740] |
+| 32K | 1830.125 ± 2.882 [1827.564..1833.246] | 2276.245 ± 1.443 [2275.204..2277.892] | 2355.090 ± 2.454 [2352.962..2357.774] |
+
+#### main3x3_20261008 · wbuffix_drop · clat_p50_us
+| map\bs | 4K | 16K | 32K |
+|---|---|---|---|
+| 4K | 69.803 ± 0.591 [69.120..70.144] | 222.208 ± 0.000 [222.208..222.208] | 444.416 ± 0.000 [444.416..444.416] |
+| 16K | 254.976 ± 0.000 [254.976..254.976] | 246.101 ± 1.182 [244.736..246.784] | 464.896 ± 0.000 [464.896..464.896] |
+| 32K | 569.344 ± 0.000 [569.344..569.344] | 536.576 ± 0.000 [536.576..536.576] | 526.336 ± 3.547 [522.240..528.384] |
+
+#### main3x3_20261008 · wbuffix_drop · clat_p99_us
+| map\bs | 4K | 16K | 32K |
+|---|---|---|---|
+| 4K | 13391.189 ± 75.674 [13303.808..13434.880] | 17694.720 ± 0.000 [17694.720..17694.720] | 18219.008 ± 0.000 [18219.008..18219.008] |
+| 16K | 14133.931 ± 75.674 [14090.240..14221.312] | 16711.680 ± 0.000 [16711.680..16711.680] | 18219.008 ± 0.000 [18219.008..18219.008] |
+| 32K | 14396.075 ± 75.674 [14352.384..14483.456] | 17519.957 ± 151.349 [17432.576..17694.720] | 17519.957 ± 151.349 [17432.576..17694.720] |
+
+#### main3x3_20261008 · wbuffix_drop · clat_p999_us
+| map\bs | 4K | 16K | 32K |
+|---|---|---|---|
+| 4K | 17170.432 ± 0.000 [17170.432..17170.432] | 18481.152 ± 0.000 [18481.152..18481.152] | 18743.296 ± 0.000 [18743.296..18743.296] |
+| 16K | 15488.341 ± 75.674 [15400.960..15532.032] | 17956.864 ± 0.000 [17956.864..17956.864] | 18743.296 ± 0.000 [18743.296..18743.296] |
+| 32K | 15400.960 ± 0.000 [15400.960..15400.960] | 17956.864 ± 0.000 [17956.864..17956.864] | 18219.008 ± 0.000 [18219.008..18219.008] |
+
+#### main3x3_20261008 · wbuffix_drop · lat_mean_us
+| map\bs | 4K | 16K | 32K |
+|---|---|---|---|
+| 4K | 299.141 ± 1.042 [298.395..300.331] | 1039.624 ± 0.386 [1039.307..1040.054] | 2073.132 ± 0.551 [2072.538..2073.627] |
+| 16K | 962.418 ± 2.355 [959.816..964.404] | 1189.281 ± 2.382 [1186.934..1191.695] | 2269.185 ± 2.899 [2265.905..2271.405] |
+| 32K | 1831.100 ± 2.871 [1828.540..1834.204] | 2277.515 ± 1.437 [2276.490..2279.157] | 2356.773 ± 2.460 [2354.627..2359.458] |
+
+#### main3x3_20261008 · wbuffix_drop · slat_mean_us
+| map\bs | 4K | 16K | 32K |
+|---|---|---|---|
+| 4K | 0.845 ± 0.004 [0.840..0.848] | 1.216 ± 0.013 [1.206..1.231] | 1.644 ± 0.012 [1.633..1.656] |
+| 16K | 0.883 ± 0.024 [0.869..0.910] | 1.248 ± 0.009 [1.239..1.256] | 1.668 ± 0.004 [1.665..1.672] |
+| 32K | 0.975 ± 0.015 [0.959..0.989] | 1.270 ± 0.014 [1.259..1.286] | 1.683 ± 0.017 [1.665..1.699] |
+
+#### main3x3_20261008 · wbuffix_drop · bw_first10s_MiBps
+| map\bs | 4K | 16K | 32K |
+|---|---|---|---|
+| 4K | 1272.818 ± 0.972 [1272.012..1273.898] | 1288.350 ± 0.246 [1288.067..1288.509] | 1290.595 ± 0.034 [1290.572..1290.634] |
+| 16K | 378.620 ± 0.125 [378.542..378.764] | 1279.583 ± 0.446 [1279.126..1280.017] | 1285.860 ± 0.011 [1285.853..1285.873] |
+| 32K | 189.710 ± 0.044 [189.660..189.739] | 741.367 ± 0.178 [741.249..741.572] | 1278.176 ± 0.379 [1277.781..1278.536] |
+
+#### main3x3_20261008 · wbuffix_drop · bw_last20s_MiBps
+| map\bs | 4K | 16K | 32K |
+|---|---|---|---|
+| 4K | 320.507 ± 4.618 [316.224..325.399] | 244.492 ± 0.419 [244.112..244.941] | 247.090 ± 0.147 [246.999..247.260] |
+| 16K | 58.495 ± 0.750 [57.983..59.356] | 323.504 ± 0.632 [322.802..324.028] | 320.661 ± 1.819 [318.919..322.549] |
+| 32K | 32.512 ± 0.230 [32.297..32.754] | 82.283 ± 0.537 [81.875..82.891] | 322.330 ± 2.498 [320.523..325.180] |
+
+#### main3x3_20261008 · wbuffix_drop · gc_onset_s
+| map\bs | 4K | 16K | 32K |
+|---|---|---|---|
+| 4K | 6.340 ± 0.026 [6.313..6.366] | 5.723 ± 0.005 [5.719..5.729] | 5.726 ± 0.000 [5.725..5.726] |
+| 16K | 5.947 ± 0.002 [5.945..5.949] | 5.957 ± 0.004 [5.954..5.961] | 5.875 ± 0.000 [5.875..5.875] |
+| 32K | 6.094 ± 0.000 [6.094..6.094] | 6.092 ± 0.003 [6.090..6.096] | 6.123 ± 0.003 [6.122..6.127] |
+
+#### main3x3_20261008 · wbuffix_drop · gc_onset_last_part_s
+| map\bs | 4K | 16K | 32K |
+|---|---|---|---|
+| 4K | 6.361 ± 0.026 [6.334..6.387] | 5.724 ± 0.005 [5.719..5.729] | 5.726 ± 0.000 [5.726..5.726] |
+| 16K | 5.977 ± 0.002 [5.975..5.979] | 5.978 ± 0.004 [5.975..5.983] | 5.897 ± 0.000 [5.896..5.897] |
+| 32K | 6.176 ± 0.000 [6.176..6.176] | 6.129 ± 0.003 [6.127..6.133] | 6.168 ± 0.003 [6.166..6.172] |
+
+#### main3x3_20261008 · wbuffix_drop · bw_pre_gc_MiBps
+| map\bs | 4K | 16K | 32K |
+|---|---|---|---|
+| 4K | 2004.864 ± 9.459 [1995.506..2014.421] | 2217.840 ± 0.267 [2217.666..2218.147] | 2217.771 ± 0.003 [2217.767..2217.773] |
+| 16K | 535.554 ± 0.075 [535.467..535.598] | 2142.132 ± 1.408 [2140.533..2143.186] | 2173.059 ± 0.071 [2172.977..2173.102] |
+| 32K | 256.096 ± 0.007 [256.090..256.104] | 1026.949 ± 0.057 [1026.883..1026.984] | 2033.002 ± 0.200 [2032.771..2033.119] |
+
+#### main3x3_20261008 · wbuffix_drop · bw_post_gc_MiBps
+| map\bs | 4K | 16K | 32K |
+|---|---|---|---|
+| 4K | 241.354 ± 1.996 [239.555..243.502] | 305.689 ± 0.200 [305.472..305.864] | 307.212 ± 0.102 [307.126..307.325] |
+| 16K | 88.928 ± 0.349 [88.617..89.305] | 246.676 ± 1.006 [245.693..247.704] | 265.947 ± 0.499 [265.588..266.516] |
+| 32K | 47.396 ± 0.120 [47.263..47.497] | 129.860 ± 0.127 [129.714..129.947] | 245.601 ± 0.521 [245.058..246.097] |
+
+#### main3x3_20261008 · wbuffix_drop · gc_cnt
+| map\bs | 4K | 16K | 32K |
+|---|---|---|---|
+| 4K | 8301.333 ± 89.646 [8199..8366] | 11270.667 ± 2.309 [11268..11272] | 11276.000 ± 0.000 [11276..11276] |
+| 16K | 7078.333 ± 49.662 [7036..7133] | 8320.667 ± 49.085 [8270..8368] | 9408.000 ± 34.117 [9380..9446] |
+| 32K | 7210.667 ± 30.105 [7177..7235] | 8279.000 ± 19.000 [8260..8298] | 8386.000 ± 24.637 [8360..8409] |
+
+#### main3x3_20261008 · wbuffix_drop · ftl_host_pgs
+| map\bs | 4K | 16K | 32K |
+|---|---|---|---|
+| 4K | 6415070 ± 22088.189 [6389760..6430451] | 7386848 ± 2920.953 [7383584..7389216] | 7408787 ± 1469.048 [7407584..7410424] |
+| 16K | 1994714 ± 4889.609 [1990448..2000050] | 1614315 ± 3042.678 [1611216..1617298] | 1692077 ± 2170.020 [1690416..1694532] |
+| 32K | 1048556 ± 1654.195 [1046730..1049954] | 843073.333 ± 467.342 [842535..843375] | 814695.000 ± 884.595 [813768..815530] |
+
+#### main3x3_20261008 · wbuffix_drop · ftl_gc_pgs
+| map\bs | 4K | 16K | 32K |
+|---|---|---|---|
+| 4K | 13706843 ± 161384.385 [13522725..13823810] | 18816276 ± 2221.160 [18813820..18818144] | 18804995 ± 1425.669 [18803408..18806168] |
+| 16K | 2410153 ± 20549.725 [2392641..2432776] | 3426085 ± 22092.670 [3403230..3447327] | 3904995 ± 15225.395 [3892398..3921914] |
+| 32K | 1187740 ± 6062.132 [1180946..1192596] | 1666757 ± 4488.712 [1662417..1671381] | 1722236 ± 5435.556 [1716494..1727302] |
+
+#### main3x3_20261008 · wbuffix_drop · waf_gc
+| map\bs | 4K | 16K | 32K |
+|---|---|---|---|
+| 4K | 3.137 ± 0.018 [3.116..3.150] | 3.547 ± 0.001 [3.547..3.548] | 3.538 ± 0.001 [3.537..3.539] |
+| 16K | 2.208 ± 0.007 [2.202..2.216] | 3.122 ± 0.010 [3.112..3.132] | 3.308 ± 0.006 [3.303..3.314] |
+| 32K | 2.133 ± 0.004 [2.128..2.136] | 2.977 ± 0.004 [2.973..2.982] | 3.114 ± 0.004 [3.109..3.118] |
+
+#### main3x3_20261008 · wbuffix_drop · waf_total
+| map\bs | 4K | 16K | 32K |
+|---|---|---|---|
+| 4K | 3.137 ± 0.018 [3.116..3.150] | 3.547 ± 0.001 [3.547..3.548] | 3.538 ± 0.001 [3.537..3.539] |
+| 16K | 8.833 ± 0.029 [8.808..8.865] | 3.122 ± 0.010 [3.112..3.132] | 3.308 ± 0.006 [3.303..3.314] |
+| 32K | 17.062 ± 0.032 [17.026..17.087] | 5.954 ± 0.009 [5.946..5.964] | 3.114 ± 0.004 [3.109..3.118] |
+
+#### main3x3_20261008 · wbuffix_drop · written_GiB
+| map\bs | 4K | 16K | 32K |
+|---|---|---|---|
+| 4K | 24.472 ± 0.084 [24.375..24.530] | 28.179 ± 0.011 [28.166..28.188] | 28.262 ± 0.006 [28.258..28.269] |
+| 16K | 7.609 ± 0.019 [7.593..7.630] | 24.632 ± 0.046 [24.585..24.678] | 25.819 ± 0.033 [25.794..25.857] |
+| 32K | 4.000 ± 0.006 [3.993..4.005] | 12.865 ± 0.007 [12.857..12.869] | 24.863 ± 0.027 [24.834..24.888] |
+
+#### main3x3_20261008 · wbuffix_drop · fill_ratio
+| map\bs | 4K | 16K | 32K |
+|---|---|---|---|
+| 4K | 2.182 ± 0.008 [2.174..2.187] | 2.513 ± 0.001 [2.512..2.514] | 2.520 ± 0.000 [2.520..2.521] |
+| 16K | 0.679 ± 0.002 [0.677..0.680] | 2.197 ± 0.004 [2.192..2.201] | 2.302 ± 0.003 [2.300..2.306] |
+| 32K | 0.357 ± 0.001 [0.356..0.357] | 1.147 ± 0.001 [1.146..1.148] | 2.217 ± 0.002 [2.215..2.219] |
+
+#### main3x3_20261008 · wbuffix_drop · chmodel_msgs
+| map\bs | 4K | 16K | 32K |
+|---|---|---|---|
+| 4K | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] |
+| 16K | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] |
+| 32K | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] |
+
+#### main3x3_20261008 · wbuffix_drop · kernel_warn
+| map\bs | 4K | 16K | 32K |
+|---|---|---|---|
+| 4K | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] |
+| 16K | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] |
+| 32K | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] |
+
+#### main3x3_20261008 · wbuffix_nodrop · bw_MiBps
+| map\bs | 4K | 16K | 32K |
+|---|---|---|---|
+| 4K | 415.997 ± 1.559 [414.744..417.743] | 480.960 ± 0.088 [480.858..481.021] | 482.267 ± 0.176 [482.105..482.454] |
+| 16K | 129.721 ± 0.035 [129.697..129.761] | 420.388 ± 1.287 [419.193..421.751] | 441.581 ± 1.301 [440.150..442.691] |
+| 32K | 68.288 ± 0.048 [68.236..68.331] | 219.565 ± 0.381 [219.138..219.869] | 424.649 ± 0.173 [424.519..424.845] |
+
+#### main3x3_20261008 · wbuffix_nodrop · iops
+| map\bs | 4K | 16K | 32K |
+|---|---|---|---|
+| 4K | 106495.339 ± 399.194 [106174.680..106942.443] | 30781.454 ± 5.676 [30774.953..30785.423] | 15432.564 ± 5.623 [15427.381..15438.542] |
+| 16K | 33208.731 ± 8.874 [33202.647..33218.913] | 26904.846 ± 82.372 [26828.406..26992.085] | 14130.611 ± 41.620 [14084.818..14166.136] |
+| 32K | 17481.884 ± 12.241 [17468.633..17492.769] | 14052.222 ± 24.404 [14024.843..14071.687] | 13588.795 ± 5.522 [13584.624..13595.057] |
+
+#### main3x3_20261008 · wbuffix_nodrop · clat_mean_us
+| map\bs | 4K | 16K | 32K |
+|---|---|---|---|
+| 4K | 299.451 ± 1.126 [298.191..300.360] | 1038.121 ± 0.204 [1037.985..1038.356] | 2071.614 ± 0.780 [2070.787..2072.336] |
+| 16K | 962.520 ± 0.259 [962.223..962.699] | 1187.876 ± 3.628 [1184.053..1191.271] | 2262.688 ± 6.689 [2256.993..2270.054] |
+| 32K | 1829.245 ± 1.279 [1828.107..1830.630] | 2275.722 ± 3.928 [2272.597..2280.132] | 2352.950 ± 0.954 [2351.873..2353.692] |
+
+#### main3x3_20261008 · wbuffix_nodrop · clat_p50_us
+| map\bs | 4K | 16K | 32K |
+|---|---|---|---|
+| 4K | 69.803 ± 0.591 [69.120..70.144] | 222.208 ± 0.000 [222.208..222.208] | 444.416 ± 0.000 [444.416..444.416] |
+| 16K | 256.341 ± 1.182 [254.976..257.024] | 246.784 ± 0.000 [246.784..246.784] | 464.896 ± 0.000 [464.896..464.896] |
+| 32K | 572.075 ± 4.730 [569.344..577.536] | 536.576 ± 0.000 [536.576..536.576] | 522.240 ± 0.000 [522.240..522.240] |
+
+#### main3x3_20261008 · wbuffix_nodrop · clat_p99_us
+| map\bs | 4K | 16K | 32K |
+|---|---|---|---|
+| 4K | 13347.499 ± 75.674 [13303.808..13434.880] | 17694.720 ± 0.000 [17694.720..17694.720] | 18219.008 ± 0.000 [18219.008..18219.008] |
+| 16K | 14046.549 ± 75.674 [13959.168..14090.240] | 16842.752 ± 113.512 [16711.680..16908.288] | 18219.008 ± 0.000 [18219.008..18219.008] |
+| 32K | 14483.456 ± 0.000 [14483.456..14483.456] | 17607.339 ± 151.349 [17432.576..17694.720] | 17694.720 ± 0.000 [17694.720..17694.720] |
+
+#### main3x3_20261008 · wbuffix_nodrop · clat_p999_us
+| map\bs | 4K | 16K | 32K |
+|---|---|---|---|
+| 4K | 16995.669 ± 151.349 [16908.288..17170.432] | 18481.152 ± 0.000 [18481.152..18481.152] | 18743.296 ± 0.000 [18743.296..18743.296] |
+| 16K | 15313.579 ± 75.674 [15269.888..15400.960] | 17956.864 ± 0.000 [17956.864..17956.864] | 18743.296 ± 0.000 [18743.296..18743.296] |
+| 32K | 15444.651 ± 75.674 [15400.960..15532.032] | 17956.864 ± 0.000 [17956.864..17956.864] | 18219.008 ± 0.000 [18219.008..18219.008] |
+
+#### main3x3_20261008 · wbuffix_nodrop · lat_mean_us
+| map\bs | 4K | 16K | 32K |
+|---|---|---|---|
+| 4K | 300.298 ± 1.123 [299.041..301.202] | 1039.342 ± 0.194 [1039.208..1039.565] | 2073.270 ± 0.759 [2072.463..2073.970] |
+| 16K | 963.389 ± 0.260 [963.090..963.567] | 1189.131 ± 3.645 [1185.275..1192.520] | 2264.343 ± 6.667 [2258.667..2271.686] |
+| 32K | 1830.215 ± 1.276 [1829.076..1831.593] | 2276.968 ± 3.939 [2273.827..2281.388] | 2354.622 ± 0.953 [2353.546..2355.361] |
+
+#### main3x3_20261008 · wbuffix_nodrop · slat_mean_us
+| map\bs | 4K | 16K | 32K |
+|---|---|---|---|
+| 4K | 0.848 ± 0.005 [0.842..0.851] | 1.221 ± 0.012 [1.208..1.232] | 1.656 ± 0.021 [1.635..1.676] |
+| 16K | 0.869 ± 0.004 [0.867..0.874] | 1.255 ± 0.037 [1.222..1.295] | 1.655 ± 0.022 [1.632..1.674] |
+| 32K | 0.970 ± 0.007 [0.964..0.978] | 1.246 ± 0.014 [1.230..1.256] | 1.672 ± 0.002 [1.670..1.673] |
+
+#### main3x3_20261008 · wbuffix_nodrop · bw_first10s_MiBps
+| map\bs | 4K | 16K | 32K |
+|---|---|---|---|
+| 4K | 1272.909 ± 1.221 [1271.960..1274.286] | 1288.244 ± 0.341 [1287.867..1288.533] | 1290.717 ± 0.203 [1290.562..1290.947] |
+| 16K | 378.912 ± 0.234 [378.643..379.058] | 1280.454 ± 0.119 [1280.323..1280.556] | 1285.856 ± 0.008 [1285.850..1285.865] |
+| 32K | 189.793 ± 0.123 [189.655..189.894] | 741.172 ± 0.006 [741.166..741.178] | 1278.010 ± 0.243 [1277.778..1278.263] |
+
+#### main3x3_20261008 · wbuffix_nodrop · bw_last20s_MiBps
+| map\bs | 4K | 16K | 32K |
+|---|---|---|---|
+| 4K | 321.959 ± 1.628 [320.716..323.802] | 244.833 ± 0.260 [244.565..245.084] | 247.153 ± 0.359 [246.785..247.503] |
+| 16K | 58.226 ± 0.105 [58.143..58.343] | 323.407 ± 1.170 [322.718..324.757] | 321.431 ± 1.819 [319.397..322.904] |
+| 32K | 32.631 ± 0.266 [32.324..32.785] | 82.161 ± 0.396 [81.830..82.599] | 322.791 ± 1.322 [321.330..323.905] |
+
+#### main3x3_20261008 · wbuffix_nodrop · gc_onset_s
+| map\bs | 4K | 16K | 32K |
+|---|---|---|---|
+| 4K | 6.317 ± 0.035 [6.277..6.342] | 5.694 ± 0.002 [5.693..5.696] | 5.693 ± 0.000 [5.693..5.693] |
+| 16K | 5.913 ± 0.002 [5.911..5.915] | 5.921 ± 0.000 [5.921..5.921] | 5.844 ± 0.001 [5.843..5.846] |
+| 32K | 6.061 ± 0.000 [6.061..6.061] | 6.064 ± 0.000 [6.064..6.064] | 6.096 ± 0.000 [6.096..6.096] |
+
+#### main3x3_20261008 · wbuffix_nodrop · gc_onset_last_part_s
+| map\bs | 4K | 16K | 32K |
+|---|---|---|---|
+| 4K | 6.338 ± 0.035 [6.298..6.362] | 5.694 ± 0.002 [5.693..5.697] | 5.693 ± 0.000 [5.693..5.694] |
+| 16K | 5.943 ± 0.002 [5.941..5.945] | 5.943 ± 0.000 [5.943..5.943] | 5.866 ± 0.001 [5.865..5.867] |
+| 32K | 6.144 ± 0.000 [6.144..6.144] | 6.101 ± 0.000 [6.101..6.101] | 6.141 ± 0.000 [6.140..6.141] |
+
+#### main3x3_20261008 · wbuffix_nodrop · bw_pre_gc_MiBps
+| map\bs | 4K | 16K | 32K |
+|---|---|---|---|
+| 4K | 2001.359 ± 12.555 [1992.749..2015.765] | 2217.592 ± 0.262 [2217.290..2217.750] | 2217.771 ± 0.003 [2217.767..2217.773] |
+| 16K | 535.595 ± 0.017 [535.576..535.609] | 2143.200 ± 0.033 [2143.168..2143.233] | 2172.678 ± 0.558 [2172.034..2173.000] |
+| 32K | 256.082 ± 0.007 [256.074..256.089] | 1026.858 ± 0.016 [1026.844..1026.875] | 2032.771 ± 0.005 [2032.766..2032.776] |
+
+#### main3x3_20261008 · wbuffix_nodrop · bw_post_gc_MiBps
+| map\bs | 4K | 16K | 32K |
+|---|---|---|---|
+| 4K | 240.091 ± 2.885 [236.918..242.558] | 305.810 ± 0.086 [305.711..305.870] | 307.234 ± 0.180 [307.052..307.412] |
+| 16K | 88.772 ± 0.036 [88.741..88.812] | 246.588 ± 1.450 [245.238..248.121] | 266.960 ± 1.475 [265.356..268.256] |
+| 32K | 47.437 ± 0.054 [47.384..47.491] | 129.922 ± 0.412 [129.459..130.249] | 246.011 ± 0.174 [245.838..246.187] |
+
+#### main3x3_20261008 · wbuffix_nodrop · gc_cnt
+| map\bs | 4K | 16K | 32K |
+|---|---|---|---|
+| 4K | 8204.667 ± 93.927 [8133..8311] | 11270.667 ± 2.309 [11268..11272] | 11276.000 ± 0.000 [11276..11276] |
+| 16K | 7056.000 ± 4.583 [7052..7061] | 8319.667 ± 74.969 [8250..8399] | 9463.333 ± 65.248 [9392..9520] |
+| 32K | 7222.667 ± 14.012 [7209..7237] | 8289.667 ± 45.829 [8241..8332] | 8409.000 ± 10.149 [8398..8418] |
+
+#### main3x3_20261008 · wbuffix_nodrop · ftl_host_pgs
+| map\bs | 4K | 16K | 32K |
+|---|---|---|---|
+| 4K | 6390148 ± 24491.429 [6370587..6417616] | 7388821 ± 1073.948 [7387712..7389856] | 7409112 ± 2433.933 [7406624..7411488] |
+| 16K | 1992601 ± 505.547 [1992192..1993166] | 1614479 ± 5060.688 [1609758..1619822] | 1695965 ± 4988.469 [1690488..1700248] |
+| 32K | 1049105 ± 733.120 [1048380..1049846] | 843318.667 ± 1426.180 [841716..844448] | 815404.667 ± 313.002 [815091..815717] |
+
+#### main3x3_20261008 · wbuffix_nodrop · ftl_gc_pgs
+| map\bs | 4K | 16K | 32K |
+|---|---|---|---|
+| 4K | 13533841 ± 167831.157 [13406435..13724008] | 18814517 ± 4586.611 [18809364..18818152] | 18804544 ± 2463.636 [18802256..18807152] |
+| 16K | 2400837 ± 1819.679 [2399217..2402806] | 3425415 ± 33300.381 [3394501..3460675] | 3929382 ± 28415.406 [3898342..3954112] |
+| 32K | 1190282 ± 2836.155 [1187519..1193186] | 1669245 ± 10323.704 [1658397..1678949] | 1727406 ± 2295.000 [1724901..1729407] |
+
+#### main3x3_20261008 · wbuffix_nodrop · waf_gc
+| map\bs | 4K | 16K | 32K |
+|---|---|---|---|
+| 4K | 3.118 ± 0.018 [3.104..3.138] | 3.546 ± 0.001 [3.546..3.547] | 3.538 ± 0.001 [3.537..3.539] |
+| 16K | 2.205 ± 0.001 [2.204..2.206] | 3.122 ± 0.014 [3.109..3.136] | 3.317 ± 0.010 [3.306..3.326] |
+| 32K | 2.135 ± 0.002 [2.133..2.137] | 2.979 ± 0.009 [2.970..2.988] | 3.118 ± 0.002 [3.116..3.120] |
+
+#### main3x3_20261008 · wbuffix_nodrop · waf_total
+| map\bs | 4K | 16K | 32K |
+|---|---|---|---|
+| 4K | 3.118 ± 0.018 [3.104..3.138] | 3.546 ± 0.001 [3.546..3.547] | 3.538 ± 0.001 [3.537..3.539] |
+| 16K | 8.820 ± 0.002 [8.817..8.822] | 3.122 ± 0.014 [3.109..3.136] | 3.317 ± 0.010 [3.306..3.326] |
+| 32K | 17.077 ± 0.015 [17.062..17.092] | 5.959 ± 0.018 [5.940..5.976] | 3.118 ± 0.002 [3.116..3.120] |
+
+#### main3x3_20261008 · wbuffix_nodrop · written_GiB
+| map\bs | 4K | 16K | 32K |
+|---|---|---|---|
+| 4K | 24.376 ± 0.093 [24.302..24.481] | 28.186 ± 0.004 [28.182..28.190] | 28.264 ± 0.009 [28.254..28.273] |
+| 16K | 7.601 ± 0.002 [7.600..7.603] | 24.635 ± 0.077 [24.563..24.717] | 25.878 ± 0.076 [25.795..25.944] |
+| 32K | 4.002 ± 0.003 [3.999..4.005] | 12.868 ± 0.022 [12.844..12.885] | 24.884 ± 0.010 [24.875..24.894] |
+
+#### main3x3_20261008 · wbuffix_nodrop · fill_ratio
+| map\bs | 4K | 16K | 32K |
+|---|---|---|---|
+| 4K | 2.174 ± 0.008 [2.167..2.183] | 2.513 ± 0.000 [2.513..2.514] | 2.520 ± 0.001 [2.520..2.521] |
+| 16K | 0.678 ± 0.000 [0.678..0.678] | 2.197 ± 0.007 [2.190..2.204] | 2.308 ± 0.007 [2.300..2.314] |
+| 32K | 0.357 ± 0.000 [0.357..0.357] | 1.148 ± 0.002 [1.145..1.149] | 2.219 ± 0.001 [2.218..2.220] |
+
+#### main3x3_20261008 · wbuffix_nodrop · chmodel_msgs
+| map\bs | 4K | 16K | 32K |
+|---|---|---|---|
+| 4K | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] |
+| 16K | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] |
+| 32K | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] |
+
+#### main3x3_20261008 · wbuffix_nodrop · kernel_warn
+| map\bs | 4K | 16K | 32K |
+|---|---|---|---|
+| 4K | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] |
+| 16K | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] |
+| 32K | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] |
+
+### 11.1.3b OS 페이지 캐시 drop vs nodrop (같은 map·bs·rep 쌍; diff = drop − nodrop)
+| variant | map | bs | metric | n | nodrop mean | drop mean | mean diff % | paired t | p (two-sided) | 95% CI % |
+|---|---|---|---|---|---|---|---|---|---|---|
+| wbuffix | 4k | 4k | bw_MiBps | 3 | 415.997 | 417.603 | 0.387 | 2.024 | 0.1803 |  |
+| wbuffix | 4k | 4k | iops | 3 | 106495.339 | 106906.563 | 0.387 | 2.024 | 0.1803 |  |
+| wbuffix | 4k | 4k | clat_mean_us | 3 | 299.451 | 298.296 | -0.385 | -2.023 | 0.1804 |  |
+| wbuffix | 4k | 4k | clat_p99_us | 3 | 13347.499 | 13391.189 | 0.328 | 1.000 | 0.4226 |  |
+| wbuffix | 4k | 4k | gc_onset_s | 3 | 6.317 | 6.340 | 0.362 | 0.941 | 0.4462 |  |
+| wbuffix | 4k | 4k | bw_pre_gc_MiBps | 3 | 2001.359 | 2004.864 | 0.178 | 0.405 | 0.7247 |  |
+| wbuffix | 4k | 4k | bw_post_gc_MiBps | 3 | 240.091 | 241.354 | 0.532 | 0.897 | 0.4645 |  |
+| wbuffix | 4k | 4k | waf_total | 3 | 3.118 | 3.137 | 0.602 | 1.817 | 0.2109 |  |
+| wbuffix | 4k | 16k | bw_MiBps | 3 | 480.960 | 480.826 | -0.028 | -1.122 | 0.3786 |  |
+| wbuffix | 4k | 16k | iops | 3 | 30781.454 | 30772.891 | -0.028 | -1.118 | 0.3797 |  |
+| wbuffix | 4k | 16k | clat_mean_us | 3 | 1038.121 | 1038.409 | 0.028 | 1.098 | 0.3866 |  |
+| wbuffix | 4k | 16k | clat_p99_us | 3 | 17694.720 | 17694.720 | 0.000 | 0.000 | NA |  |
+| wbuffix | 4k | 16k | gc_onset_s | 3 | 5.694 | 5.723 | 0.513 | 8.900 | 0.0124 |  |
+| wbuffix | 4k | 16k | bw_pre_gc_MiBps | 3 | 2217.592 | 2217.840 | 0.011 | 1.563 | 0.2586 |  |
+| wbuffix | 4k | 16k | bw_post_gc_MiBps | 3 | 305.810 | 305.689 | -0.039 | -0.941 | 0.4461 |  |
+| wbuffix | 4k | 16k | waf_total | 3 | 3.546 | 3.547 | 0.026 | 1.201 | 0.3527 |  |
+| wbuffix | 4k | 32k | bw_MiBps | 3 | 482.267 | 482.302 | 0.007 | 0.322 | 0.7781 |  |
+| wbuffix | 4k | 32k | iops | 3 | 15432.564 | 15433.686 | 0.007 | 0.321 | 0.7785 |  |
+| wbuffix | 4k | 32k | clat_mean_us | 3 | 2071.614 | 2071.488 | -0.006 | -0.258 | 0.8203 |  |
+| wbuffix | 4k | 32k | clat_p99_us | 3 | 18219.008 | 18219.008 | 0.000 | 0.000 | NA |  |
+| wbuffix | 4k | 32k | gc_onset_s | 3 | 5.693 | 5.726 | 0.570 | 121.252 | 0.0001 |  |
+| wbuffix | 4k | 32k | bw_pre_gc_MiBps | 3 | 2217.771 | 2217.771 | 0.000 | 0.000 | NA |  |
+| wbuffix | 4k | 32k | bw_post_gc_MiBps | 3 | 307.234 | 307.212 | -0.007 | -0.218 | 0.8475 |  |
+| wbuffix | 4k | 32k | waf_total | 3 | 3.538 | 3.538 | 0.005 | 0.259 | 0.8197 |  |
+| wbuffix | 16k | 4k | bw_MiBps | 3 | 129.721 | 129.852 | 0.101 | 0.798 | 0.5086 |  |
+| wbuffix | 16k | 4k | iops | 3 | 33208.731 | 33242.094 | 0.100 | 0.796 | 0.5095 |  |
+| wbuffix | 16k | 4k | clat_mean_us | 3 | 962.520 | 961.535 | -0.102 | -0.813 | 0.5014 |  |
+| wbuffix | 16k | 4k | clat_p99_us | 3 | 14046.549 | 14133.931 | 0.623 | 2.000 | 0.1835 |  |
+| wbuffix | 16k | 4k | gc_onset_s | 3 | 5.913 | 5.947 | 0.578 | 21.889 | 0.0021 |  |
+| wbuffix | 16k | 4k | bw_pre_gc_MiBps | 3 | 535.595 | 535.554 | -0.008 | -1.195 | 0.3546 |  |
+| wbuffix | 16k | 4k | bw_post_gc_MiBps | 3 | 88.772 | 88.928 | 0.176 | 0.866 | 0.4778 |  |
+| wbuffix | 16k | 4k | waf_total | 3 | 8.820 | 8.833 | 0.153 | 0.870 | 0.4758 |  |
+| wbuffix | 16k | 16k | bw_MiBps | 3 | 420.388 | 420.331 | -0.013 | -0.092 | 0.9349 |  |
+| wbuffix | 16k | 16k | iops | 3 | 26904.846 | 26901.225 | -0.013 | -0.093 | 0.9346 |  |
+| wbuffix | 16k | 16k | clat_mean_us | 3 | 1187.876 | 1188.032 | 0.014 | 0.091 | 0.9361 |  |
+| wbuffix | 16k | 16k | clat_p99_us | 3 | 16842.752 | 16711.680 | -0.775 | -2.000 | 0.1835 |  |
+| wbuffix | 16k | 16k | gc_onset_s | 3 | 5.921 | 5.957 | 0.601 | 15.878 | 0.0039 |  |
+| wbuffix | 16k | 16k | bw_pre_gc_MiBps | 3 | 2143.200 | 2142.132 | -0.050 | -1.337 | 0.3131 |  |
+| wbuffix | 16k | 16k | bw_post_gc_MiBps | 3 | 246.588 | 246.676 | 0.037 | 0.132 | 0.9067 |  |
+| wbuffix | 16k | 16k | waf_total | 3 | 3.122 | 3.122 | 0.022 | 0.093 | 0.9343 |  |
+| wbuffix | 16k | 32k | bw_MiBps | 3 | 441.581 | 440.637 | -0.213 | -1.159 | 0.3661 |  |
+| wbuffix | 16k | 32k | iops | 3 | 14130.611 | 14100.404 | -0.213 | -1.159 | 0.3661 |  |
+| wbuffix | 16k | 32k | clat_mean_us | 3 | 2262.688 | 2267.517 | 0.214 | 1.154 | 0.3678 |  |
+| wbuffix | 16k | 32k | clat_p99_us | 3 | 18219.008 | 18219.008 | 0.000 | 0.000 | NA |  |
+| wbuffix | 16k | 32k | gc_onset_s | 3 | 5.844 | 5.875 | 0.531 | 35.510 | 0.0008 |  |
+| wbuffix | 16k | 32k | bw_pre_gc_MiBps | 3 | 2172.678 | 2173.059 | 0.018 | 1.354 | 0.3086 |  |
+| wbuffix | 16k | 32k | bw_post_gc_MiBps | 3 | 266.960 | 265.947 | -0.378 | -1.258 | 0.3353 |  |
+| wbuffix | 16k | 32k | waf_total | 3 | 3.317 | 3.308 | -0.273 | -1.279 | 0.3291 |  |
+| wbuffix | 32k | 4k | bw_MiBps | 3 | 68.288 | 68.256 | -0.048 | -0.960 | 0.4385 |  |
+| wbuffix | 32k | 4k | iops | 3 | 17481.884 | 17473.609 | -0.047 | -0.947 | 0.4435 |  |
+| wbuffix | 32k | 4k | clat_mean_us | 3 | 1829.245 | 1830.125 | 0.048 | 0.951 | 0.4420 |  |
+| wbuffix | 32k | 4k | clat_p99_us | 3 | 14483.456 | 14396.075 | -0.603 | -2.000 | 0.1835 |  |
+| wbuffix | 32k | 4k | gc_onset_s | 3 | 6.061 | 6.094 | 0.538 | 236.485 | 0.0000 |  |
+| wbuffix | 32k | 4k | bw_pre_gc_MiBps | 3 | 256.082 | 256.096 | 0.006 | 3.995 | 0.0573 |  |
+| wbuffix | 32k | 4k | bw_post_gc_MiBps | 3 | 47.437 | 47.396 | -0.086 | -1.022 | 0.4142 |  |
+| wbuffix | 32k | 4k | waf_total | 3 | 17.077 | 17.062 | -0.086 | -1.374 | 0.3033 |  |
+| wbuffix | 32k | 16k | bw_MiBps | 3 | 219.565 | 219.511 | -0.025 | -0.206 | 0.8558 |  |
+| wbuffix | 32k | 16k | iops | 3 | 14052.222 | 14048.746 | -0.025 | -0.206 | 0.8560 |  |
+| wbuffix | 32k | 16k | clat_mean_us | 3 | 2275.722 | 2276.245 | 0.023 | 0.192 | 0.8658 |  |
+| wbuffix | 32k | 16k | clat_p99_us | 3 | 17607.339 | 17519.957 | -0.494 | -1.000 | 0.4226 |  |
+| wbuffix | 32k | 16k | gc_onset_s | 3 | 6.064 | 6.092 | 0.463 | 15.803 | 0.0040 |  |
+| wbuffix | 32k | 16k | bw_pre_gc_MiBps | 3 | 1026.858 | 1026.949 | 0.009 | 3.375 | 0.0777 |  |
+| wbuffix | 32k | 16k | bw_post_gc_MiBps | 3 | 129.922 | 129.860 | -0.047 | -0.225 | 0.8426 |  |
+| wbuffix | 32k | 16k | waf_total | 3 | 5.959 | 5.954 | -0.081 | -0.599 | 0.6099 |  |
+| wbuffix | 32k | 32k | bw_MiBps | 3 | 424.649 | 424.263 | -0.091 | -2.190 | 0.1599 |  |
+| wbuffix | 32k | 32k | iops | 3 | 13588.795 | 13576.439 | -0.091 | -2.189 | 0.1600 |  |
+| wbuffix | 32k | 32k | clat_mean_us | 3 | 2352.950 | 2355.090 | 0.091 | 2.202 | 0.1586 |  |
+| wbuffix | 32k | 32k | clat_p99_us | 3 | 17694.720 | 17519.957 | -0.988 | -2.000 | 0.1835 |  |
+| wbuffix | 32k | 32k | gc_onset_s | 3 | 6.096 | 6.123 | 0.450 | 14.710 | 0.0046 |  |
+| wbuffix | 32k | 32k | bw_pre_gc_MiBps | 3 | 2032.771 | 2033.002 | 0.011 | 1.999 | 0.1836 |  |
+| wbuffix | 32k | 32k | bw_post_gc_MiBps | 3 | 246.011 | 245.601 | -0.167 | -2.038 | 0.1784 |  |
+| wbuffix | 32k | 32k | waf_total | 3 | 3.118 | 3.114 | -0.144 | -3.253 | 0.0829 |  |
+| wbuffix | ALL | ALL | bw_MiBps | 27 | NA | NA | 0.009 | 0.191 | 0.8497 | [-0.084, 0.101] |
+| wbuffix | ALL | ALL | iops | 27 | NA | NA | 0.009 | 0.192 | 0.8495 | [-0.084, 0.101] |
+| wbuffix | ALL | ALL | clat_mean_us | 27 | NA | NA | -0.008 | -0.188 | 0.8521 | [-0.101, 0.084] |
+| wbuffix | ALL | ALL | clat_p99_us | 27 | NA | NA | -0.212 | -1.594 | 0.1231 | [-0.486, 0.061] |
+| wbuffix | ALL | ALL | gc_onset_s | 27 | NA | NA | 0.512 | 13.134 | 0.0000 | [0.432, 0.592] |
+| wbuffix | ALL | ALL | bw_pre_gc_MiBps | 27 | NA | NA | 0.019 | 0.465 | 0.6459 | [-0.066, 0.105] |
+| wbuffix | ALL | ALL | bw_post_gc_MiBps | 27 | NA | NA | 0.002 | 0.026 | 0.9793 | [-0.174, 0.178] |
+| wbuffix | ALL | ALL | waf_total | 27 | NA | NA | 0.025 | 0.378 | 0.7082 | [-0.110, 0.160] |
+
+### 11.1.4 회차별 전체 (analysis/summary_runs.csv 와 같은 값)
+```csv
+variant,map,bs,rep,bw_MiBps,iops,written_GiB,fill_ratio,clat_mean_us,clat_p50_us,clat_p99_us,clat_p999_us,lat_mean_us,slat_mean_us,runtime_s,bw_first10s_MiBps,bw_last20s_MiBps,dev_bytes,chmodel_msgs,kernel_warn,gc_onset_s,gc_onset_last_part_s,bw_pre_gc_MiBps,bw_post_gc_MiBps,gc_cnt,ftl_host_pgs,ftl_gc_pgs,waf_gc,waf_total
+wbuffix_drop,4k,4k,1,415.944336,106481.802426,24.375000,2.173614,299.484155,70.144000,13434.880000,17170.432000,300.330947,0.846792,60.008000,1272.544775,325.399072,12040984064,0,0,6.340591,6.361433,2004.665120,239.555384,8199,6389760,13522725,3.116312,3.116312
+wbuffix_drop,4k,4k,2,418.641602,107172.397127,24.530224,2.187456,297.547593,70.144000,13434.880000,17170.432000,298.395443,0.847849,60.001000,1272.011865,316.223926,12040984064,0,0,6.366142,6.386889,1995.506104,243.501899,8366,6430451,13823810,3.149742,3.149742
+wbuffix_drop,4k,4k,3,418.223633,107065.489085,24.509430,2.185602,297.855543,69.120000,13303.808000,17170.432000,298.695582,0.840040,60.010000,1273.897803,319.897852,12040984064,0,0,6.313434,6.334210,2014.421468,241.004150,8339,6425000,13773993,3.143812,3.143812
+wbuffix_drop,4k,16k,1,480.629883,30760.319285,28.166138,2.511685,1038.823219,222.208000,17694.720000,18481.152000,1040.053931,1.230712,60.009000,1288.473193,244.111572,12040984064,0,0,5.722159,5.722374,2217.707120,305.471707,11268,7383584,18813820,3.548061,3.548061
+wbuffix_drop,4k,16k,2,480.971680,30782.243551,28.187622,2.513601,1038.101158,222.208000,17694.720000,18481.152000,1039.307316,1.206158,60.012000,1288.066553,244.940918,12040984064,0,0,5.728957,5.729182,2217.666460,305.863684,11272,7389216,18816864,3.546531,3.546531
+wbuffix_drop,4k,16k,3,480.875977,30776.111444,28.182007,2.513100,1038.301176,222.208000,17694.720000,18481.152000,1039.511291,1.210114,60.012000,1288.509229,244.424756,12040984064,0,0,5.719205,5.719417,2218.147461,305.732735,11272,7387744,18818144,3.547211,3.547211
+wbuffix_drop,4k,32k,1,482.282227,15433.037797,28.260620,2.520110,2071.598068,444.416000,18219.008000,18743.296000,2073.230895,1.632827,60.004000,1290.579443,247.012134,12040984064,0,0,5.725743,5.725950,2217.772727,307.185206,11276,7408352,18805408,3.538406,3.538406
+wbuffix_drop,4k,32k,2,482.441406,15438.126031,28.268524,2.520815,2070.895245,444.416000,18219.008000,18743.296000,2072.537858,1.642613,60.001000,1290.571875,247.260205,12040984064,0,0,5.725890,5.726097,2217.767045,307.325052,11276,7410424,18803408,3.537427,3.537427
+wbuffix_drop,4k,32k,3,482.183594,15429.895017,28.257690,2.519849,2071.971445,444.416000,18219.008000,18743.296000,2073.627213,1.655768,60.010000,1290.634326,246.998950,12040984064,0,0,5.725342,5.725543,2217.772727,307.125770,11276,7407584,18806168,3.538772,3.538772
+wbuffix_drop,16k,4k,1,129.768555,33220.755849,7.605148,0.678181,962.123925,254.976000,14221.312000,15532.032000,963.034422,0.910497,60.012000,378.764014,58.146509,12040984064,0,0,5.949480,5.979352,535.467330,88.861445,7066,1993644,2405043,2.206355,8.825421
+wbuffix_drop,16k,4k,2,130.202148,33331.944537,7.629585,0.680360,958.946465,254.976000,14090.240000,15532.032000,959.815795,0.869330,60.004000,378.541699,59.356128,12040984064,0,0,5.947554,5.977397,535.596591,89.305431,7133,2000050,2432776,2.216358,8.865430
+wbuffix_drop,16k,4k,3,129.583984,33173.580440,7.592957,0.677094,963.534877,254.976000,14090.240000,15400.960000,964.403761,0.868884,60.001000,378.553174,57.983398,12040984064,0,0,5.945426,5.975239,535.598011,88.617447,7036,1990448,2392641,2.202062,8.808246
+wbuffix_drop,16k,16k,1,420.354492,26902.716214,24.634277,2.196735,1187.973868,246.784000,16711.680000,17956.864000,1189.212842,1.238974,60.010000,1279.126416,322.802271,12040984064,0,0,5.954927,5.976614,2142.676136,246.630268,8324,1614432,3427697,3.123160,3.123160
+wbuffix_drop,16k,16k,2,419.475586,26846.440949,24.585205,2.192359,1190.438915,246.784000,16711.680000,17956.864000,1191.695231,1.256316,60.016000,1280.016553,323.681592,12040984064,0,0,5.953646,5.975280,2143.186346,245.692867,8270,1611216,3403230,3.112212,3.112212
+wbuffix_drop,16k,16k,3,421.164062,26954.517425,24.678009,2.200635,1185.684693,244.736000,16711.680000,17956.864000,1186.933652,1.248959,60.001000,1279.605518,324.028271,12040984064,0,0,5.961075,5.982786,2140.532759,247.703689,8368,1617298,3447327,3.131535,3.131535
+wbuffix_drop,16k,32k,1,440.430664,14093.781770,25.806915,2.301304,2268.572353,464.896000,18219.008000,18743.296000,2270.244161,1.671808,60.001000,1285.853125,318.918530,12040984064,0,0,5.875123,5.896678,2173.096591,265.588186,9398,1691282,3900672,3.306340,3.306340
+wbuffix_drop,16k,32k,2,440.205078,14086.565224,25.793701,2.300126,2269.739746,464.896000,18219.008000,18743.296000,2271.405380,1.665634,60.001000,1285.853906,322.548633,12040984064,0,0,5.874799,5.896365,2172.977273,265.734999,9380,1690416,3892398,3.302627,3.302627
+wbuffix_drop,16k,32k,3,441.276367,14120.864652,25.856506,2.305726,2264.239822,464.896000,18219.008000,18743.296000,2265.905181,1.665359,60.001000,1285.873096,320.516211,12040984064,0,0,5.875311,5.896829,2173.102273,266.516315,9446,1694532,3921914,3.314453,3.314453
+wbuffix_drop,32k,4k,1,68.275391,17478.713655,4.001560,0.356835,1829.565709,569.344000,14352.384000,15400.960000,1830.554677,0.988967,60.015000,189.659619,32.754492,12040984064,0,0,6.093964,6.176249,256.089844,47.427933,7220,1048985,1189679,2.134124,17.072992
+wbuffix_drop,32k,4k,2,68.140625,17444.046329,3.992958,0.356068,1833.245723,569.344000,14352.384000,15400.960000,1834.204401,0.958678,60.005000,189.731201,32.297266,12040984064,0,0,6.093524,6.175818,256.103516,47.263138,7177,1046730,1180946,2.128224,17.025793
+wbuffix_drop,32k,4k,3,68.351562,17498.066796,4.005257,0.357164,1827.563631,569.344000,14483.456000,15400.960000,1828.540051,0.976420,60.004000,189.739062,32.485010,12040984064,0,0,6.094118,6.176477,256.094401,47.497242,7235,1049954,1192596,2.135855,17.086844
+wbuffix_drop,32k,16k,1,219.610352,14055.110237,12.869339,1.147609,2275.204359,536.576000,17694.720000,17956.864000,2276.490396,1.286037,60.007000,741.280908,81.875391,12040984064,0,0,6.090182,6.127213,1026.983805,129.947293,8279,843375,1666474,2.975959,5.951705
+wbuffix_drop,32k,16k,2,219.571289,14052.572819,12.868088,1.147498,2275.637864,536.576000,17432.576000,17956.864000,2276.897144,1.259279,60.012000,741.572217,82.082983,12040984064,0,0,6.095640,6.132565,1026.882812,129.917616,8298,843310,1671381,2.981930,5.963767
+wbuffix_drop,32k,16k,3,219.351562,14038.555100,12.856537,1.146468,2277.891984,536.576000,17432.576000,17956.864000,2279.157114,1.265130,60.018000,741.249365,82.891113,12040984064,0,0,6.089876,6.126930,1026.980713,129.714410,8260,842535,1662417,2.973113,5.946008
+wbuffix_drop,32k,32k,1,423.780273,13560.991868,24.834229,2.214566,2357.773717,528.384000,17694.720000,18219.008000,2359.458113,1.684396,60.008000,1278.212207,321.286157,12040984064,0,0,6.121849,6.166429,2033.119303,245.058241,8360,813768,1716494,3.109316,3.109316
+wbuffix_drop,32k,32k,2,424.648438,13588.769474,24.888000,2.219361,2352.961947,522.240000,17432.576000,18219.008000,2354.627188,1.665241,60.015000,1277.781250,320.523315,12040984064,0,0,6.127057,6.171579,2032.770833,246.096906,8409,815530,1727302,3.118012,3.118012
+wbuffix_drop,32k,32k,3,424.360352,13579.557007,24.865326,2.217339,2354.534489,528.384000,17432.576000,18219.008000,2356.233886,1.699396,60.001000,1278.535742,325.179907,12040984064,0,0,6.121575,6.166088,2033.116862,245.648067,8389,814787,1722911,3.114554,3.114554
+wbuffix_nodrop,4k,4k,1,414.744141,106174.680422,24.301861,2.167092,300.359579,69.120000,13434.880000,16908.288000,301.201599,0.842020,60.001000,1274.286035,320.716162,12040984064,0,0,6.276949,6.297565,2015.765137,236.918231,8133,6370587,13406435,3.104427,3.104427
+wbuffix_nodrop,4k,4k,2,415.502930,106368.893852,24.346313,2.171056,299.800560,70.144000,13303.808000,16908.288000,300.651257,0.850697,60.001000,1272.479395,323.801611,12040984064,0,0,6.341670,6.362200,1992.748698,240.795287,8170,6382240,13471081,3.110714,3.110714
+wbuffix_nodrop,4k,4k,3,417.743164,106942.442926,24.481262,2.183090,298.191441,70.144000,13303.808000,17170.432000,299.041393,0.849952,60.010000,1271.960205,321.358008,12040984064,0,0,6.333402,6.354020,1995.562581,242.558205,8311,6417616,13724008,3.138490,3.138490
+wbuffix_nodrop,4k,16k,1,480.999023,30783.988268,28.186401,2.513492,1038.022001,222.208000,17694.720000,18481.152000,1039.254059,1.232058,60.006000,1287.867432,245.083618,12040984064,0,0,5.696374,5.696590,2217.289773,305.847343,11268,7388896,18809364,3.545626,3.545626
+wbuffix_nodrop,4k,16k,2,481.021484,30785.422673,28.190063,2.513819,1037.985228,222.208000,17694.720000,18481.152000,1039.207547,1.222319,60.011000,1288.532520,244.851978,12040984064,0,0,5.693162,5.693381,2217.735795,305.870359,11272,7389856,18816036,3.546198,3.546198
+wbuffix_nodrop,4k,16k,3,480.858398,30774.952511,28.181885,2.513089,1038.356268,222.208000,17694.720000,18481.152000,1039.564602,1.208333,60.014000,1288.332617,244.564771,12040984064,0,0,5.693097,5.693314,2217.750000,305.711466,11272,7387712,18818152,3.547223,3.547223
+wbuffix_nodrop,4k,32k,1,482.454102,15438.541528,28.272583,2.521177,2070.787029,444.416000,18219.008000,18743.296000,2072.462820,1.675792,60.008000,1290.641553,247.503369,12040984064,0,0,5.693038,5.693245,2217.772727,307.412378,11276,7411488,18802256,3.536907,3.536907
+wbuffix_nodrop,4k,32k,2,482.242188,15431.768195,28.263947,2.520407,2071.719447,444.416000,18219.008000,18743.296000,2073.377194,1.657747,60.016000,1290.946875,247.171655,12040984064,0,0,5.693209,5.693420,2217.767045,307.238407,11276,7409224,18804224,3.537948,3.537948
+wbuffix_nodrop,4k,32k,3,482.105469,15427.381190,28.254028,2.519523,2072.335555,444.416000,18219.008000,18743.296000,2073.970227,1.634673,60.012000,1290.562500,246.785425,12040984064,0,0,5.693451,5.693653,2217.772727,307.052331,11276,7406624,18807152,3.539234,3.539234
+wbuffix_nodrop,16k,4k,1,129.705078,33204.632947,7.600571,0.677773,962.636117,257.024000,14090.240000,15269.888000,963.509758,0.873642,60.005000,379.058301,58.142700,12040984064,0,0,5.914784,5.944689,535.575994,88.762874,7055,1992444,2400489,2.204796,8.819185
+wbuffix_nodrop,16k,4k,2,129.760742,33218.913018,7.603333,0.678019,962.223264,254.976000,13959.168000,15400.960000,963.090408,0.867144,60.001000,379.035547,58.343384,12040984064,0,0,5.911013,5.940904,535.598722,88.812070,7061,1993166,2402806,2.205522,8.822080
+wbuffix_nodrop,16k,4k,3,129.697266,33202.646623,7.599609,0.677687,962.699315,257.024000,14090.240000,15269.888000,963.566723,0.867408,60.001000,378.642969,58.192456,12040984064,0,0,5.914207,5.944163,535.609375,88.740870,7052,1992192,2399217,2.204310,8.817241
+wbuffix_nodrop,16k,16k,1,419.193359,26828.405720,24.562958,2.190375,1191.270901,246.784000,16711.680000,17956.864000,1192.519928,1.249026,60.002000,1280.556055,324.757324,12040984064,0,0,5.920972,5.942714,2143.232955,245.238210,8250,1609758,3394501,3.108703,3.108703
+wbuffix_nodrop,16k,16k,2,420.218750,26894.047460,24.625519,2.195954,1188.302654,246.784000,16908.288000,17956.864000,1189.597476,1.294822,60.008000,1280.481250,322.744922,12040984064,0,0,5.920850,5.942568,2143.198864,246.406447,8310,1613858,3421069,3.119808,3.119808
+wbuffix_nodrop,16k,16k,3,421.750977,26992.084784,24.716522,2.204069,1184.052978,246.784000,16908.288000,17956.864000,1185.275408,1.222431,60.011000,1280.323437,322.717505,12040984064,0,0,5.921050,5.942793,2143.167614,248.120655,8399,1619822,3460675,3.136454,3.136454
+wbuffix_nodrop,16k,32k,1,440.150391,14084.817783,25.794800,2.300224,2270.053876,464.896000,18219.008000,18743.296000,2271.685656,1.631780,60.011000,1285.850000,319.397363,12040984064,0,0,5.843336,5.864878,2173.000000,265.355505,9392,1690488,3898342,3.306045,3.306045
+wbuffix_nodrop,16k,32k,2,442.691406,14166.136208,25.943726,2.313504,2256.992831,464.896000,18219.008000,18743.296000,2258.667132,1.674301,60.011000,1285.865430,322.904028,12040984064,0,0,5.845501,5.867085,2172.034091,268.256209,9520,1700248,3954112,3.325609,3.325609
+wbuffix_nodrop,16k,32k,3,441.902344,14140.878868,25.896606,2.309302,2261.016160,464.896000,18219.008000,18743.296000,2262.675991,1.659831,60.009000,1285.853125,321.991016,12040984064,0,0,5.843275,5.864806,2173.000000,267.268985,9478,1697160,3935692,3.318987,3.318987
+wbuffix_nodrop,32k,4k,1,68.297852,17484.250525,4.001961,0.356871,1828.997847,577.536000,14483.456000,15400.960000,1829.975799,0.977952,60.002000,189.893750,32.784985,12040984064,0,0,6.061479,6.144004,256.082031,47.436044,7222,1049090,1190140,2.134450,17.075599
+wbuffix_nodrop,32k,4k,2,68.236328,17468.632842,3.999252,0.356629,1830.629704,569.344000,14483.456000,15400.960000,1831.593495,0.963791,60.015000,189.828906,32.324097,12040984064,0,0,6.061112,6.143710,256.088542,47.383753,7209,1048380,1187519,2.132718,17.061745
+wbuffix_nodrop,32k,4k,3,68.331055,17492.768595,4.004845,0.357128,1828.107287,569.344000,14483.456000,15532.032000,1829.075747,0.968460,60.016000,189.655078,32.785229,12040984064,0,0,6.061261,6.143886,256.074219,47.491310,7237,1049846,1193186,2.136534,17.092274
+wbuffix_nodrop,32k,16k,1,219.137695,14024.842961,12.843765,1.145329,2280.131635,536.576000,17694.720000,17956.864000,2281.387771,1.256136,60.017000,741.178125,82.053955,12040984064,0,0,6.063629,6.100835,1026.854167,129.459084,8241,841716,1658397,2.970257,5.940423
+wbuffix_nodrop,32k,16k,2,219.869141,14071.686857,12.885376,1.149040,2272.596578,536.576000,17694.720000,17956.864000,2273.826587,1.230009,60.011000,741.165625,82.599487,12040984064,0,0,6.064007,6.101138,1026.843750,130.249032,8332,844448,1678949,2.988221,5.976385
+wbuffix_nodrop,32k,16k,3,219.689453,14060.135968,12.875443,1.148154,2274.438362,536.576000,17432.576000,17956.864000,2275.689247,1.250885,60.014000,741.171875,81.829932,12040984064,0,0,6.063796,6.100865,1026.875000,130.057310,8296,843792,1670390,2.979623,5.959154
+wbuffix_nodrop,32k,32k,1,424.518555,13584.623590,24.874603,2.218166,2353.691890,522.240000,17694.720000,18219.008000,2355.361397,1.669507,60.001000,1277.778125,323.905225,12040984064,0,0,6.096136,6.140668,2032.765625,245.838406,8398,815091,1724901,3.116207,3.116207
+wbuffix_nodrop,32k,32k,2,424.844727,13595.056749,24.893707,2.219870,2351.873088,522.240000,17694.720000,18219.008000,2353.546356,1.673268,60.001000,1277.990625,321.330151,12040984064,0,0,6.095870,6.140373,2032.770833,246.186614,8418,815717,1729407,3.120107,3.120107
+wbuffix_nodrop,32k,32k,3,424.583984,13586.703324,24.884216,2.219023,2353.284186,522.240000,17694.720000,18219.008000,2354.957588,1.673402,60.015000,1278.262500,323.138062,12040984064,0,0,6.096105,6.140618,2032.776042,246.006664,8411,815406,1727911,3.119081,3.119081
+```
+
+### 11.1.5 조합별 집계 전체 (analysis/summary_agg.csv 와 같은 값)
+```csv
+variant,map,bs,n,bw_MiBps_mean,bw_MiBps_std,bw_MiBps_min,bw_MiBps_max,iops_mean,iops_std,iops_min,iops_max,written_GiB_mean,written_GiB_std,written_GiB_min,written_GiB_max,fill_ratio_mean,fill_ratio_std,fill_ratio_min,fill_ratio_max,clat_mean_us_mean,clat_mean_us_std,clat_mean_us_min,clat_mean_us_max,clat_p50_us_mean,clat_p50_us_std,clat_p50_us_min,clat_p50_us_max,clat_p99_us_mean,clat_p99_us_std,clat_p99_us_min,clat_p99_us_max,clat_p999_us_mean,clat_p999_us_std,clat_p999_us_min,clat_p999_us_max,lat_mean_us_mean,lat_mean_us_std,lat_mean_us_min,lat_mean_us_max,slat_mean_us_mean,slat_mean_us_std,slat_mean_us_min,slat_mean_us_max,runtime_s_mean,runtime_s_std,runtime_s_min,runtime_s_max,bw_first10s_MiBps_mean,bw_first10s_MiBps_std,bw_first10s_MiBps_min,bw_first10s_MiBps_max,bw_last20s_MiBps_mean,bw_last20s_MiBps_std,bw_last20s_MiBps_min,bw_last20s_MiBps_max,chmodel_msgs_mean,chmodel_msgs_std,chmodel_msgs_min,chmodel_msgs_max,kernel_warn_mean,kernel_warn_std,kernel_warn_min,kernel_warn_max,gc_onset_s_mean,gc_onset_s_std,gc_onset_s_min,gc_onset_s_max,gc_onset_last_part_s_mean,gc_onset_last_part_s_std,gc_onset_last_part_s_min,gc_onset_last_part_s_max,bw_pre_gc_MiBps_mean,bw_pre_gc_MiBps_std,bw_pre_gc_MiBps_min,bw_pre_gc_MiBps_max,bw_post_gc_MiBps_mean,bw_post_gc_MiBps_std,bw_post_gc_MiBps_min,bw_post_gc_MiBps_max,gc_cnt_mean,gc_cnt_std,gc_cnt_min,gc_cnt_max,ftl_host_pgs_mean,ftl_host_pgs_std,ftl_host_pgs_min,ftl_host_pgs_max,ftl_gc_pgs_mean,ftl_gc_pgs_std,ftl_gc_pgs_min,ftl_gc_pgs_max,waf_gc_mean,waf_gc_std,waf_gc_min,waf_gc_max,waf_total_mean,waf_total_std,waf_total_min,waf_total_max
+wbuffix_drop,4k,4k,3,417.603190,1.451731,415.944336,418.641602,106906.562879,371.716847,106481.802426,107172.397127,24.471551,0.084260,24.375000,24.530224,2.182224,0.007514,2.173614,2.187456,298.295764,1.040631,297.547593,299.484155,69.802667,0.591207,69.120000,70.144000,13391.189333,75.674454,13303.808000,13434.880000,17170.432000,0.000000,17170.432000,17170.432000,299.140657,1.041688,298.395443,300.330947,0.844894,0.004237,0.840040,0.847849,60.006333,0.004726,60.001000,60.010000,1272.818148,0.972234,1272.011865,1273.897803,320.506950,4.617800,316.223926,325.399072,0.000000,0.000000,0,0,0.000000,0.000000,0,0,6.340056,0.026358,6.313434,6.366142,6.360844,0.026344,6.334210,6.386889,2004.864231,9.459254,1995.506104,2014.421468,241.353811,1.996357,239.555384,243.501899,8301.333333,89.645599,8199,8366,6415070,22088.188706,6389760,6430451,13706843,161384.385107,13522725,13823810,3.136622,0.017837,3.116312,3.149742,3.136622,0.017837,3.116312,3.149742
+wbuffix_drop,4k,16k,3,480.825846,0.176327,480.629883,480.971680,30772.891427,11.311266,30760.319285,30782.243551,28.178589,0.011143,28.166138,28.187622,2.512795,0.000994,2.511685,2.513601,1038.408518,0.372807,1038.101158,1038.823219,222.208000,0.000000,222.208000,222.208000,17694.720000,0.000000,17694.720000,17694.720000,18481.152000,0.000000,18481.152000,18481.152000,1039.624179,0.385897,1039.307316,1040.053931,1.215662,0.013183,1.206158,1.230712,60.011000,0.001732,60.009000,60.012000,1288.349658,0.245838,1288.066553,1288.509229,244.492415,0.418792,244.111572,244.940918,0.000000,0.000000,0,0,0.000000,0.000000,0,0,5.723440,0.005001,5.719205,5.728957,5.723658,0.005007,5.719417,5.729182,2217.840347,0.266744,2217.666460,2218.147461,305.689375,0.199554,305.471707,305.863684,11270.666667,2.309401,11268,11272,7386848,2920.953269,7383584,7389216,18816276,2221.160057,18813820,18818144,3.547267,0.000767,3.546531,3.548061,3.547267,0.000767,3.546531,3.548061
+wbuffix_drop,4k,32k,3,482.302409,0.130086,482.183594,482.441406,15433.686282,4.153649,15429.895017,15438.126031,28.262278,0.005604,28.257690,28.268524,2.520258,0.000500,2.519849,2.520815,2071.488253,0.546440,2070.895245,2071.971445,444.416000,0.000000,444.416000,444.416000,18219.008000,0.000000,18219.008000,18219.008000,18743.296000,0.000000,18743.296000,18743.296000,2073.131989,0.551372,2072.537858,2073.627213,1.643736,0.011512,1.632827,1.655768,60.005000,0.004583,60.001000,60.010000,1290.595215,0.034082,1290.571875,1290.634326,247.090430,0.147177,246.998950,247.260205,0.000000,0.000000,0,0,0.000000,0.000000,0,0,5.725658,0.000284,5.725342,5.725890,5.725863,0.000287,5.725543,5.726097,2217.770833,0.003280,2217.767045,2217.772727,307.212010,0.102309,307.125770,307.325052,11276.000000,0.000000,11276,11276,7408787,1469.047764,7407584,7410424,18804995,1425.669433,18803408,18806168,3.538202,0.000696,3.537427,3.538772,3.538202,0.000696,3.537427,3.538772
+wbuffix_drop,16k,4k,3,129.851562,0.317332,129.583984,130.202148,33242.093609,81.309728,33173.580440,33331.944537,7.609230,0.018652,7.592957,7.629585,0.678545,0.001663,0.677094,0.680360,961.535089,2.350198,958.946465,963.534877,254.976000,0.000000,254.976000,254.976000,14133.930667,75.674454,14090.240000,14221.312000,15488.341333,75.674454,15400.960000,15532.032000,962.417993,2.355281,959.815795,964.403761,0.882904,0.023898,0.868884,0.910497,60.005667,0.005686,60.001000,60.012000,378.619629,0.125172,378.541699,378.764014,58.495345,0.749908,57.983398,59.356128,0.000000,0.000000,0,0,0.000000,0.000000,0,0,5.947487,0.002028,5.945426,5.949480,5.977329,0.002057,5.975239,5.979352,535.553977,0.075042,535.467330,535.598011,88.928108,0.348803,88.617447,89.305431,7078.333333,49.662192,7036,7133,1994714,4889.608982,1990448,2000050,2410153,20549.724726,2392641,2432776,2.208258,0.007336,2.202062,2.216358,8.833033,0.029342,8.808246,8.865430
+wbuffix_drop,16k,16k,3,420.331380,0.844476,419.475586,421.164062,26901.224863,54.053670,26846.440949,26954.517425,24.632497,0.046428,24.585205,24.678009,2.196576,0.004140,2.192359,2.200635,1188.032492,2.377653,1185.684693,1190.438915,246.101333,1.182413,244.736000,246.784000,16711.680000,0.000000,16711.680000,16711.680000,17956.864000,0.000000,17956.864000,17956.864000,1189.280575,2.381512,1186.933652,1191.695231,1.248083,0.008704,1.238974,1.256316,60.009000,0.007550,60.001000,60.016000,1279.582829,0.445502,1279.126416,1280.016553,323.504045,0.631990,322.802271,324.028271,0.000000,0.000000,0,0,0.000000,0.000000,0,0,5.956549,0.003971,5.953646,5.961075,5.978227,0.004004,5.975280,5.982786,2142.131747,1.408066,2140.532759,2143.186346,246.675608,1.006178,245.692867,247.703689,8320.666667,49.084960,8270,8368,1614315,3042.677987,1611216,1617298,3426085,22092.669968,3403230,3447327,3.122302,0.009690,3.112212,3.131535,3.122302,0.009690,3.112212,3.131535
+wbuffix_drop,16k,32k,3,440.637370,0.564766,440.205078,441.276367,14100.403882,18.083196,14086.565224,14120.864652,25.819041,0.033112,25.793701,25.856506,2.302385,0.002953,2.300126,2.305726,2267.517307,2.897781,2264.239822,2269.739746,464.896000,0.000000,464.896000,464.896000,18219.008000,0.000000,18219.008000,18219.008000,18743.296000,0.000000,18743.296000,18743.296000,2269.184907,2.899062,2265.905181,2271.405380,1.667600,0.003646,1.665359,1.671808,60.001000,0.000000,60.001000,60.001000,1285.860042,0.011311,1285.853125,1285.873096,320.661125,1.819385,318.918530,322.548633,0.000000,0.000000,0,0,0.000000,0.000000,0,0,5.875078,0.000259,5.874799,5.875311,5.896624,0.000237,5.896365,5.896829,2173.058712,0.070586,2172.977273,2173.102273,265.946500,0.498904,265.588186,266.516315,9408.000000,34.117444,9380,9446,1692077,2170.019662,1690416,1694532,3904995,15225.394883,3892398,3921914,3.307807,0.006047,3.302627,3.314453,3.307807,0.006047,3.302627,3.314453
+wbuffix_drop,32k,4k,3,68.255859,0.106816,68.140625,68.351562,17473.608927,27.369626,17444.046329,17498.066796,3.999925,0.006310,3.992958,4.005257,0.356689,0.000563,0.356068,0.357164,1830.125021,2.882042,1827.563631,1833.245723,569.344000,0.000000,569.344000,569.344000,14396.074667,75.674454,14352.384000,14483.456000,15400.960000,0.000000,15400.960000,15400.960000,1831.099710,2.871238,1828.540051,1834.204401,0.974688,0.015219,0.958678,0.988967,60.008000,0.006083,60.004000,60.015000,189.709961,0.043774,189.659619,189.739062,32.512256,0.229828,32.297266,32.754492,0.000000,0.000000,0,0,0.000000,0.000000,0,0,6.093869,0.000308,6.093524,6.094118,6.176181,0.000335,6.175818,6.176477,256.095920,0.006961,256.089844,256.103516,47.396105,0.120254,47.263138,47.497242,7210.666667,30.105371,7177,7235,1048556,1654.194769,1046730,1049954,1187740,6062.132161,1180946,1192596,2.132735,0.004001,2.128224,2.135855,17.061876,0.032007,17.025793,17.086844
+wbuffix_drop,32k,16k,3,219.511068,0.139510,219.351562,219.610352,14048.746052,8.916347,14038.555100,14055.110237,12.864655,0.007058,12.856537,12.869339,1.147192,0.000629,1.146468,1.147609,2276.244736,1.442932,2275.204359,2277.891984,536.576000,0.000000,536.576000,536.576000,17519.957333,151.348909,17432.576000,17694.720000,17956.864000,0.000000,17956.864000,17956.864000,2277.514885,1.436680,2276.490396,2279.157114,1.270149,0.014067,1.259279,1.286037,60.012333,0.005508,60.007000,60.018000,741.367497,0.177993,741.249365,741.572217,82.283162,0.536635,81.875391,82.891113,0.000000,0.000000,0,0,0.000000,0.000000,0,0,6.091899,0.003243,6.089876,6.095640,6.128903,0.003175,6.126930,6.132565,1026.949110,0.057436,1026.882812,1026.983805,129.859773,0.126760,129.714410,129.947293,8279.000000,19.000000,8260,8298,843073.333333,467.341774,842535,843375,1666757,4488.711656,1662417,1671381,2.977000,0.004500,2.973113,2.981930,5.953827,0.009068,5.946008,5.963767
+wbuffix_drop,32k,32k,3,424.263021,0.442190,423.780273,424.648438,13576.439450,14.148789,13560.991868,13588.769474,24.862518,0.026996,24.834229,24.888000,2.217088,0.002407,2.214566,2.219361,2355.090051,2.453522,2352.961947,2357.773717,526.336000,3.547240,522.240000,528.384000,17519.957333,151.348909,17432.576000,17694.720000,18219.008000,0.000000,18219.008000,18219.008000,2356.773062,2.460182,2354.627188,2359.458113,1.683011,0.017120,1.665241,1.699396,60.008000,0.007000,60.001000,60.015000,1278.176400,0.378518,1277.781250,1278.535742,322.329793,2.497568,320.523315,325.179907,0.000000,0.000000,0,0,0.000000,0.000000,0,0,6.123494,0.003089,6.121575,6.127057,6.168032,0.003077,6.166088,6.171579,2033.002333,0.200488,2032.770833,2033.119303,245.601071,0.520925,245.058241,246.096906,8386.000000,24.637370,8360,8409,814695.000000,884.595388,813768,815530,1722236,5435.556304,1716494,1727302,3.113961,0.004378,3.109316,3.118012,3.113961,0.004378,3.109316,3.118012
+wbuffix_nodrop,4k,4k,3,415.996745,1.559303,414.744141,417.743164,106495.339067,399.194326,106174.680422,106942.442926,24.376479,0.093427,24.301861,24.481262,2.173746,0.008331,2.167092,2.183090,299.450527,1.125654,298.191441,300.359579,69.802667,0.591207,69.120000,70.144000,13347.498667,75.674454,13303.808000,13434.880000,16995.669333,151.348909,16908.288000,17170.432000,300.298083,1.122574,299.041393,301.201599,0.847556,0.004809,0.842020,0.850697,60.004000,0.005196,60.001000,60.010000,1272.908545,1.220860,1271.960205,1274.286035,321.958594,1.628044,320.716162,323.801611,0.000000,0.000000,0,0,0.000000,0.000000,0,0,6.317340,0.035223,6.276949,6.341670,6.337928,0.035194,6.297565,6.362200,2001.358805,12.555328,1992.748698,2015.765137,240.090574,2.885271,236.918231,242.558205,8204.666667,93.927277,8133,8311,6390148,24491.429202,6370587,6417616,13533841,167831.156709,13406435,13724008,3.117877,0.018126,3.104427,3.138490,3.117877,0.018126,3.104427,3.138490
+wbuffix_nodrop,4k,16k,3,480.959635,0.088390,480.858398,481.021484,30781.454484,5.676365,30774.952511,30785.422673,28.186117,0.004097,28.181885,28.190063,2.513467,0.000365,2.513089,2.513819,1038.121166,0.204433,1037.985228,1038.356268,222.208000,0.000000,222.208000,222.208000,17694.720000,0.000000,17694.720000,17694.720000,18481.152000,0.000000,18481.152000,18481.152000,1039.342069,0.194117,1039.207547,1039.564602,1.220903,0.011925,1.208333,1.232058,60.010333,0.004041,60.006000,60.014000,1288.244189,0.341248,1287.867432,1288.532520,244.833455,0.259919,244.564771,245.083618,0.000000,0.000000,0,0,0.000000,0.000000,0,0,5.694211,0.001873,5.693097,5.696374,5.694428,0.001872,5.693314,5.696590,2217.591856,0.261708,2217.289773,2217.750000,305.809723,0.085867,305.711466,305.870359,11270.666667,2.309401,11268,11272,7388821,1073.948478,7387712,7389856,18814517,4586.610659,18809364,18818152,3.546349,0.000809,3.545626,3.547223,3.546349,0.000809,3.545626,3.547223
+wbuffix_nodrop,4k,32k,3,482.267253,0.175663,482.105469,482.454102,15432.563638,5.622529,15427.381190,15438.541528,28.263519,0.009285,28.254028,28.272583,2.520369,0.000828,2.519523,2.521177,2071.614010,0.779629,2070.787029,2072.335555,444.416000,0.000000,444.416000,444.416000,18219.008000,0.000000,18219.008000,18219.008000,18743.296000,0.000000,18743.296000,18743.296000,2073.270081,0.759390,2072.462820,2073.970227,1.656070,0.020611,1.634673,1.675792,60.012000,0.004000,60.008000,60.016000,1290.716976,0.202984,1290.562500,1290.946875,247.153483,0.359317,246.785425,247.503369,0.000000,0.000000,0,0,0.000000,0.000000,0,0,5.693233,0.000208,5.693038,5.693451,5.693439,0.000205,5.693245,5.693653,2217.770833,0.003280,2217.767045,2217.772727,307.234372,0.180057,307.052331,307.412378,11276.000000,0.000000,11276,11276,7409112,2433.933442,7406624,7411488,18804544,2463.636337,18802256,18807152,3.538030,0.001166,3.536907,3.539234,3.538030,0.001166,3.536907,3.539234
+wbuffix_nodrop,16k,4k,3,129.721029,0.034614,129.697266,129.760742,33208.730863,8.873758,33202.646623,33218.913018,7.601171,0.001933,7.599609,7.603333,0.677826,0.000172,0.677687,0.678019,962.519565,0.258543,962.223264,962.699315,256.341333,1.182413,254.976000,257.024000,14046.549333,75.674454,13959.168000,14090.240000,15313.578667,75.674454,15269.888000,15400.960000,963.388963,0.260120,963.090408,963.566723,0.869398,0.003677,0.867144,0.873642,60.002333,0.002309,60.001000,60.005000,378.912272,0.233501,378.642969,379.058301,58.226180,0.104506,58.142700,58.343384,0.000000,0.000000,0,0,0.000000,0.000000,0,0,5.913335,0.002031,5.911013,5.914784,5.943252,0.002050,5.940904,5.944689,535.594697,0.017050,535.575994,535.609375,88.771938,0.036455,88.740870,88.812070,7056.000000,4.582576,7052,7061,1992601,505.546569,1992192,1993166,2400837,1819.679184,2399217,2402806,2.204876,0.000610,2.204310,2.205522,8.819502,0.002435,8.817241,8.822080
+wbuffix_nodrop,16k,16k,3,420.387695,1.287151,419.193359,421.750977,26904.845988,82.372114,26828.405720,26992.084784,24.635000,0.077220,24.562958,24.716522,2.196800,0.006886,2.190375,2.204069,1187.875511,3.627871,1184.052978,1191.270901,246.784000,0.000000,246.784000,246.784000,16842.752000,113.511682,16711.680000,16908.288000,17956.864000,0.000000,17956.864000,17956.864000,1189.130937,3.644724,1185.275408,1192.519928,1.255426,0.036618,1.222431,1.294822,60.007000,0.004583,60.002000,60.011000,1280.453581,0.118751,1280.323437,1280.556055,323.406584,1.169856,322.717505,324.757324,0.000000,0.000000,0,0,0.000000,0.000000,0,0,5.920957,0.000101,5.920850,5.921050,5.942692,0.000114,5.942568,5.942793,2143.199811,0.032681,2143.167614,2143.232955,246.588437,1.449815,245.238210,248.120655,8319.666667,74.968882,8250,8399,1614479,5060.688227,1609758,1619822,3425415,33300.380719,3394501,3460675,3.121655,0.013967,3.108703,3.136454,3.121655,0.013967,3.108703,3.136454
+wbuffix_nodrop,16k,32k,3,441.581380,1.300559,440.150391,442.691406,14130.610953,41.620237,14084.817783,14166.136208,25.878377,0.076118,25.794800,25.943726,2.307677,0.006788,2.300224,2.313504,2262.687622,6.689026,2256.992831,2270.053876,464.896000,0.000000,464.896000,464.896000,18219.008000,0.000000,18219.008000,18219.008000,18743.296000,0.000000,18743.296000,18743.296000,2264.342926,6.667421,2258.667132,2271.685656,1.655304,0.021619,1.631780,1.674301,60.010333,0.001155,60.009000,60.011000,1285.856185,0.008157,1285.850000,1285.865430,321.430802,1.819218,319.397363,322.904028,0.000000,0.000000,0,0,0.000000,0.000000,0,0,5.844037,0.001268,5.843275,5.845501,5.865590,0.001295,5.864806,5.867085,2172.678030,0.557668,2172.034091,2173.000000,266.960233,1.474794,265.355505,268.256209,9463.333333,65.248244,9392,9520,1695965,4988.468837,1690488,1700248,3929382,28415.406033,3898342,3954112,3.316880,0.009950,3.306045,3.325609,3.316880,0.009950,3.306045,3.325609
+wbuffix_nodrop,32k,4k,3,68.288411,0.048064,68.236328,68.331055,17481.883987,12.240671,17468.632842,17492.768595,4.002019,0.002797,3.999252,4.004845,0.356876,0.000249,0.356629,0.357128,1829.244946,1.279234,1828.107287,1830.629704,572.074667,4.729653,569.344000,577.536000,14483.456000,0.000000,14483.456000,14483.456000,15444.650667,75.674454,15400.960000,15532.032000,1830.215014,1.275806,1829.075747,1831.593495,0.970068,0.007216,0.963791,0.977952,60.011000,0.007810,60.002000,60.016000,189.792578,0.123413,189.655078,189.893750,32.631437,0.266165,32.324097,32.785229,0.000000,0.000000,0,0,0.000000,0.000000,0,0,6.061284,0.000185,6.061112,6.061479,6.143867,0.000148,6.143710,6.144004,256.081597,0.007171,256.074219,256.088542,47.437036,0.053786,47.383753,47.491310,7222.666667,14.011900,7209,7237,1049105,733.120272,1048380,1049846,1190282,2836.154850,1187519,1193186,2.134567,0.001911,2.132718,2.136534,17.076539,0.015287,17.061745,17.092274
+wbuffix_nodrop,32k,16k,3,219.565430,0.381168,219.137695,219.869141,14052.221929,24.404132,14024.842961,14071.686857,12.868195,0.021732,12.843765,12.885376,1.147507,0.001938,1.145329,1.149040,2275.722191,3.928159,2272.596578,2280.131635,536.576000,0.000000,536.576000,536.576000,17607.338667,151.348909,17432.576000,17694.720000,17956.864000,0.000000,17956.864000,17956.864000,2276.967868,3.939420,2273.826587,2281.387771,1.245677,0.013820,1.230009,1.256136,60.014000,0.003000,60.011000,60.017000,741.171875,0.006250,741.165625,741.178125,82.161125,0.395813,81.829932,82.599487,0.000000,0.000000,0,0,0.000000,0.000000,0,0,6.063811,0.000189,6.063629,6.064007,6.100946,0.000167,6.100835,6.101138,1026.857639,0.015912,1026.843750,1026.875000,129.921809,0.412038,129.459084,130.249032,8289.666667,45.829394,8241,8332,843318.666667,1426.179979,841716,844448,1669245,10323.704390,1658397,1678949,2.979367,0.008984,2.970257,2.988221,5.958654,0.017986,5.940423,5.976385
+wbuffix_nodrop,32k,32k,3,424.649089,0.172557,424.518555,424.844727,13588.794554,5.522014,13584.623590,13595.056749,24.884176,0.009552,24.874603,24.893707,2.219020,0.000852,2.218166,2.219870,2352.949721,0.954416,2351.873088,2353.691890,522.240000,0.000000,522.240000,522.240000,17694.720000,0.000000,17694.720000,17694.720000,18219.008000,0.000000,18219.008000,18219.008000,2354.621780,0.952979,2353.546356,2355.361397,1.672059,0.002211,1.669507,1.673402,60.005667,0.008083,60.001000,60.015000,1278.010417,0.242793,1277.778125,1278.262500,322.791146,1.322125,321.330151,323.905225,0.000000,0.000000,0,0,0.000000,0.000000,0,0,6.096037,0.000145,6.095870,6.096136,6.140553,0.000158,6.140373,6.140668,2032.770833,0.005208,2032.765625,2032.776042,246.010561,0.174137,245.838406,246.186614,8409.000000,10.148892,8398,8418,815404.666667,313.002130,815091,815717,1727406,2295.000073,1724901,1729407,3.118465,0.002022,3.116207,3.120107,3.118465,0.002022,3.116207,3.120107
+```
+
+### 11.1.6 파티션별 GC 로그 (회차마다: 첫 GC 줄의 fio 시작 기준 시각·내용, rmmod 통계)
+```
+[wbuffix_drop map4k bs4k r1]
+  +6.341s first GC part=0 victim line=343 vpc=1898 ipc=150 free_lines=2 host_pgs=778240
+  +6.343s first GC part=2 victim line=340 vpc=1889 ipc=159 free_lines=2 host_pgs=778240
+  +6.360s first GC part=3 victim line=194 vpc=1892 ipc=156 free_lines=2 host_pgs=778240
+  +6.361s first GC part=1 victim line=106 vpc=1897 ipc=151 free_lines=2 host_pgs=778240
+  stats part=0 host_pgs=1597461 gc_pgs=3381145 gc_cnt=2050 free_lines=2
+  stats part=1 host_pgs=1597735 gc_pgs=3380899 gc_cnt=2050 free_lines=2
+  stats part=2 host_pgs=1597469 gc_pgs=3389226 gc_cnt=2054 free_lines=2
+  stats part=3 host_pgs=1597095 gc_pgs=3371455 gc_cnt=2045 free_lines=2
+  (kernel) [67210.965607] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [67211.032437] NVMeVirt: Virtual NVMe device closed
+[wbuffix_drop map4k bs4k r2]
+  +6.366s first GC part=0 victim line=343 vpc=1898 ipc=150 free_lines=2 host_pgs=778240
+  +6.368s first GC part=2 victim line=340 vpc=1890 ipc=158 free_lines=2 host_pgs=778240
+  +6.386s first GC part=3 victim line=194 vpc=1893 ipc=155 free_lines=2 host_pgs=778240
+  +6.387s first GC part=1 victim line=106 vpc=1897 ipc=151 free_lines=2 host_pgs=778240
+  stats part=0 host_pgs=1607664 gc_pgs=3452870 gc_cnt=2090 free_lines=3
+  stats part=1 host_pgs=1607796 gc_pgs=3452779 gc_cnt=2090 free_lines=2
+  stats part=2 host_pgs=1607727 gc_pgs=3466993 gc_cnt=2097 free_lines=2
+  stats part=3 host_pgs=1607264 gc_pgs=3451168 gc_cnt=2089 free_lines=2
+  (kernel) [68407.967322] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [68408.035617] NVMeVirt: Virtual NVMe device closed
+[wbuffix_drop map4k bs4k r3]
+  +6.313s first GC part=0 victim line=343 vpc=1898 ipc=150 free_lines=2 host_pgs=778240
+  +6.315s first GC part=2 victim line=340 vpc=1889 ipc=159 free_lines=2 host_pgs=778240
+  +6.333s first GC part=3 victim line=194 vpc=1892 ipc=156 free_lines=2 host_pgs=778240
+  +6.334s first GC part=1 victim line=106 vpc=1897 ipc=151 free_lines=2 host_pgs=778240
+  stats part=0 host_pgs=1606313 gc_pgs=3445950 gc_cnt=2086 free_lines=2
+  stats part=1 host_pgs=1606458 gc_pgs=3441754 gc_cnt=2084 free_lines=2
+  stats part=2 host_pgs=1606306 gc_pgs=3452131 gc_cnt=2089 free_lines=2
+  stats part=3 host_pgs=1605923 gc_pgs=3434158 gc_cnt=2080 free_lines=2
+  (kernel) [69745.871919] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [69745.938981] NVMeVirt: Virtual NVMe device closed
+[wbuffix_drop map4k bs16k r1]
+  +5.722s first GC part=0 victim line=291 vpc=1902 ipc=146 free_lines=2 host_pgs=778240
+  +5.722s first GC part=1 victim line=291 vpc=1902 ipc=146 free_lines=2 host_pgs=778240
+  +5.722s first GC part=2 victim line=291 vpc=1902 ipc=146 free_lines=2 host_pgs=778240
+  +5.722s first GC part=3 victim line=291 vpc=1902 ipc=146 free_lines=2 host_pgs=778240
+  stats part=0 host_pgs=1845896 gc_pgs=4703455 gc_cnt=2817 free_lines=2
+  stats part=1 host_pgs=1845896 gc_pgs=4703455 gc_cnt=2817 free_lines=2
+  stats part=2 host_pgs=1845896 gc_pgs=4703455 gc_cnt=2817 free_lines=2
+  stats part=3 host_pgs=1845896 gc_pgs=4703455 gc_cnt=2817 free_lines=2
+  (kernel) [67351.932797] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [67352.001471] NVMeVirt: Virtual NVMe device closed
+[wbuffix_drop map4k bs16k r2]
+  +5.729s first GC part=0 victim line=291 vpc=1902 ipc=146 free_lines=2 host_pgs=778240
+  +5.729s first GC part=1 victim line=291 vpc=1902 ipc=146 free_lines=2 host_pgs=778240
+  +5.729s first GC part=2 victim line=291 vpc=1902 ipc=146 free_lines=2 host_pgs=778240
+  +5.729s first GC part=3 victim line=291 vpc=1902 ipc=146 free_lines=2 host_pgs=778240
+  stats part=0 host_pgs=1847304 gc_pgs=4704216 gc_cnt=2818 free_lines=2
+  stats part=1 host_pgs=1847304 gc_pgs=4704216 gc_cnt=2818 free_lines=2
+  stats part=2 host_pgs=1847304 gc_pgs=4704216 gc_cnt=2818 free_lines=2
+  stats part=3 host_pgs=1847304 gc_pgs=4704216 gc_cnt=2818 free_lines=2
+  (kernel) [68548.916657] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [68548.984246] NVMeVirt: Virtual NVMe device closed
+[wbuffix_drop map4k bs16k r3]
+  +5.719s first GC part=0 victim line=291 vpc=1902 ipc=146 free_lines=2 host_pgs=778240
+  +5.719s first GC part=1 victim line=291 vpc=1902 ipc=146 free_lines=2 host_pgs=778240
+  +5.719s first GC part=2 victim line=291 vpc=1902 ipc=146 free_lines=2 host_pgs=778240
+  +5.719s first GC part=3 victim line=291 vpc=1902 ipc=146 free_lines=2 host_pgs=778240
+  stats part=0 host_pgs=1846936 gc_pgs=4704536 gc_cnt=2818 free_lines=2
+  stats part=1 host_pgs=1846936 gc_pgs=4704536 gc_cnt=2818 free_lines=2
+  stats part=2 host_pgs=1846936 gc_pgs=4704536 gc_cnt=2818 free_lines=2
+  stats part=3 host_pgs=1846936 gc_pgs=4704536 gc_cnt=2818 free_lines=2
+  (kernel) [69886.827189] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [69886.895529] NVMeVirt: Virtual NVMe device closed
+[wbuffix_drop map4k bs32k r1]
+  +5.726s first GC part=0 victim line=26 vpc=1880 ipc=168 free_lines=2 host_pgs=778240
+  +5.726s first GC part=1 victim line=26 vpc=1880 ipc=168 free_lines=2 host_pgs=778240
+  +5.726s first GC part=2 victim line=26 vpc=1880 ipc=168 free_lines=2 host_pgs=778240
+  +5.726s first GC part=3 victim line=26 vpc=1880 ipc=168 free_lines=2 host_pgs=778240
+  stats part=0 host_pgs=1852088 gc_pgs=4701352 gc_cnt=2819 free_lines=2
+  stats part=1 host_pgs=1852088 gc_pgs=4701352 gc_cnt=2819 free_lines=2
+  stats part=2 host_pgs=1852088 gc_pgs=4701352 gc_cnt=2819 free_lines=2
+  stats part=3 host_pgs=1852088 gc_pgs=4701352 gc_cnt=2819 free_lines=2
+  (kernel) [67492.853264] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [67492.920608] NVMeVirt: Virtual NVMe device closed
+[wbuffix_drop map4k bs32k r2]
+  +5.726s first GC part=0 victim line=26 vpc=1880 ipc=168 free_lines=2 host_pgs=778240
+  +5.726s first GC part=1 victim line=26 vpc=1880 ipc=168 free_lines=2 host_pgs=778240
+  +5.726s first GC part=2 victim line=26 vpc=1880 ipc=168 free_lines=2 host_pgs=778240
+  +5.726s first GC part=3 victim line=26 vpc=1880 ipc=168 free_lines=2 host_pgs=778240
+  stats part=0 host_pgs=1852606 gc_pgs=4700852 gc_cnt=2819 free_lines=2
+  stats part=1 host_pgs=1852606 gc_pgs=4700852 gc_cnt=2819 free_lines=2
+  stats part=2 host_pgs=1852606 gc_pgs=4700852 gc_cnt=2819 free_lines=2
+  stats part=3 host_pgs=1852606 gc_pgs=4700852 gc_cnt=2819 free_lines=2
+  (kernel) [68689.852628] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [68689.919706] NVMeVirt: Virtual NVMe device closed
+[wbuffix_drop map4k bs32k r3]
+  +5.725s first GC part=0 victim line=26 vpc=1880 ipc=168 free_lines=2 host_pgs=778240
+  +5.725s first GC part=1 victim line=26 vpc=1880 ipc=168 free_lines=2 host_pgs=778240
+  +5.725s first GC part=2 victim line=26 vpc=1880 ipc=168 free_lines=2 host_pgs=778240
+  +5.726s first GC part=3 victim line=26 vpc=1880 ipc=168 free_lines=2 host_pgs=778240
+  stats part=0 host_pgs=1851896 gc_pgs=4701542 gc_cnt=2819 free_lines=2
+  stats part=1 host_pgs=1851896 gc_pgs=4701542 gc_cnt=2819 free_lines=2
+  stats part=2 host_pgs=1851896 gc_pgs=4701542 gc_cnt=2819 free_lines=2
+  stats part=3 host_pgs=1851896 gc_pgs=4701542 gc_cnt=2819 free_lines=2
+  (kernel) [70027.734447] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [70027.802898] NVMeVirt: Virtual NVMe device closed
+[wbuffix_drop map16k bs4k r1]
+  +5.949s first GC part=2 victim line=6 vpc=172 ipc=340 free_lines=2 host_pgs=194560
+  +5.961s first GC part=1 victim line=8 vpc=164 ipc=348 free_lines=2 host_pgs=194560
+  +5.978s first GC part=3 victim line=10 vpc=168 ipc=344 free_lines=2 host_pgs=194560
+  +5.979s first GC part=0 victim line=4 vpc=169 ipc=343 free_lines=2 host_pgs=194560
+  stats part=0 host_pgs=497541 gc_pgs=598809 gc_cnt=1760 free_lines=2
+  stats part=1 host_pgs=498557 gc_pgs=597295 gc_cnt=1759 free_lines=2
+  stats part=2 host_pgs=499565 gc_pgs=609569 gc_cnt=1785 free_lines=2
+  stats part=3 host_pgs=497981 gc_pgs=599370 gc_cnt=1762 free_lines=2
+  (kernel) [67633.700023] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [67633.727707] NVMeVirt: Virtual NVMe device closed
+[wbuffix_drop map16k bs4k r2]
+  +5.948s first GC part=2 victim line=6 vpc=171 ipc=341 free_lines=2 host_pgs=194560
+  +5.959s first GC part=1 victim line=8 vpc=164 ipc=348 free_lines=2 host_pgs=194560
+  +5.976s first GC part=3 victim line=10 vpc=168 ipc=344 free_lines=2 host_pgs=194560
+  +5.977s first GC part=0 victim line=4 vpc=169 ipc=343 free_lines=2 host_pgs=194560
+  stats part=0 host_pgs=499164 gc_pgs=605805 gc_cnt=1777 free_lines=2
+  stats part=1 host_pgs=500133 gc_pgs=605417 gc_cnt=1778 free_lines=2
+  stats part=2 host_pgs=501180 gc_pgs=615638 gc_cnt=1800 free_lines=2
+  stats part=3 host_pgs=499573 gc_pgs=605916 gc_cnt=1778 free_lines=2
+  (kernel) [68830.770185] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [68830.798021] NVMeVirt: Virtual NVMe device closed
+[wbuffix_drop map16k bs4k r3]
+  +5.945s first GC part=2 victim line=6 vpc=171 ipc=341 free_lines=2 host_pgs=194560
+  +5.957s first GC part=1 victim line=8 vpc=164 ipc=348 free_lines=2 host_pgs=194560
+  +5.974s first GC part=3 victim line=10 vpc=168 ipc=344 free_lines=2 host_pgs=194560
+  +5.975s first GC part=0 victim line=4 vpc=169 ipc=343 free_lines=2 host_pgs=194560
+  stats part=0 host_pgs=496732 gc_pgs=596463 gc_cnt=1754 free_lines=2
+  stats part=1 host_pgs=497751 gc_pgs=593955 gc_cnt=1751 free_lines=1
+  stats part=2 host_pgs=498772 gc_pgs=605714 gc_cnt=1776 free_lines=1
+  stats part=3 host_pgs=497193 gc_pgs=596509 gc_cnt=1755 free_lines=1
+  (kernel) [70168.575760] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [70168.603670] NVMeVirt: Virtual NVMe device closed
+[wbuffix_drop map16k bs16k r1]
+  +5.955s first GC part=0 victim line=135 vpc=468 ipc=44 free_lines=2 host_pgs=194560
+  +5.956s first GC part=1 victim line=144 vpc=465 ipc=47 free_lines=2 host_pgs=194560
+  +5.976s first GC part=2 victim line=218 vpc=466 ipc=46 free_lines=2 host_pgs=194560
+  +5.977s first GC part=3 victim line=182 vpc=466 ipc=46 free_lines=2 host_pgs=194560
+  stats part=0 host_pgs=403651 gc_pgs=859917 gc_cnt=2087 free_lines=2
+  stats part=1 host_pgs=403760 gc_pgs=859310 gc_cnt=2086 free_lines=2
+  stats part=2 host_pgs=403724 gc_pgs=855816 gc_cnt=2079 free_lines=2
+  stats part=3 host_pgs=403297 gc_pgs=852654 gc_cnt=2072 free_lines=2
+  (kernel) [67774.479930] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [67774.507678] NVMeVirt: Virtual NVMe device closed
+[wbuffix_drop map16k bs16k r2]
+  +5.954s first GC part=0 victim line=135 vpc=468 ipc=44 free_lines=2 host_pgs=194560
+  +5.955s first GC part=1 victim line=144 vpc=465 ipc=47 free_lines=2 host_pgs=194560
+  +5.975s first GC part=2 victim line=218 vpc=466 ipc=46 free_lines=2 host_pgs=194560
+  +5.975s first GC part=3 victim line=182 vpc=466 ipc=46 free_lines=2 host_pgs=194560
+  stats part=0 host_pgs=402842 gc_pgs=852545 gc_cnt=2071 free_lines=2
+  stats part=1 host_pgs=402977 gc_pgs=853962 gc_cnt=2074 free_lines=2
+  stats part=2 host_pgs=402935 gc_pgs=849927 gc_cnt=2066 free_lines=2
+  stats part=3 host_pgs=402462 gc_pgs=846796 gc_cnt=2059 free_lines=2
+  (kernel) [68971.595949] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [68971.623954] NVMeVirt: Virtual NVMe device closed
+[wbuffix_drop map16k bs16k r3]
+  +5.961s first GC part=0 victim line=135 vpc=468 ipc=44 free_lines=2 host_pgs=194560
+  +5.962s first GC part=1 victim line=144 vpc=465 ipc=47 free_lines=2 host_pgs=194560
+  +5.983s first GC part=2 victim line=218 vpc=466 ipc=46 free_lines=2 host_pgs=194560
+  +5.983s first GC part=3 victim line=182 vpc=466 ipc=46 free_lines=2 host_pgs=194560
+  stats part=0 host_pgs=404414 gc_pgs=864271 gc_cnt=2097 free_lines=2
+  stats part=1 host_pgs=404457 gc_pgs=865274 gc_cnt=2099 free_lines=3
+  stats part=2 host_pgs=404408 gc_pgs=859203 gc_cnt=2087 free_lines=2
+  stats part=3 host_pgs=404019 gc_pgs=858579 gc_cnt=2085 free_lines=2
+  (kernel) [70309.330051] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [70309.357946] NVMeVirt: Virtual NVMe device closed
+[wbuffix_drop map16k bs32k r1]
+  +5.875s first GC part=0 victim line=152 vpc=465 ipc=47 free_lines=2 host_pgs=194560
+  +5.875s first GC part=1 victim line=152 vpc=465 ipc=47 free_lines=2 host_pgs=194560
+  +5.897s first GC part=2 victim line=344 vpc=469 ipc=43 free_lines=2 host_pgs=194560
+  +5.897s first GC part=3 victim line=344 vpc=469 ipc=43 free_lines=2 host_pgs=194560
+  stats part=0 host_pgs=422954 gc_pgs=976319 gc_cnt=2352 free_lines=2
+  stats part=1 host_pgs=422954 gc_pgs=976319 gc_cnt=2352 free_lines=2
+  stats part=2 host_pgs=422687 gc_pgs=974017 gc_cnt=2347 free_lines=2
+  stats part=3 host_pgs=422687 gc_pgs=974017 gc_cnt=2347 free_lines=2
+  (kernel) [67915.230966] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [67915.258758] NVMeVirt: Virtual NVMe device closed
+[wbuffix_drop map16k bs32k r2]
+  +5.875s first GC part=0 victim line=152 vpc=465 ipc=47 free_lines=2 host_pgs=194560
+  +5.875s first GC part=1 victim line=152 vpc=465 ipc=47 free_lines=2 host_pgs=194560
+  +5.896s first GC part=2 victim line=344 vpc=469 ipc=43 free_lines=2 host_pgs=194560
+  +5.896s first GC part=3 victim line=344 vpc=469 ipc=43 free_lines=2 host_pgs=194560
+  stats part=0 host_pgs=422750 gc_pgs=975003 gc_cnt=2349 free_lines=2
+  stats part=1 host_pgs=422750 gc_pgs=975003 gc_cnt=2349 free_lines=2
+  stats part=2 host_pgs=422458 gc_pgs=971196 gc_cnt=2341 free_lines=2
+  stats part=3 host_pgs=422458 gc_pgs=971196 gc_cnt=2341 free_lines=2
+  (kernel) [69112.345869] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [69112.374182] NVMeVirt: Virtual NVMe device closed
+[wbuffix_drop map16k bs32k r3]
+  +5.875s first GC part=0 victim line=152 vpc=465 ipc=47 free_lines=2 host_pgs=194560
+  +5.875s first GC part=1 victim line=152 vpc=465 ipc=47 free_lines=2 host_pgs=194560
+  +5.897s first GC part=2 victim line=344 vpc=469 ipc=43 free_lines=2 host_pgs=194560
+  +5.897s first GC part=3 victim line=344 vpc=469 ipc=43 free_lines=2 host_pgs=194560
+  stats part=0 host_pgs=423763 gc_pgs=981646 gc_cnt=2364 free_lines=2
+  stats part=1 host_pgs=423763 gc_pgs=981646 gc_cnt=2364 free_lines=2
+  stats part=2 host_pgs=423503 gc_pgs=979311 gc_cnt=2359 free_lines=2
+  stats part=3 host_pgs=423503 gc_pgs=979311 gc_cnt=2359 free_lines=2
+  (kernel) [70450.077391] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [70450.105079] NVMeVirt: Virtual NVMe device closed
+[wbuffix_drop map32k bs4k r1]
+  +6.094s first GC part=0 victim line=8 vpc=79 ipc=177 free_lines=2 host_pgs=97280
+  +6.131s first GC part=1 victim line=34 vpc=77 ipc=179 free_lines=2 host_pgs=97280
+  +6.154s first GC part=2 victim line=26 vpc=82 ipc=174 free_lines=2 host_pgs=97280
+  +6.176s first GC part=3 victim line=29 vpc=80 ipc=176 free_lines=2 host_pgs=97280
+  stats part=0 host_pgs=262618 gc_pgs=296286 gc_cnt=1802 free_lines=2
+  stats part=1 host_pgs=262685 gc_pgs=302364 gc_cnt=1826 free_lines=1
+  stats part=2 host_pgs=262145 gc_pgs=297762 gc_cnt=1806 free_lines=1
+  stats part=3 host_pgs=261537 gc_pgs=293267 gc_cnt=1786 free_lines=2
+  (kernel) [68055.993138] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [68056.013857] NVMeVirt: Virtual NVMe device closed
+[wbuffix_drop map32k bs4k r2]
+  +6.094s first GC part=0 victim line=8 vpc=79 ipc=177 free_lines=2 host_pgs=97280
+  +6.130s first GC part=1 victim line=34 vpc=77 ipc=179 free_lines=2 host_pgs=97280
+  +6.154s first GC part=2 victim line=26 vpc=82 ipc=174 free_lines=2 host_pgs=97280
+  +6.176s first GC part=3 victim line=29 vpc=80 ipc=176 free_lines=2 host_pgs=97280
+  stats part=0 host_pgs=262016 gc_pgs=294586 gc_cnt=1793 free_lines=2
+  stats part=1 host_pgs=262111 gc_pgs=299091 gc_cnt=1811 free_lines=2
+  stats part=2 host_pgs=261597 gc_pgs=295764 gc_cnt=1796 free_lines=2
+  stats part=3 host_pgs=261006 gc_pgs=291505 gc_cnt=1777 free_lines=2
+  (kernel) [69253.121868] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [69253.142720] NVMeVirt: Virtual NVMe device closed
+[wbuffix_drop map32k bs4k r3]
+  +6.094s first GC part=0 victim line=6 vpc=79 ipc=177 free_lines=2 host_pgs=97280
+  +6.131s first GC part=1 victim line=34 vpc=77 ipc=179 free_lines=2 host_pgs=97280
+  +6.154s first GC part=2 victim line=26 vpc=82 ipc=174 free_lines=2 host_pgs=97280
+  +6.176s first GC part=3 victim line=29 vpc=80 ipc=176 free_lines=2 host_pgs=97280
+  stats part=0 host_pgs=262880 gc_pgs=297330 gc_cnt=1807 free_lines=2
+  stats part=1 host_pgs=262942 gc_pgs=302618 gc_cnt=1828 free_lines=1
+  stats part=2 host_pgs=262387 gc_pgs=298836 gc_cnt=1811 free_lines=2
+  stats part=3 host_pgs=261745 gc_pgs=293812 gc_cnt=1789 free_lines=2
+  (kernel) [70590.852727] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [70590.873557] NVMeVirt: Virtual NVMe device closed
+[wbuffix_drop map32k bs16k r1]
+  +6.090s first GC part=1 victim line=12 vpc=86 ipc=170 free_lines=2 host_pgs=97280
+  +6.115s first GC part=2 victim line=0 vpc=84 ipc=172 free_lines=2 host_pgs=97280
+  +6.126s first GC part=0 victim line=8 vpc=84 ipc=172 free_lines=2 host_pgs=97280
+  +6.127s first GC part=3 victim line=47 vpc=83 ipc=173 free_lines=2 host_pgs=97280
+  stats part=0 host_pgs=210841 gc_pgs=416435 gc_cnt=2069 free_lines=2
+  stats part=1 host_pgs=210968 gc_pgs=417328 gc_cnt=2073 free_lines=1
+  stats part=2 host_pgs=210946 gc_pgs=419142 gc_cnt=2080 free_lines=1
+  stats part=3 host_pgs=210620 gc_pgs=413569 gc_cnt=2057 free_lines=2
+  (kernel) [68196.726353] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [68196.747099] NVMeVirt: Virtual NVMe device closed
+[wbuffix_drop map32k bs16k r2]
+  +6.096s first GC part=1 victim line=12 vpc=86 ipc=170 free_lines=2 host_pgs=97280
+  +6.121s first GC part=2 victim line=0 vpc=84 ipc=172 free_lines=2 host_pgs=97280
+  +6.132s first GC part=0 victim line=8 vpc=84 ipc=172 free_lines=2 host_pgs=97280
+  +6.133s first GC part=3 victim line=47 vpc=83 ipc=173 free_lines=2 host_pgs=97280
+  stats part=0 host_pgs=210829 gc_pgs=418740 gc_cnt=2078 free_lines=2
+  stats part=1 host_pgs=210950 gc_pgs=418612 gc_cnt=2078 free_lines=1
+  stats part=2 host_pgs=210931 gc_pgs=420167 gc_cnt=2084 free_lines=2
+  stats part=3 host_pgs=210600 gc_pgs=413862 gc_cnt=2058 free_lines=2
+  (kernel) [69393.883953] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [69393.904772] NVMeVirt: Virtual NVMe device closed
+[wbuffix_drop map32k bs16k r3]
+  +6.090s first GC part=1 victim line=12 vpc=86 ipc=170 free_lines=2 host_pgs=97280
+  +6.115s first GC part=2 victim line=0 vpc=84 ipc=172 free_lines=2 host_pgs=97280
+  +6.126s first GC part=0 victim line=8 vpc=84 ipc=172 free_lines=2 host_pgs=97280
+  +6.127s first GC part=3 victim line=47 vpc=83 ipc=173 free_lines=2 host_pgs=97280
+  stats part=0 host_pgs=210623 gc_pgs=414844 gc_cnt=2062 free_lines=2
+  stats part=1 host_pgs=210756 gc_pgs=417267 gc_cnt=2072 free_lines=2
+  stats part=2 host_pgs=210759 gc_pgs=417277 gc_cnt=2072 free_lines=2
+  stats part=3 host_pgs=210397 gc_pgs=413029 gc_cnt=2054 free_lines=2
+  (kernel) [70731.608864] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [70731.629824] NVMeVirt: Virtual NVMe device closed
+[wbuffix_drop map32k bs32k r1]
+  +6.122s first GC part=0 victim line=74 vpc=229 ipc=27 free_lines=2 host_pgs=97280
+  +6.145s first GC part=1 victim line=143 vpc=231 ipc=25 free_lines=2 host_pgs=97280
+  +6.166s first GC part=2 victim line=49 vpc=230 ipc=26 free_lines=2 host_pgs=97280
+  +6.166s first GC part=3 victim line=344 vpc=227 ipc=29 free_lines=2 host_pgs=97280
+  stats part=0 host_pgs=203544 gc_pgs=428509 gc_cnt=2088 free_lines=2
+  stats part=1 host_pgs=203271 gc_pgs=428033 gc_cnt=2085 free_lines=1
+  stats part=2 host_pgs=203606 gc_pgs=431003 gc_cnt=2098 free_lines=2
+  stats part=3 host_pgs=203347 gc_pgs=428949 gc_cnt=2089 free_lines=2
+  (kernel) [68337.496648] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [68337.517128] NVMeVirt: Virtual NVMe device closed
+[wbuffix_drop map32k bs32k r2]
+  +6.127s first GC part=0 victim line=74 vpc=229 ipc=27 free_lines=2 host_pgs=97280
+  +6.150s first GC part=1 victim line=143 vpc=231 ipc=25 free_lines=2 host_pgs=97280
+  +6.171s first GC part=2 victim line=49 vpc=230 ipc=26 free_lines=2 host_pgs=97280
+  +6.172s first GC part=3 victim line=344 vpc=227 ipc=29 free_lines=2 host_pgs=97280
+  stats part=0 host_pgs=203957 gc_pgs=430917 gc_cnt=2099 free_lines=2
+  stats part=1 host_pgs=203706 gc_pgs=430168 gc_cnt=2095 free_lines=2
+  stats part=2 host_pgs=204070 gc_pgs=433880 gc_cnt=2111 free_lines=2
+  stats part=3 host_pgs=203797 gc_pgs=432337 gc_cnt=2104 free_lines=2
+  (kernel) [69534.631108] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [69534.652062] NVMeVirt: Virtual NVMe device closed
+[wbuffix_drop map32k bs32k r3]
+  +6.122s first GC part=0 victim line=74 vpc=229 ipc=27 free_lines=2 host_pgs=97280
+  +6.145s first GC part=1 victim line=143 vpc=231 ipc=25 free_lines=2 host_pgs=97280
+  +6.166s first GC part=2 victim line=49 vpc=230 ipc=26 free_lines=2 host_pgs=97280
+  +6.166s first GC part=3 victim line=344 vpc=227 ipc=29 free_lines=2 host_pgs=97280
+  stats part=0 host_pgs=203777 gc_pgs=429829 gc_cnt=2094 free_lines=1
+  stats part=1 host_pgs=203518 gc_pgs=430070 gc_cnt=2094 free_lines=3
+  stats part=2 host_pgs=203875 gc_pgs=432518 gc_cnt=2105 free_lines=2
+  stats part=3 host_pgs=203617 gc_pgs=430494 gc_cnt=2096 free_lines=2
+  (kernel) [70872.377095] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [70872.398116] NVMeVirt: Virtual NVMe device closed
+[wbuffix_nodrop map4k bs4k r1]
+  +6.277s first GC part=0 victim line=343 vpc=1898 ipc=150 free_lines=2 host_pgs=778240
+  +6.279s first GC part=2 victim line=340 vpc=1890 ipc=158 free_lines=2 host_pgs=778240
+  +6.296s first GC part=3 victim line=194 vpc=1892 ipc=156 free_lines=2 host_pgs=778240
+  +6.298s first GC part=1 victim line=106 vpc=1897 ipc=151 free_lines=2 host_pgs=778240
+  stats part=0 host_pgs=1592612 gc_pgs=3351083 gc_cnt=2033 free_lines=2
+  stats part=1 host_pgs=1592973 gc_pgs=3350951 gc_cnt=2033 free_lines=2
+  stats part=2 host_pgs=1592635 gc_pgs=3359213 gc_cnt=2037 free_lines=2
+  stats part=3 host_pgs=1592367 gc_pgs=3345188 gc_cnt=2030 free_lines=2
+  (kernel) [67140.460648] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [67140.529053] NVMeVirt: Virtual NVMe device closed
+[wbuffix_nodrop map4k bs4k r2]
+  +6.342s first GC part=0 victim line=343 vpc=1898 ipc=150 free_lines=2 host_pgs=778240
+  +6.344s first GC part=2 victim line=340 vpc=1889 ipc=159 free_lines=2 host_pgs=778240
+  +6.361s first GC part=3 victim line=194 vpc=1893 ipc=155 free_lines=2 host_pgs=778240
+  +6.362s first GC part=1 victim line=106 vpc=1897 ipc=151 free_lines=2 host_pgs=778240
+  stats part=0 host_pgs=1595554 gc_pgs=3364734 gc_cnt=2041 free_lines=2
+  stats part=1 host_pgs=1595898 gc_pgs=3366496 gc_cnt=2042 free_lines=2
+  stats part=2 host_pgs=1595572 gc_pgs=3376919 gc_cnt=2047 free_lines=2
+  stats part=3 host_pgs=1595216 gc_pgs=3362932 gc_cnt=2040 free_lines=2
+  (kernel) [68478.392986] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [68478.461462] NVMeVirt: Virtual NVMe device closed
+[wbuffix_nodrop map4k bs4k r3]
+  +6.333s first GC part=0 victim line=343 vpc=1898 ipc=150 free_lines=2 host_pgs=778240
+  +6.335s first GC part=2 victim line=340 vpc=1889 ipc=159 free_lines=2 host_pgs=778240
+  +6.353s first GC part=3 victim line=194 vpc=1893 ipc=155 free_lines=2 host_pgs=778240
+  +6.354s first GC part=1 victim line=106 vpc=1897 ipc=151 free_lines=2 host_pgs=778240
+  stats part=0 host_pgs=1604455 gc_pgs=3431525 gc_cnt=2078 free_lines=2
+  stats part=1 host_pgs=1604663 gc_pgs=3429162 gc_cnt=2077 free_lines=2
+  stats part=2 host_pgs=1604426 gc_pgs=3437602 gc_cnt=2081 free_lines=2
+  stats part=3 host_pgs=1604072 gc_pgs=3425719 gc_cnt=2075 free_lines=2
+  (kernel) [69675.373308] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [69675.440673] NVMeVirt: Virtual NVMe device closed
+[wbuffix_nodrop map4k bs16k r1]
+  +5.696s first GC part=0 victim line=291 vpc=1902 ipc=146 free_lines=2 host_pgs=778240
+  +5.696s first GC part=1 victim line=291 vpc=1902 ipc=146 free_lines=2 host_pgs=778240
+  +5.697s first GC part=2 victim line=291 vpc=1902 ipc=146 free_lines=2 host_pgs=778240
+  +5.697s first GC part=3 victim line=291 vpc=1902 ipc=146 free_lines=2 host_pgs=778240
+  stats part=0 host_pgs=1847224 gc_pgs=4702341 gc_cnt=2817 free_lines=2
+  stats part=1 host_pgs=1847224 gc_pgs=4702341 gc_cnt=2817 free_lines=2
+  stats part=2 host_pgs=1847224 gc_pgs=4702341 gc_cnt=2817 free_lines=2
+  stats part=3 host_pgs=1847224 gc_pgs=4702341 gc_cnt=2817 free_lines=2
+  (kernel) [67281.393642] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [67281.461990] NVMeVirt: Virtual NVMe device closed
+[wbuffix_nodrop map4k bs16k r2]
+  +5.693s first GC part=0 victim line=291 vpc=1902 ipc=146 free_lines=2 host_pgs=778240
+  +5.693s first GC part=1 victim line=291 vpc=1902 ipc=146 free_lines=2 host_pgs=778240
+  +5.693s first GC part=2 victim line=291 vpc=1902 ipc=146 free_lines=2 host_pgs=778240
+  +5.693s first GC part=3 victim line=291 vpc=1902 ipc=146 free_lines=2 host_pgs=778240
+  stats part=0 host_pgs=1847464 gc_pgs=4704009 gc_cnt=2818 free_lines=2
+  stats part=1 host_pgs=1847464 gc_pgs=4704009 gc_cnt=2818 free_lines=2
+  stats part=2 host_pgs=1847464 gc_pgs=4704009 gc_cnt=2818 free_lines=2
+  stats part=3 host_pgs=1847464 gc_pgs=4704009 gc_cnt=2818 free_lines=2
+  (kernel) [68619.388342] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [68619.455881] NVMeVirt: Virtual NVMe device closed
+[wbuffix_nodrop map4k bs16k r3]
+  +5.693s first GC part=0 victim line=291 vpc=1902 ipc=146 free_lines=2 host_pgs=778240
+  +5.693s first GC part=1 victim line=291 vpc=1902 ipc=146 free_lines=2 host_pgs=778240
+  +5.693s first GC part=2 victim line=291 vpc=1902 ipc=146 free_lines=2 host_pgs=778240
+  +5.693s first GC part=3 victim line=291 vpc=1902 ipc=146 free_lines=2 host_pgs=778240
+  stats part=0 host_pgs=1846928 gc_pgs=4704538 gc_cnt=2818 free_lines=2
+  stats part=1 host_pgs=1846928 gc_pgs=4704538 gc_cnt=2818 free_lines=2
+  stats part=2 host_pgs=1846928 gc_pgs=4704538 gc_cnt=2818 free_lines=2
+  stats part=3 host_pgs=1846928 gc_pgs=4704538 gc_cnt=2818 free_lines=2
+  (kernel) [69816.320560] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [69816.387816] NVMeVirt: Virtual NVMe device closed
+[wbuffix_nodrop map4k bs32k r1]
+  +5.693s first GC part=0 victim line=26 vpc=1880 ipc=168 free_lines=2 host_pgs=778240
+  +5.693s first GC part=1 victim line=26 vpc=1880 ipc=168 free_lines=2 host_pgs=778240
+  +5.693s first GC part=2 victim line=26 vpc=1880 ipc=168 free_lines=2 host_pgs=778240
+  +5.693s first GC part=3 victim line=26 vpc=1880 ipc=168 free_lines=2 host_pgs=778240
+  stats part=0 host_pgs=1852872 gc_pgs=4700564 gc_cnt=2819 free_lines=2
+  stats part=1 host_pgs=1852872 gc_pgs=4700564 gc_cnt=2819 free_lines=2
+  stats part=2 host_pgs=1852872 gc_pgs=4700564 gc_cnt=2819 free_lines=2
+  stats part=3 host_pgs=1852872 gc_pgs=4700564 gc_cnt=2819 free_lines=2
+  (kernel) [67422.380994] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [67422.447910] NVMeVirt: Virtual NVMe device closed
+[wbuffix_nodrop map4k bs32k r2]
+  +5.693s first GC part=0 victim line=26 vpc=1880 ipc=168 free_lines=2 host_pgs=778240
+  +5.693s first GC part=1 victim line=26 vpc=1880 ipc=168 free_lines=2 host_pgs=778240
+  +5.693s first GC part=2 victim line=26 vpc=1880 ipc=168 free_lines=2 host_pgs=778240
+  +5.693s first GC part=3 victim line=26 vpc=1880 ipc=168 free_lines=2 host_pgs=778240
+  stats part=0 host_pgs=1852306 gc_pgs=4701056 gc_cnt=2819 free_lines=2
+  stats part=1 host_pgs=1852306 gc_pgs=4701056 gc_cnt=2819 free_lines=2
+  stats part=2 host_pgs=1852306 gc_pgs=4701056 gc_cnt=2819 free_lines=2
+  stats part=3 host_pgs=1852306 gc_pgs=4701056 gc_cnt=2819 free_lines=2
+  (kernel) [68760.303887] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [68760.372192] NVMeVirt: Virtual NVMe device closed
+[wbuffix_nodrop map4k bs32k r3]
+  +5.693s first GC part=0 victim line=26 vpc=1880 ipc=168 free_lines=2 host_pgs=778240
+  +5.694s first GC part=1 victim line=26 vpc=1880 ipc=168 free_lines=2 host_pgs=778240
+  +5.694s first GC part=2 victim line=26 vpc=1880 ipc=168 free_lines=2 host_pgs=778240
+  +5.694s first GC part=3 victim line=26 vpc=1880 ipc=168 free_lines=2 host_pgs=778240
+  stats part=0 host_pgs=1851656 gc_pgs=4701788 gc_cnt=2819 free_lines=2
+  stats part=1 host_pgs=1851656 gc_pgs=4701788 gc_cnt=2819 free_lines=2
+  stats part=2 host_pgs=1851656 gc_pgs=4701788 gc_cnt=2819 free_lines=2
+  stats part=3 host_pgs=1851656 gc_pgs=4701788 gc_cnt=2819 free_lines=2
+  (kernel) [69957.284852] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [69957.352073] NVMeVirt: Virtual NVMe device closed
+[wbuffix_nodrop map16k bs4k r1]
+  +5.915s first GC part=2 victim line=6 vpc=171 ipc=341 free_lines=2 host_pgs=194560
+  +5.926s first GC part=1 victim line=8 vpc=164 ipc=348 free_lines=2 host_pgs=194560
+  +5.944s first GC part=3 victim line=10 vpc=168 ipc=344 free_lines=2 host_pgs=194560
+  +5.945s first GC part=0 victim line=4 vpc=169 ipc=343 free_lines=2 host_pgs=194560
+  stats part=0 host_pgs=497230 gc_pgs=597554 gc_cnt=1757 free_lines=1
+  stats part=1 host_pgs=498246 gc_pgs=596551 gc_cnt=1757 free_lines=1
+  stats part=2 host_pgs=499280 gc_pgs=608304 gc_cnt=1782 free_lines=1
+  stats part=3 host_pgs=497688 gc_pgs=598080 gc_cnt=1759 free_lines=1
+  (kernel) [67563.295634] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [67563.323382] NVMeVirt: Virtual NVMe device closed
+[wbuffix_nodrop map16k bs4k r2]
+  +5.911s first GC part=2 victim line=6 vpc=171 ipc=341 free_lines=2 host_pgs=194560
+  +5.922s first GC part=1 victim line=8 vpc=164 ipc=348 free_lines=2 host_pgs=194560
+  +5.940s first GC part=3 victim line=10 vpc=168 ipc=344 free_lines=2 host_pgs=194560
+  +5.941s first GC part=0 victim line=4 vpc=169 ipc=343 free_lines=2 host_pgs=194560
+  stats part=0 host_pgs=497426 gc_pgs=598400 gc_cnt=1759 free_lines=2
+  stats part=1 host_pgs=498431 gc_pgs=597368 gc_cnt=1759 free_lines=2
+  stats part=2 host_pgs=499452 gc_pgs=608601 gc_cnt=1783 free_lines=2
+  stats part=3 host_pgs=497857 gc_pgs=598437 gc_cnt=1760 free_lines=2
+  (kernel) [68901.156550] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [68901.184548] NVMeVirt: Virtual NVMe device closed
+[wbuffix_nodrop map16k bs4k r3]
+  +5.914s first GC part=2 victim line=6 vpc=172 ipc=340 free_lines=2 host_pgs=194560
+  +5.925s first GC part=1 victim line=8 vpc=164 ipc=348 free_lines=2 host_pgs=194560
+  +5.943s first GC part=3 victim line=10 vpc=168 ipc=344 free_lines=2 host_pgs=194560
+  +5.944s first GC part=0 victim line=4 vpc=169 ipc=343 free_lines=2 host_pgs=194560
+  stats part=0 host_pgs=497171 gc_pgs=597627 gc_cnt=1757 free_lines=1
+  stats part=1 host_pgs=498188 gc_pgs=596061 gc_cnt=1756 free_lines=1
+  stats part=2 host_pgs=499219 gc_pgs=607359 gc_cnt=1780 free_lines=1
+  stats part=3 host_pgs=497614 gc_pgs=598170 gc_cnt=1759 free_lines=2
+  (kernel) [70098.161111] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [70098.188836] NVMeVirt: Virtual NVMe device closed
+[wbuffix_nodrop map16k bs16k r1]
+  +5.921s first GC part=0 victim line=135 vpc=468 ipc=44 free_lines=2 host_pgs=194560
+  +5.922s first GC part=1 victim line=144 vpc=465 ipc=47 free_lines=2 host_pgs=194560
+  +5.943s first GC part=2 victim line=218 vpc=466 ipc=46 free_lines=2 host_pgs=194560
+  +5.943s first GC part=3 victim line=182 vpc=466 ipc=46 free_lines=2 host_pgs=194560
+  stats part=0 host_pgs=402514 gc_pgs=851867 gc_cnt=2069 free_lines=2
+  stats part=1 host_pgs=402592 gc_pgs=851296 gc_cnt=2068 free_lines=2
+  stats part=2 host_pgs=402576 gc_pgs=846185 gc_cnt=2058 free_lines=2
+  stats part=3 host_pgs=402076 gc_pgs=845153 gc_cnt=2055 free_lines=2
+  (kernel) [67704.063442] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [67704.091003] NVMeVirt: Virtual NVMe device closed
+[wbuffix_nodrop map16k bs16k r2]
+  +5.921s first GC part=0 victim line=135 vpc=468 ipc=44 free_lines=2 host_pgs=194560
+  +5.922s first GC part=1 victim line=144 vpc=465 ipc=47 free_lines=2 host_pgs=194560
+  +5.942s first GC part=2 victim line=218 vpc=466 ipc=46 free_lines=2 host_pgs=194560
+  +5.943s first GC part=3 victim line=182 vpc=466 ipc=46 free_lines=2 host_pgs=194560
+  stats part=0 host_pgs=403495 gc_pgs=857538 gc_cnt=2082 free_lines=2
+  stats part=1 host_pgs=403619 gc_pgs=858429 gc_cnt=2084 free_lines=2
+  stats part=2 host_pgs=403588 gc_pgs=854387 gc_cnt=2076 free_lines=2
+  stats part=3 host_pgs=403156 gc_pgs=850715 gc_cnt=2068 free_lines=2
+  (kernel) [69041.945393] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [69041.973688] NVMeVirt: Virtual NVMe device closed
+[wbuffix_nodrop map16k bs16k r3]
+  +5.921s first GC part=0 victim line=135 vpc=468 ipc=44 free_lines=2 host_pgs=194560
+  +5.922s first GC part=1 victim line=144 vpc=465 ipc=47 free_lines=2 host_pgs=194560
+  +5.943s first GC part=2 victim line=218 vpc=466 ipc=46 free_lines=2 host_pgs=194560
+  +5.943s first GC part=3 victim line=182 vpc=466 ipc=46 free_lines=2 host_pgs=194560
+  stats part=0 host_pgs=405037 gc_pgs=867257 gc_cnt=2104 free_lines=2
+  stats part=1 host_pgs=405096 gc_pgs=866690 gc_cnt=2103 free_lines=2
+  stats part=2 host_pgs=405065 gc_pgs=865195 gc_cnt=2100 free_lines=2
+  stats part=3 host_pgs=404624 gc_pgs=861533 gc_cnt=2092 free_lines=2
+  (kernel) [70238.949395] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [70238.977171] NVMeVirt: Virtual NVMe device closed
+[wbuffix_nodrop map16k bs32k r1]
+  +5.843s first GC part=0 victim line=152 vpc=465 ipc=47 free_lines=2 host_pgs=194560
+  +5.843s first GC part=1 victim line=152 vpc=465 ipc=47 free_lines=2 host_pgs=194560
+  +5.865s first GC part=2 victim line=344 vpc=469 ipc=43 free_lines=2 host_pgs=194560
+  +5.865s first GC part=3 victim line=344 vpc=469 ipc=43 free_lines=2 host_pgs=194560
+  stats part=0 host_pgs=422769 gc_pgs=976483 gc_cnt=2352 free_lines=2
+  stats part=1 host_pgs=422769 gc_pgs=976483 gc_cnt=2352 free_lines=2
+  stats part=2 host_pgs=422475 gc_pgs=972688 gc_cnt=2344 free_lines=2
+  stats part=3 host_pgs=422475 gc_pgs=972688 gc_cnt=2344 free_lines=2
+  (kernel) [67844.827448] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [67844.855323] NVMeVirt: Virtual NVMe device closed
+[wbuffix_nodrop map16k bs32k r2]
+  +5.846s first GC part=0 victim line=152 vpc=465 ipc=47 free_lines=2 host_pgs=194560
+  +5.846s first GC part=1 victim line=152 vpc=465 ipc=47 free_lines=2 host_pgs=194560
+  +5.867s first GC part=2 victim line=344 vpc=469 ipc=43 free_lines=2 host_pgs=194560
+  +5.867s first GC part=3 victim line=344 vpc=469 ipc=43 free_lines=2 host_pgs=194560
+  stats part=0 host_pgs=425136 gc_pgs=988954 gc_cnt=2381 free_lines=2
+  stats part=1 host_pgs=425136 gc_pgs=988954 gc_cnt=2381 free_lines=2
+  stats part=2 host_pgs=424988 gc_pgs=988102 gc_cnt=2379 free_lines=2
+  stats part=3 host_pgs=424988 gc_pgs=988102 gc_cnt=2379 free_lines=2
+  (kernel) [69182.714346] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [69182.742224] NVMeVirt: Virtual NVMe device closed
+[wbuffix_nodrop map16k bs32k r3]
+  +5.843s first GC part=0 victim line=152 vpc=465 ipc=47 free_lines=2 host_pgs=194560
+  +5.843s first GC part=1 victim line=152 vpc=465 ipc=47 free_lines=2 host_pgs=194560
+  +5.865s first GC part=2 victim line=344 vpc=469 ipc=43 free_lines=2 host_pgs=194560
+  +5.865s first GC part=3 victim line=344 vpc=469 ipc=43 free_lines=2 host_pgs=194560
+  stats part=0 host_pgs=424386 gc_pgs=985094 gc_cnt=2372 free_lines=2
+  stats part=1 host_pgs=424386 gc_pgs=985094 gc_cnt=2372 free_lines=2
+  stats part=2 host_pgs=424194 gc_pgs=982752 gc_cnt=2367 free_lines=2
+  stats part=3 host_pgs=424194 gc_pgs=982752 gc_cnt=2367 free_lines=2
+  (kernel) [70379.700715] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [70379.728885] NVMeVirt: Virtual NVMe device closed
+[wbuffix_nodrop map32k bs4k r1]
+  +6.061s first GC part=0 victim line=6 vpc=79 ipc=177 free_lines=2 host_pgs=97280
+  +6.099s first GC part=1 victim line=34 vpc=77 ipc=179 free_lines=2 host_pgs=97280
+  +6.122s first GC part=2 victim line=26 vpc=82 ipc=174 free_lines=2 host_pgs=97280
+  +6.144s first GC part=3 victim line=29 vpc=80 ipc=176 free_lines=2 host_pgs=97280
+  stats part=0 host_pgs=262646 gc_pgs=296766 gc_cnt=1804 free_lines=2
+  stats part=1 host_pgs=262714 gc_pgs=302106 gc_cnt=1825 free_lines=1
+  stats part=2 host_pgs=262172 gc_pgs=297736 gc_cnt=1806 free_lines=1
+  stats part=3 host_pgs=261558 gc_pgs=293532 gc_cnt=1787 free_lines=2
+  (kernel) [67985.618551] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [67985.639448] NVMeVirt: Virtual NVMe device closed
+[wbuffix_nodrop map32k bs4k r2]
+  +6.061s first GC part=0 victim line=8 vpc=79 ipc=177 free_lines=2 host_pgs=97280
+  +6.098s first GC part=1 victim line=34 vpc=77 ipc=179 free_lines=2 host_pgs=97280
+  +6.121s first GC part=2 victim line=26 vpc=82 ipc=174 free_lines=2 host_pgs=97280
+  +6.144s first GC part=3 victim line=29 vpc=80 ipc=176 free_lines=2 host_pgs=97280
+  stats part=0 host_pgs=262452 gc_pgs=295672 gc_cnt=1799 free_lines=2
+  stats part=1 host_pgs=262533 gc_pgs=301755 gc_cnt=1823 free_lines=2
+  stats part=2 host_pgs=262006 gc_pgs=297157 gc_cnt=1803 free_lines=2
+  stats part=3 host_pgs=261389 gc_pgs=292935 gc_cnt=1784 free_lines=1
+  (kernel) [69323.475405] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [69323.496390] NVMeVirt: Virtual NVMe device closed
+[wbuffix_nodrop map32k bs4k r3]
+  +6.061s first GC part=0 victim line=8 vpc=79 ipc=177 free_lines=2 host_pgs=97280
+  +6.098s first GC part=1 victim line=34 vpc=77 ipc=179 free_lines=2 host_pgs=97280
+  +6.122s first GC part=2 victim line=26 vpc=82 ipc=174 free_lines=2 host_pgs=97280
+  +6.144s first GC part=3 victim line=29 vpc=80 ipc=176 free_lines=2 host_pgs=97280
+  stats part=0 host_pgs=262850 gc_pgs=298109 gc_cnt=1810 free_lines=2
+  stats part=1 host_pgs=262911 gc_pgs=302397 gc_cnt=1827 free_lines=2
+  stats part=2 host_pgs=262363 gc_pgs=298831 gc_cnt=1811 free_lines=2
+  stats part=3 host_pgs=261722 gc_pgs=293849 gc_cnt=1789 free_lines=2
+  (kernel) [70520.457108] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [70520.477622] NVMeVirt: Virtual NVMe device closed
+[wbuffix_nodrop map32k bs16k r1]
+  +6.064s first GC part=1 victim line=12 vpc=86 ipc=170 free_lines=2 host_pgs=97280
+  +6.089s first GC part=2 victim line=0 vpc=84 ipc=172 free_lines=2 host_pgs=97280
+  +6.100s first GC part=0 victim line=8 vpc=84 ipc=172 free_lines=2 host_pgs=97280
+  +6.101s first GC part=3 victim line=47 vpc=83 ipc=173 free_lines=2 host_pgs=97280
+  stats part=0 host_pgs=210418 gc_pgs=414554 gc_cnt=2060 free_lines=2
+  stats part=1 host_pgs=210533 gc_pgs=415966 gc_cnt=2066 free_lines=2
+  stats part=2 host_pgs=210575 gc_pgs=417709 gc_cnt=2073 free_lines=2
+  stats part=3 host_pgs=210190 gc_pgs=410168 gc_cnt=2042 free_lines=1
+  (kernel) [68126.345737] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [68126.366307] NVMeVirt: Virtual NVMe device closed
+[wbuffix_nodrop map32k bs16k r2]
+  +6.064s first GC part=1 victim line=12 vpc=86 ipc=170 free_lines=2 host_pgs=97280
+  +6.089s first GC part=2 victim line=0 vpc=84 ipc=172 free_lines=2 host_pgs=97280
+  +6.100s first GC part=0 victim line=8 vpc=84 ipc=172 free_lines=2 host_pgs=97280
+  +6.101s first GC part=3 victim line=47 vpc=83 ipc=173 free_lines=2 host_pgs=97280
+  stats part=0 host_pgs=211115 gc_pgs=419470 gc_cnt=2082 free_lines=2
+  stats part=1 host_pgs=211238 gc_pgs=420384 gc_cnt=2086 free_lines=1
+  stats part=2 host_pgs=211230 gc_pgs=422434 gc_cnt=2094 free_lines=1
+  stats part=3 host_pgs=210865 gc_pgs=416661 gc_cnt=2070 free_lines=2
+  (kernel) [69464.250543] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [69464.271401] NVMeVirt: Virtual NVMe device closed
+[wbuffix_nodrop map32k bs16k r3]
+  +6.064s first GC part=1 victim line=12 vpc=86 ipc=170 free_lines=2 host_pgs=97280
+  +6.089s first GC part=2 victim line=0 vpc=84 ipc=172 free_lines=2 host_pgs=97280
+  +6.100s first GC part=0 victim line=8 vpc=84 ipc=172 free_lines=2 host_pgs=97280
+  +6.101s first GC part=3 victim line=47 vpc=83 ipc=173 free_lines=2 host_pgs=97280
+  stats part=0 host_pgs=210949 gc_pgs=416838 gc_cnt=2071 free_lines=1
+  stats part=1 host_pgs=211076 gc_pgs=419523 gc_cnt=2082 free_lines=2
+  stats part=2 host_pgs=211056 gc_pgs=419787 gc_cnt=2083 free_lines=2
+  stats part=3 host_pgs=210711 gc_pgs=414242 gc_cnt=2060 free_lines=1
+  (kernel) [70661.212390] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [70661.233168] NVMeVirt: Virtual NVMe device closed
+[wbuffix_nodrop map32k bs32k r1]
+  +6.096s first GC part=0 victim line=74 vpc=229 ipc=27 free_lines=2 host_pgs=97280
+  +6.119s first GC part=1 victim line=143 vpc=231 ipc=25 free_lines=2 host_pgs=97280
+  +6.140s first GC part=2 victim line=49 vpc=230 ipc=26 free_lines=2 host_pgs=97280
+  +6.141s first GC part=3 victim line=344 vpc=227 ipc=29 free_lines=2 host_pgs=97280
+  stats part=0 host_pgs=203850 gc_pgs=430262 gc_cnt=2096 free_lines=2
+  stats part=1 host_pgs=203598 gc_pgs=428726 gc_cnt=2089 free_lines=2
+  stats part=2 host_pgs=203954 gc_pgs=433212 gc_cnt=2108 free_lines=2
+  stats part=3 host_pgs=203689 gc_pgs=432701 gc_cnt=2105 free_lines=2
+  (kernel) [68267.097035] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [68267.118069] NVMeVirt: Virtual NVMe device closed
+[wbuffix_nodrop map32k bs32k r2]
+  +6.096s first GC part=0 victim line=74 vpc=229 ipc=27 free_lines=2 host_pgs=97280
+  +6.119s first GC part=1 victim line=143 vpc=231 ipc=25 free_lines=2 host_pgs=97280
+  +6.140s first GC part=2 victim line=49 vpc=230 ipc=26 free_lines=2 host_pgs=97280
+  +6.140s first GC part=3 victim line=344 vpc=227 ipc=29 free_lines=2 host_pgs=97280
+  stats part=0 host_pgs=204011 gc_pgs=431643 gc_cnt=2102 free_lines=2
+  stats part=1 host_pgs=203744 gc_pgs=430879 gc_cnt=2098 free_lines=2
+  stats part=2 host_pgs=204115 gc_pgs=434591 gc_cnt=2114 free_lines=2
+  stats part=3 host_pgs=203847 gc_pgs=432294 gc_cnt=2104 free_lines=2
+  (kernel) [69604.999711] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [69605.020648] NVMeVirt: Virtual NVMe device closed
+[wbuffix_nodrop map32k bs32k r3]
+  +6.096s first GC part=0 victim line=74 vpc=229 ipc=27 free_lines=2 host_pgs=97280
+  +6.119s first GC part=1 victim line=143 vpc=231 ipc=25 free_lines=2 host_pgs=97280
+  +6.140s first GC part=2 victim line=49 vpc=230 ipc=26 free_lines=2 host_pgs=97280
+  +6.141s first GC part=3 victim line=344 vpc=227 ipc=29 free_lines=2 host_pgs=97280
+  stats part=0 host_pgs=203929 gc_pgs=431205 gc_cnt=2100 free_lines=2
+  stats part=1 host_pgs=203675 gc_pgs=430945 gc_cnt=2098 free_lines=2
+  stats part=2 host_pgs=204034 gc_pgs=433652 gc_cnt=2110 free_lines=2
+  stats part=3 host_pgs=203768 gc_pgs=432109 gc_cnt=2103 free_lines=3
+  (kernel) [70801.976214] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [70801.996911] NVMeVirt: Virtual NVMe device closed
+```
+
+### 11.1.7 1 초 평균 대역폭 시계열 (MiB/s, t=1..60 s, fio_bw.1.log 의 0.5 s 값 두 개 평균)
+형식: variant map bs rep | gc_onset_s | 값 60개 (공백 구분)
+```
+wbuffix_drop 4k 4k r1 | 6.341 | 1999 1991 1998 2002 2000 2037 273 128 145 152 171 155 164 153 180 171 176 166 168 172 187 194 182 179 181 187 183 175 201 200 188 183 199 229 262 198 221 231 215 252 263 255 264 275 284 315 339 384 415 514 616 1314 121 134 145 161 178 167 175 191
+wbuffix_drop 4k 4k r2 | 6.366 | 1995 1986 1980 1990 1992 2030 323 129 146 149 181 175 199 211 157 172 187 179 173 175 169 173 183 209 211 205 219 220 183 239 202 225 224 192 227 204 235 262 242 247 274 262 278 296 316 348 332 421 453 580 1326 119 133 136 166 174 175 198 169 168
+wbuffix_drop 4k 4k r3 | 6.313 | 2011 2008 2007 2007 2003 2051 216 130 151 155 180 170 172 201 164 151 169 199 215 175 193 180 222 196 199 193 191 210 202 200 201 212 210 182 202 216 211 285 235 228 242 258 284 284 312 327 362 427 429 517 1234 396 132 144 152 155 182 199 200 159
+wbuffix_drop 4k 16k r1 | 5.722 | 2235 2233 2233 2233 2228 1097 130 146 164 185 208 236 221 204 217 227 232 245 240 248 259 262 274 281 290 308 320 326 348 369 396 421 462 516 574 699 921 1510 126 140 157 178 200 225 245 200 210 221 231 237 245 245 246 263 270 283 289 301 310 328
+wbuffix_drop 4k 16k r2 | 5.729 | 2234 2233 2227 2233 2233 1098 129 144 164 185 209 234 220 204 215 228 234 244 240 252 256 263 275 281 295 303 320 333 345 370 396 421 464 518 582 690 934 1495 127 140 156 177 204 225 241 200 215 223 231 238 246 246 248 262 269 279 296 300 310 330
+wbuffix_drop 4k 16k r3 | 5.719 | 2235 2233 2233 2233 2233 1091 130 146 164 186 211 232 221 205 216 228 236 241 240 251 257 261 277 280 297 301 321 333 343 372 397 420 472 508 586 702 944 1466 127 141 159 179 202 226 239 201 215 222 231 235 246 246 246 263 269 282 289 301 311 326
+wbuffix_drop 4k 32k r1 | 5.726 | 2234 2233 2233 2233 2233 1098 137 151 166 188 213 232 222 208 215 226 235 239 244 254 257 264 278 284 297 302 321 336 348 370 398 436 466 523 596 728 1006 1319 132 147 164 183 206 228 228 204 216 227 236 241 243 248 260 262 275 279 294 306 314 326
+wbuffix_drop 4k 32k r2 | 5.726 | 2234 2233 2233 2233 2233 1098 137 148 168 188 215 231 222 208 215 224 237 239 244 250 258 265 280 284 299 295 318 337 351 373 397 431 472 523 599 731 1019 1289 133 147 161 185 207 228 227 204 215 228 239 242 244 250 256 264 275 278 296 304 318 325
+wbuffix_drop 4k 32k r3 | 5.725 | 2234 2233 2233 2233 2233 1097 137 150 167 188 214 231 222 208 215 227 234 238 244 255 254 265 278 282 297 303 320 329 354 374 398 426 473 517 595 727 1003 1329 130 146 163 183 204 228 232 205 215 220 234 241 246 246 256 269 270 278 294 309 309 333
+wbuffix_drop 16k 4k r1 | 5.949 | 536 533 538 536 535 430 180 160 175 165 151 140 141 133 118 123 109 116 106 104 102 99 95 90 94 85 81 81 80 78 79 72 75 74 71 77 67 67 62 66 61 71 61 58 59 57 57 59 57 54 57 58 54 56 59 57 55 55 59 58
+wbuffix_drop 16k 4k r2 | 5.948 | 536 533 538 536 535 430 182 167 176 161 150 144 141 132 117 120 113 110 106 109 103 99 95 89 94 90 81 81 79 80 75 72 79 74 69 72 67 68 65 65 65 66 61 67 60 60 59 61 65 61 54 55 52 64 55 56 61 55 54 56
+wbuffix_drop 16k 4k r3 | 5.945 | 536 533 538 536 535 430 178 161 174 164 153 139 144 132 121 125 105 112 106 107 101 96 93 90 90 89 81 81 81 78 76 75 73 71 70 71 73 66 65 64 62 63 62 66 61 62 65 57 62 55 57 56 58 56 57 52 54 55 54 47
+wbuffix_drop 16k 16k r1 | 5.955 | 2141 2141 2143 2147 2140 1514 134 138 145 150 168 177 177 173 173 178 170 182 178 184 187 190 185 185 192 203 206 195 199 211 201 223 225 225 218 224 238 233 233 246 272 283 289 301 338 355 397 468 544 1074 652 132 148 152 158 170 177 176 168 179
+wbuffix_drop 16k 16k r2 | 5.954 | 2140 2141 2143 2149 2140 1514 136 136 144 157 177 170 187 173 176 170 176 184 184 165 178 183 188 194 188 193 204 201 208 206 195 203 215 205 200 218 248 230 244 243 249 261 281 294 321 352 399 429 486 752 1188 131 135 148 151 175 176 182 190 172
+wbuffix_drop 16k 16k r3 | 5.961 | 2137 2136 2141 2149 2135 1526 135 139 141 157 161 166 173 170 168 162 183 165 183 183 201 194 200 184 211 193 207 195 210 242 193 216 219 213 239 215 237 244 232 240 268 288 289 303 332 383 395 485 616 1283 351 133 146 156 156 177 185 185 178 172
+wbuffix_drop 16k 32k r1 | 5.875 | 2177 2175 2169 2167 2173 1377 139 147 159 175 198 194 207 190 198 202 197 209 187 185 230 206 207 209 218 206 216 228 239 224 268 244 299 298 284 290 333 338 317 368 368 445 537 619 1385 379 141 157 170 174 183 201 196 200 183 200 202 213 212 213
+wbuffix_drop 16k 32k r2 | 5.875 | 2177 2174 2169 2167 2174 1377 138 146 162 175 194 196 197 195 200 206 206 196 215 192 199 208 190 214 237 196 251 241 266 260 239 250 240 329 284 269 288 347 316 341 380 448 480 585 1184 669 142 155 170 178 199 197 188 196 196 203 202 193 209 214
+wbuffix_drop 16k 32k r3 | 5.875 | 2177 2175 2169 2167 2173 1377 138 149 159 175 198 194 202 195 197 214 202 200 215 220 224 234 205 204 242 261 260 259 220 306 259 241 225 235 269 244 296 306 333 348 429 454 599 724 1412 135 146 162 165 178 189 204 203 199 199 208 193 204 194 214
+wbuffix_drop 32k 4k r1 | 6.094 | 261 260 259 261 260 235 100 89 86 85 80 77 81 69 70 67 64 57 58 56 54 53 51 49 48 48 46 44 44 42 43 43 40 39 39 39 37 37 37 35 35 36 34 34 35 34 34 33 34 34 32 32 31 32 30 32 30 29 33 31
+wbuffix_drop 32k 4k r2 | 6.094 | 261 260 259 261 260 235 100 90 88 84 82 80 81 68 70 64 63 57 55 59 51 55 51 48 48 48 44 45 43 44 42 44 40 40 39 38 41 37 36 34 35 36 34 35 35 33 35 32 33 33 30 31 31 32 31 30 31 30 29 29
+wbuffix_drop 32k 4k r3 | 6.094 | 261 260 259 261 260 235 100 89 87 85 80 80 81 70 69 65 60 59 55 59 55 52 53 50 46 47 49 47 46 44 43 41 40 39 40 38 37 37 36 35 34 36 36 35 34 35 33 35 32 32 31 32 31 30 32 31 30 32 30 29
+wbuffix_drop 32k 16k r1 | 6.090 | 1041 1042 1040 1042 1045 952 363 313 303 272 247 234 212 210 184 185 167 156 159 150 145 143 130 128 124 113 122 123 115 109 108 105 108 104 98 95 92 90 87 85 84 82 84 80 85 86 80 81 87 79 82 83 79 81 80 80 81 81 81 79
+wbuffix_drop 32k 16k r2 | 6.096 | 1041 1042 1040 1042 1045 952 363 313 306 273 247 224 218 211 185 187 168 158 156 149 140 139 131 124 124 121 119 116 113 115 107 114 102 102 100 95 93 92 88 83 84 81 81 81 83 83 85 87 80 83 85 80 80 79 79 84 84 81 81 81
+wbuffix_drop 32k 16k r3 | 6.090 | 1041 1042 1040 1042 1045 952 363 313 300 274 247 232 220 204 183 184 171 157 158 146 145 142 128 124 121 118 120 116 120 106 106 103 99 99 96 94 97 87 86 88 82 86 80 77 86 84 83 80 87 78 83 87 83 87 79 87 89 83 79 79
+wbuffix_drop 32k 32k r1 | 6.122 | 2085 2079 2068 2079 2082 1805 138 143 149 154 162 174 168 176 186 177 175 181 202 193 191 199 192 199 198 197 215 213 218 210 205 219 245 218 233 249 254 257 248 265 280 294 324 361 368 434 480 560 1180 492 144 141 156 163 165 169 177 172 176 190
+wbuffix_drop 32k 32k r2 | 6.127 | 2084 2079 2068 2079 2082 1804 138 143 145 155 164 173 174 186 171 181 173 188 187 187 196 211 197 198 199 191 215 211 218 212 237 230 241 231 226 247 248 259 270 277 292 303 311 348 369 436 497 632 1160 137 140 141 160 162 173 171 189 172 184 171
+wbuffix_drop 32k 32k r3 | 6.122 | 2086 2079 2068 2079 2082 1805 138 143 149 157 162 176 177 178 184 182 172 189 188 183 191 183 197 192 204 200 202 207 219 210 212 228 233 233 222 229 239 271 249 264 293 307 317 334 382 456 439 637 1226 433 145 144 157 159 167 175 188 184 179 182
+wbuffix_nodrop 4k 4k r1 | 6.277 | 2011 2012 1999 2009 2006 2057 208 130 151 159 173 173 170 194 170 152 179 172 167 165 171 176 188 182 226 196 221 173 210 190 175 199 213 194 207 206 209 215 244 221 231 246 256 266 292 305 346 358 431 483 571 1401 137 132 134 158 152 169 174 173
+wbuffix_nodrop 4k 4k r2 | 6.342 | 1991 1987 1988 1985 1984 2020 335 128 147 159 166 159 161 187 178 166 174 178 169 178 176 185 182 205 174 179 194 197 183 186 212 216 193 212 210 235 214 218 234 222 230 263 259 272 282 312 326 353 403 505 661 1339 121 131 136 149 173 166 185 186
+wbuffix_nodrop 4k 4k r3 | 6.333 | 1992 1988 1992 1986 1988 2028 321 130 144 152 168 166 169 209 168 181 164 179 181 169 204 184 174 181 223 222 208 215 199 198 205 188 194 207 201 233 237 218 229 250 239 256 272 283 310 328 375 419 459 476 787 896 129 137 155 179 164 199 181 184
+wbuffix_nodrop 4k 16k r1 | 5.696 | 2234 2233 2233 2226 2233 1098 128 145 164 185 212 231 221 204 215 228 234 238 239 251 254 260 277 278 292 300 324 325 348 372 395 420 462 516 577 694 921 1532 124 140 158 178 200 226 246 201 211 223 232 242 243 244 253 261 270 284 288 301 310 330
+wbuffix_nodrop 4k 16k r2 | 5.693 | 2234 2233 2233 2233 2233 1090 130 146 164 188 209 232 222 204 216 232 233 240 240 253 257 261 277 279 296 304 319 333 350 371 395 425 466 512 585 706 945 1454 127 141 159 179 202 226 239 201 215 223 232 237 247 244 248 263 270 283 288 303 311 328
+wbuffix_nodrop 4k 16k r3 | 5.693 | 2234 2233 2233 2233 2233 1090 130 146 163 187 211 232 222 204 216 228 237 240 241 252 255 262 277 280 296 302 319 334 348 370 391 420 471 508 584 697 938 1481 127 141 157 176 205 226 240 200 211 227 232 236 242 247 247 260 274 278 294 301 310 329
+wbuffix_nodrop 4k 32k r1 | 5.693 | 2234 2233 2233 2233 2233 1098 137 151 166 188 214 231 222 208 215 227 234 239 244 254 256 264 279 285 297 303 322 329 357 374 398 432 471 525 601 724 1023 1291 130 147 164 184 205 233 227 204 216 226 234 245 243 247 256 268 271 284 291 309 312 331
+wbuffix_nodrop 4k 32k r2 | 5.693 | 2233 2233 2233 2233 2233 1098 137 151 169 188 211 231 222 208 215 225 236 238 244 250 260 264 280 283 296 303 322 331 357 371 400 425 474 514 604 726 1008 1312 130 147 164 184 205 228 232 204 216 228 233 243 244 248 256 266 271 276 295 304 315 332
+wbuffix_nodrop 4k 32k r3 | 5.693 | 2234 2233 2233 2233 2233 1098 137 150 166 188 215 231 222 207 215 225 234 241 244 249 260 265 275 286 293 307 322 330 356 372 397 427 473 518 600 723 1008 1318 132 144 162 183 204 230 229 204 216 226 234 241 244 248 259 264 271 284 290 307 310 330
+wbuffix_nodrop 16k 4k r1 | 5.915 | 536 533 538 536 535 430 179 162 175 166 152 144 139 131 119 123 111 118 104 101 103 97 91 92 95 88 80 86 79 81 76 72 75 69 76 68 66 67 65 64 66 61 60 62 60 60 57 59 57 58 57 58 56 61 56 59 56 53 57 51
+wbuffix_nodrop 16k 4k r2 | 5.911 | 536 534 538 536 535 430 176 165 176 165 153 140 137 132 121 121 111 117 106 101 104 97 95 90 93 93 82 81 84 77 79 73 70 70 71 70 67 66 65 63 64 67 61 64 61 61 61 61 61 57 58 53 59 55 55 52 55 53 56 52
+wbuffix_nodrop 16k 4k r3 | 5.914 | 536 533 538 536 535 430 176 163 176 163 152 145 141 133 118 126 105 110 104 102 100 97 93 87 93 93 83 83 80 82 76 73 73 75 68 71 66 65 72 65 66 63 62 63 58 61 57 58 57 59 62 55 54 56 53 59 56 54 57 53
+wbuffix_nodrop 16k 16k r1 | 5.921 | 2141 2141 2143 2149 2140 1512 136 136 147 157 171 166 169 175 163 160 174 177 176 194 185 191 176 198 197 196 176 186 196 207 207 203 212 218 219 218 223 236 242 244 252 268 282 323 315 370 379 436 524 698 1201 130 139 147 155 172 178 174 183 170
+wbuffix_nodrop 16k 16k r2 | 5.921 | 2141 2141 2143 2149 2140 1512 136 136 147 161 170 162 179 185 178 178 169 179 183 203 184 179 189 190 206 191 191 186 195 194 223 201 226 209 215 236 242 226 240 245 254 265 297 300 323 362 390 460 573 874 889 130 142 152 161 169 177 179 183 176
+wbuffix_nodrop 16k 16k r3 | 5.921 | 2140 2141 2142 2149 2140 1512 136 136 149 158 176 173 186 178 192 168 173 182 177 185 187 196 183 189 193 207 209 205 201 204 209 203 212 219 234 231 224 242 254 259 257 270 288 311 347 387 413 532 675 1344 131 135 148 167 160 168 177 187 177 180
+wbuffix_nodrop 16k 32k r1 | 5.843 | 2176 2175 2169 2167 2173 1377 138 148 159 175 198 194 202 195 198 214 202 200 220 215 219 227 212 219 230 234 256 213 232 232 261 244 254 232 279 264 293 300 328 399 417 426 491 598 1273 541 141 154 170 179 199 205 184 193 187 186 223 213 214 193
+wbuffix_nodrop 16k 32k r2 | 5.846 | 2176 2175 2169 2167 2169 1382 138 146 162 175 194 198 207 190 194 212 200 214 191 209 223 212 194 225 224 192 234 239 249 234 254 269 273 290 264 285 315 311 346 408 399 533 740 875 1078 135 150 164 172 186 189 207 191 198 189 202 219 199 213 220
+wbuffix_nodrop 16k 32k r3 | 5.843 | 2176 2175 2169 2167 2173 1379 139 146 159 175 198 194 207 190 198 210 197 205 181 205 220 217 189 235 213 240 240 222 223 247 244 261 287 230 299 296 288 348 349 389 378 471 531 776 1451 135 143 158 176 189 192 209 196 201 194 197 205 206 225 207
+wbuffix_nodrop 32k 4k r1 | 6.061 | 261 260 259 261 260 235 101 89 88 85 81 78 81 71 69 64 62 59 55 58 53 53 49 51 47 47 46 45 43 44 41 40 43 40 37 37 39 38 36 36 37 36 36 34 34 35 33 32 34 33 32 30 32 30 31 34 31 32 30 29
+wbuffix_nodrop 32k 4k r2 | 6.061 | 261 260 259 261 260 235 101 89 88 84 82 80 80 70 70 64 62 58 55 59 51 53 50 52 49 50 46 45 42 44 41 43 42 39 38 37 38 38 36 36 36 35 35 34 34 35 34 32 33 30 32 32 32 31 30 30 30 29 31 29
+wbuffix_nodrop 32k 4k r3 | 6.061 | 261 260 259 261 260 235 101 89 86 84 81 80 82 70 70 64 63 57 57 57 53 52 51 52 47 48 47 45 44 43 42 41 40 39 39 37 38 37 37 35 34 35 34 35 33 36 33 34 34 33 33 31 30 32 32 33 32 31 30 31
+wbuffix_nodrop 32k 16k r1 | 6.064 | 1041 1042 1040 1042 1045 952 363 313 302 273 240 234 216 207 185 189 166 157 157 148 139 131 126 138 128 115 119 115 109 111 105 104 98 103 102 95 95 90 92 88 82 83 82 80 83 82 84 85 82 82 83 82 78 82 84 84 80 82 83 78
+wbuffix_nodrop 32k 16k r2 | 6.064 | 1041 1042 1040 1042 1044 952 363 313 301 274 243 230 214 216 191 182 170 157 156 149 138 142 139 132 116 125 127 119 120 108 105 102 99 103 99 92 92 96 86 83 84 80 83 81 80 84 84 81 86 84 85 82 84 82 80 82 82 81 83 86
+wbuffix_nodrop 32k 16k r3 | 6.064 | 1041 1042 1040 1042 1045 952 363 314 302 272 243 228 219 211 181 184 168 157 159 146 146 140 131 125 122 122 124 120 113 112 113 104 106 99 101 96 97 89 90 87 83 79 83 82 82 89 78 81 84 84 84 80 86 80 81 82 81 81 79 79
+wbuffix_nodrop 32k 32k r1 | 6.096 | 2084 2079 2068 2079 2082 1805 138 143 145 155 165 172 174 193 179 169 170 181 187 188 187 192 200 196 199 194 207 216 220 224 222 221 240 235 230 247 242 248 252 270 280 293 318 359 389 439 503 620 1426 184 141 148 154 163 172 176 174 180 177 183
+wbuffix_nodrop 32k 32k r2 | 6.096 | 2084 2079 2068 2079 2082 1805 138 143 149 154 166 176 177 176 185 182 172 190 185 185 192 188 198 194 198 196 207 215 224 206 221 225 243 230 239 247 278 255 266 270 271 298 321 357 385 420 485 681 1398 131 136 149 162 166 176 179 182 174 181 174
+wbuffix_nodrop 32k 32k r3 | 6.096 | 2084 2079 2068 2079 2082 1804 138 143 149 157 163 176 177 178 184 180 173 187 186 183 194 191 185 194 196 198 206 207 217 218 221 220 218 235 234 245 245 263 274 287 303 290 316 339 402 422 486 655 1439 140 139 150 159 163 168 182 186 181 173 170
+```
+
+### 11.1.8 실험 전후 환경 차이 (env_before vs env_after_*; 날짜·부하·여유 메모리 줄 제외)
+- env_after_wbuffix:
+  - 08_nvmevirt_git.txt:
+    `-1d6cd036893f06bfe8aa8f6bb4327239bc4b720f`
+    `+a93ef76bbf990eafd1d0a5a9484a27a1b709ed9d`
+    `-1d6cd03 exp: final 3x3 design with OS page-cache comparison`
+    `+a93ef76 exp: final 3x3 design with OS page-cache comparison`
+    `+ M EXPERIMENT_LOG_FOR_CLAUDE.md`
+    `+ M exp/analyze.py`
+    `+ M exp/report/make_md_results.py`
+    `+ M exp/report/make_report.py`
+    `+?? exp/report/make_handoff.sh`
+  - 09_block.txt:
+    `-/dev/nvme0n1          /dev/ng0n1            S5GYNF0RA00765J      Samsung SSD 980 PRO 500GB                0x1        121.44  GB / 500.11  GB    512   B +  0 B   3B2QGXA7`
+    `+/dev/nvme0n1          /dev/ng0n1            S5GYNF0RA00765J      Samsung SSD 980 PRO 500GB                0x1        121.47  GB / 500.11  GB    512   B +  0 B   3B2QGXA7`
+
+### 11.1.9 run_all 로그 끝 40 줄 (원본 로그, 시각은 KST 로 변환)
+```
+    -> 424.8 MiB/s, 13595 IOPS, clat mean 2351.9 us
+[2026-10-08 16:42:50 KST] === [37/54] variant=wbuffix cache=nodrop map=4k bs=4k rep=3 ===
+    -> 417.7 MiB/s, 106942 IOPS, clat mean 298.2 us
+[2026-10-08 16:44:00 KST] === [38/54] variant=wbuffix cache=drop map=4k bs=4k rep=3 ===
+    -> 418.2 MiB/s, 107065 IOPS, clat mean 297.9 us
+[2026-10-08 16:45:11 KST] === [39/54] variant=wbuffix cache=nodrop map=4k bs=16k rep=3 ===
+    -> 480.9 MiB/s, 30775 IOPS, clat mean 1038.4 us
+[2026-10-08 16:46:21 KST] === [40/54] variant=wbuffix cache=drop map=4k bs=16k rep=3 ===
+    -> 480.9 MiB/s, 30776 IOPS, clat mean 1038.3 us
+[2026-10-08 16:47:32 KST] === [41/54] variant=wbuffix cache=nodrop map=4k bs=32k rep=3 ===
+    -> 482.1 MiB/s, 15427 IOPS, clat mean 2072.3 us
+[2026-10-08 16:48:42 KST] === [42/54] variant=wbuffix cache=drop map=4k bs=32k rep=3 ===
+    -> 482.2 MiB/s, 15430 IOPS, clat mean 2072.0 us
+[2026-10-08 16:49:52 KST] === [43/54] variant=wbuffix cache=nodrop map=16k bs=4k rep=3 ===
+    -> 129.7 MiB/s, 33203 IOPS, clat mean 962.7 us
+[2026-10-08 16:51:03 KST] === [44/54] variant=wbuffix cache=drop map=16k bs=4k rep=3 ===
+    -> 129.6 MiB/s, 33174 IOPS, clat mean 963.5 us
+[2026-10-08 16:52:13 KST] === [45/54] variant=wbuffix cache=nodrop map=16k bs=16k rep=3 ===
+    -> 421.8 MiB/s, 26992 IOPS, clat mean 1184.1 us
+[2026-10-08 16:53:24 KST] === [46/54] variant=wbuffix cache=drop map=16k bs=16k rep=3 ===
+    -> 421.2 MiB/s, 26955 IOPS, clat mean 1185.7 us
+[2026-10-08 16:54:34 KST] === [47/54] variant=wbuffix cache=nodrop map=16k bs=32k rep=3 ===
+    -> 441.9 MiB/s, 14141 IOPS, clat mean 2261.0 us
+[2026-10-08 16:55:44 KST] === [48/54] variant=wbuffix cache=drop map=16k bs=32k rep=3 ===
+    -> 441.3 MiB/s, 14121 IOPS, clat mean 2264.2 us
+[2026-10-08 16:56:55 KST] === [49/54] variant=wbuffix cache=nodrop map=32k bs=4k rep=3 ===
+    -> 68.3 MiB/s, 17493 IOPS, clat mean 1828.1 us
+[2026-10-08 16:58:05 KST] === [50/54] variant=wbuffix cache=drop map=32k bs=4k rep=3 ===
+    -> 68.4 MiB/s, 17498 IOPS, clat mean 1827.6 us
+[2026-10-08 16:59:16 KST] === [51/54] variant=wbuffix cache=nodrop map=32k bs=16k rep=3 ===
+    -> 219.7 MiB/s, 14060 IOPS, clat mean 2274.4 us
+[2026-10-08 17:00:26 KST] === [52/54] variant=wbuffix cache=drop map=32k bs=16k rep=3 ===
+    -> 219.4 MiB/s, 14039 IOPS, clat mean 2277.9 us
+[2026-10-08 17:01:36 KST] === [53/54] variant=wbuffix cache=nodrop map=32k bs=32k rep=3 ===
+    -> 424.6 MiB/s, 13587 IOPS, clat mean 2353.3 us
+[2026-10-08 17:02:47 KST] === [54/54] variant=wbuffix cache=drop map=32k bs=32k rep=3 ===
+    -> 424.4 MiB/s, 13580 IOPS, clat mean 2354.5 us
+environment snapshot -> /home/dccearth/jsw/KSC2026/nvmevirt/exp/results/main3x3_20261008/env_after_wbuffix
+[2026-10-08 17:03:57 KST] finished: /home/dccearth/jsw/KSC2026/nvmevirt/exp/results/main3x3_20261008/wbuffix_nodrop /home/dccearth/jsw/KSC2026/nvmevirt/exp/results/main3x3_20261008/wbuffix_drop
+54 runs, 0 failed -> /home/dccearth/jsw/KSC2026/nvmevirt/exp/results/main3x3_20261008/analysis
+```
+
+## 11.2 main_20261008  (묶음 경로 repo/exp/results/main_20261008/)
+
+### 11.2.1 회차 목록
+- base: 완료 회차 20 (DONE 있음). run.log 첫 시각 2026-10-08 14:21:02 KST, 마지막 시각 2026-10-08 14:46:57 KST. chmodel 오류 줄 합계 41,107,393. chmodel>0 회차 5. kernel_warn>0 회차 2.
+  - FAILED: map32k_bs16k_r1
+  - 미완료/없음 88: map4k_bs4k_r2 map4k_bs4k_r3 map4k_bs8k_r2 map4k_bs8k_r3 map4k_bs16k_r2 map4k_bs16k_r3 map4k_bs32k_r2 map4k_bs32k_r3 map4k_bs64k_r2 map4k_bs64k_r3 map4k_bs128k_r2 map4k_bs128k_r3 map8k_bs4k_r2 map8k_bs4k_r3 map8k_bs8k_r2 map8k_bs8k_r3 map8k_bs16k_r2 map8k_bs16k_r3 map8k_bs32k_r2 map8k_bs32k_r3 map8k_bs64k_r2 map8k_bs64k_r3 map8k_bs128k_r2 map8k_bs128k_r3 map16k_bs4k_r2 map16k_bs4k_r3 map16k_bs8k_r2 map16k_bs8k_r3 map16k_bs16k_r2 map16k_bs16k_r3 map16k_bs32k_r2 map16k_bs32k_r3 map16k_bs64k_r2 map16k_bs64k_r3 map16k_bs128k_r2 map16k_bs128k_r3 map32k_bs4k_r2 map32k_bs4k_r3 map32k_bs8k_r2 map32k_bs8k_r3 map32k_bs16k_r1 map32k_bs16k_r2 map32k_bs16k_r3 map32k_bs32k_r1 map32k_bs32k_r2 map32k_bs32k_r3 map32k_bs64k_r1 map32k_bs64k_r2 map32k_bs64k_r3 map32k_bs128k_r1 map32k_bs128k_r2 map32k_bs128k_r3 map64k_bs4k_r1 map64k_bs4k_r2 map64k_bs4k_r3 map64k_bs8k_r1 map64k_bs8k_r2 map64k_bs8k_r3 map64k_bs16k_r1 map64k_bs16k_r2 map64k_bs16k_r3 map64k_bs32k_r1 map64k_bs32k_r2 map64k_bs32k_r3 map64k_bs64k_r1 map64k_bs64k_r2 map64k_bs64k_r3 map64k_bs128k_r1 map64k_bs128k_r2 map64k_bs128k_r3 map128k_bs4k_r1 map128k_bs4k_r2 map128k_bs4k_r3 map128k_bs8k_r1 map128k_bs8k_r2 map128k_bs8k_r3 map128k_bs16k_r1 map128k_bs16k_r2 map128k_bs16k_r3 map128k_bs32k_r1 map128k_bs32k_r2 map128k_bs32k_r3 map128k_bs64k_r1 map128k_bs64k_r2 map128k_bs64k_r3 map128k_bs128k_r1 map128k_bs128k_r2 map128k_bs128k_r3
+  - run.log NOTE/WARNING/ERROR 줄 9개 (원본 로그 인용, 시각은 KST 로 변환):
+    - `[2026-10-08 14:29:10 KST] NOTE: 8242206 channel-model overflow messages (first 20 in kernel.log)`
+    - `[2026-10-08 14:29:10 KST] NOTE: 1 kernel warning line(s) — see /home/dccearth/jsw/KSC2026/nvmevirt/exp/results/main_20261008/base/map8k_bs4k_r1/kernel.log`
+    - `[2026-10-08 14:36:09 KST] NOTE: 6757590 channel-model overflow messages (first 20 in kernel.log)`
+    - `[2026-10-08 14:37:20 KST] NOTE: 9087642 channel-model overflow messages (first 20 in kernel.log)`
+    - `[2026-10-08 14:37:20 KST] NOTE: 1 kernel warning line(s) — see /home/dccearth/jsw/KSC2026/nvmevirt/exp/results/main_20261008/base/map16k_bs8k_r1/kernel.log`
+    - `[2026-10-08 14:43:09 KST] NOTE: 8233550 channel-model overflow messages (first 20 in kernel.log)`
+    - `[2026-10-08 14:44:21 KST] NOTE: 8786405 channel-model overflow messages (first 20 in kernel.log)`
+    - `[2026-10-08 14:44:21 KST] NOTE: 1 kernel warning line(s) — see /home/dccearth/jsw/KSC2026/nvmevirt/exp/results/main_20261008/base/map32k_bs8k_r1/kernel.log`
+    - `[2026-10-08 14:46:57 KST] ERROR: fio failed (exit 1) — see /home/dccearth/jsw/KSC2026/nvmevirt/exp/results/main_20261008/base/map32k_bs16k_r1`
+- wbuffix: 완료 회차 53 (DONE 있음). run.log 첫 시각 2026-10-08 14:49:14 KST, 마지막 시각 2026-10-08 15:51:36 KST. chmodel 오류 줄 합계 0. chmodel>0 회차 0. kernel_warn>0 회차 0.
+  - 미완료/없음 55: map4k_bs4k_r3 map4k_bs8k_r3 map4k_bs16k_r3 map4k_bs32k_r3 map4k_bs64k_r3 map4k_bs128k_r3 map8k_bs4k_r3 map8k_bs8k_r3 map8k_bs16k_r3 map8k_bs32k_r3 map8k_bs64k_r3 map8k_bs128k_r3 map16k_bs4k_r3 map16k_bs8k_r3 map16k_bs16k_r3 map16k_bs32k_r3 map16k_bs64k_r3 map16k_bs128k_r2 map16k_bs128k_r3 map32k_bs4k_r2 map32k_bs4k_r3 map32k_bs8k_r2 map32k_bs8k_r3 map32k_bs16k_r2 map32k_bs16k_r3 map32k_bs32k_r2 map32k_bs32k_r3 map32k_bs64k_r2 map32k_bs64k_r3 map32k_bs128k_r2 map32k_bs128k_r3 map64k_bs4k_r2 map64k_bs4k_r3 map64k_bs8k_r2 map64k_bs8k_r3 map64k_bs16k_r2 map64k_bs16k_r3 map64k_bs32k_r2 map64k_bs32k_r3 map64k_bs64k_r2 map64k_bs64k_r3 map64k_bs128k_r2 map64k_bs128k_r3 map128k_bs4k_r2 map128k_bs4k_r3 map128k_bs8k_r2 map128k_bs8k_r3 map128k_bs16k_r2 map128k_bs16k_r3 map128k_bs32k_r2 map128k_bs32k_r3 map128k_bs64k_r2 map128k_bs64k_r3 map128k_bs128k_r2 map128k_bs128k_r3
+
+### 11.2.2 조합별 행렬 (행 = 매핑 단위, 열 = fio bs). 칸 = mean ± std [min..max], n = 그 조합의 완료 회차 수(보통 3)
+#### main_20261008 · base · bw_MiBps
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | 418.396 ± 0.000 [418.396..418.396] | 433.590 ± 0.000 [433.590..433.590] | 480.928 ± 0.000 [480.928..480.928] | 482.595 ± 0.000 [482.595..482.595] | 486.360 ± 0.000 [486.360..486.360] | 496.773 ± 0.000 [496.773..496.773] |
+| 8K | 266.394 ± 0.000 [266.394..266.394] | 420.125 ± 0.000 [420.125..420.125] | 440.075 ± 0.000 [440.075..440.075] | 482.244 ± 0.000 [482.244..482.244] | 486.371 ± 0.000 [486.371..486.371] | 497.388 ± 0.000 [497.388..497.388] |
+| 16K | 167.853 ± 0.000 [167.853..167.853] | 272.789 ± 0.000 [272.789..272.789] | 420.993 ± 0.000 [420.993..420.993] | 443.818 ± 0.000 [443.818..443.818] | 486.388 ± 0.000 [486.388..486.388] | 496.748 ± 0.000 [496.748..496.748] |
+| 32K | 92.600 ± 0.000 [92.600..92.600] | 174.002 ± 0.000 [174.002..174.002] | NA | NA | NA | NA |
+| 64K | NA | NA | NA | NA | NA | NA |
+| 128K | NA | NA | NA | NA | NA | NA |
+
+#### main_20261008 · base · iops
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | 107109.382 ± 0.000 [107109.382..107109.382] | 55499.542 ± 0.000 [55499.542..55499.542] | 30779.394 ± 0.000 [30779.394..30779.394] | 15443.059 ± 0.000 [15443.059..15443.059] | 7781.766 ± 0.000 [7781.766..7781.766] | 3974.191 ± 0.000 [3974.191..3974.191] |
+| 8K | 68196.973 ± 0.000 [68196.973..68196.973] | 53776.037 ± 0.000 [53776.037..53776.037] | 28164.831 ± 0.000 [28164.831..28164.831] | 15431.838 ± 0.000 [15431.838..15431.838] | 7781.952 ± 0.000 [7781.952..7781.952] | 3979.103 ± 0.000 [3979.103..3979.103] |
+| 16K | 42970.418 ± 0.000 [42970.418..42970.418] | 34917.104 ± 0.000 [34917.104..34917.104] | 26943.601 ± 0.000 [26943.601..26943.601] | 14202.206 ± 0.000 [14202.206..14202.206] | 7782.215 ± 0.000 [7782.215..7782.215] | 3973.991 ± 0.000 [3973.991..3973.991] |
+| 32K | 23705.581 ± 0.000 [23705.581..23705.581] | 22272.277 ± 0.000 [22272.277..22272.277] | NA | NA | NA | NA |
+| 64K | NA | NA | NA | NA | NA | NA |
+| 128K | NA | NA | NA | NA | NA | NA |
+
+#### main_20261008 · base · clat_mean_us
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | 297.725 ± 0.000 [297.725..297.725] | 575.365 ± 0.000 [575.365..575.365] | 1038.183 ± 0.000 [1038.183..1038.183] | 2070.202 ± 0.000 [2070.202..2070.202] | 4109.243 ± 0.000 [4109.243..4109.243] | 8047.197 ± 0.000 [8047.197..8047.197] |
+| 8K | 467.307 ± 0.000 [467.307..467.307] | 593.818 ± 0.000 [593.818..593.818] | 1134.696 ± 0.000 [1134.696..1134.696] | 2071.723 ± 0.000 [2071.723..2071.723] | 4109.183 ± 0.000 [4109.183..4109.183] | 8037.268 ± 0.000 [8037.268..8037.268] |
+| 16K | 742.770 ± 0.000 [742.770..742.770] | 914.359 ± 0.000 [914.359..914.359] | 1186.169 ± 0.000 [1186.169..1186.169] | 2251.226 ± 0.000 [2251.226..2251.226] | 4109.073 ± 0.000 [4109.073..4109.073] | 8047.680 ± 0.000 [8047.680..8047.680] |
+| 32K | 1347.668 ± 0.000 [1347.668..1347.668] | 1434.271 ± 0.000 [1434.271..1434.271] | NA | NA | NA | NA |
+| 64K | NA | NA | NA | NA | NA | NA |
+| 128K | NA | NA | NA | NA | NA | NA |
+
+#### main_20261008 · base · clat_p50_us
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | 70.144 ± 0.000 [70.144..70.144] | 120.320 ± 0.000 [120.320..120.320] | 222.208 ± 0.000 [222.208..222.208] | 444.416 ± 0.000 [444.416..444.416] | 897.024 ± 0.000 [897.024..897.024] | 1794.048 ± 0.000 [1794.048..1794.048] |
+| 8K | 342.016 ± 0.000 [342.016..342.016] | 132.096 ± 0.000 [132.096..132.096] | 224.256 ± 0.000 [224.256..224.256] | 444.416 ± 0.000 [444.416..444.416] | 897.024 ± 0.000 [897.024..897.024] | 1794.048 ± 0.000 [1794.048..1794.048] |
+| 16K | 684.032 ± 0.000 [684.032..684.032] | 692.224 ± 0.000 [692.224..692.224] | 246.784 ± 0.000 [246.784..246.784] | 464.896 ± 0.000 [464.896..464.896] | 897.024 ± 0.000 [897.024..897.024] | 1794.048 ± 0.000 [1794.048..1794.048] |
+| 32K | 1236.992 ± 0.000 [1236.992..1236.992] | 1236.992 ± 0.000 [1236.992..1236.992] | NA | NA | NA | NA |
+| 64K | NA | NA | NA | NA | NA | NA |
+| 128K | NA | NA | NA | NA | NA | NA |
+
+#### main_20261008 · base · clat_p99_us
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | 13303.808 ± 0.000 [13303.808..13303.808] | 16449.536 ± 0.000 [16449.536..16449.536] | 17694.720 ± 0.000 [17694.720..17694.720] | 18219.008 ± 0.000 [18219.008..18219.008] | 19005.440 ± 0.000 [19005.440..19005.440] | 20578.304 ± 0.000 [20578.304..20578.304] |
+| 8K | 2473.984 ± 0.000 [2473.984..2473.984] | 15532.032 ± 0.000 [15532.032..15532.032] | 17432.576 ± 0.000 [17432.576..17432.576] | 18219.008 ± 0.000 [18219.008..18219.008] | 19005.440 ± 0.000 [19005.440..19005.440] | 20316.160 ± 0.000 [20316.160..20316.160] |
+| 16K | 2768.896 ± 0.000 [2768.896..2768.896] | 3162.112 ± 0.000 [3162.112..3162.112] | 16908.288 ± 0.000 [16908.288..16908.288] | 18219.008 ± 0.000 [18219.008..18219.008] | 19005.440 ± 0.000 [19005.440..19005.440] | 20316.160 ± 0.000 [20316.160..20316.160] |
+| 32K | 3784.704 ± 0.000 [3784.704..3784.704] | 4227.072 ± 0.000 [4227.072..4227.072] | NA | NA | NA | NA |
+| 64K | NA | NA | NA | NA | NA | NA |
+| 128K | NA | NA | NA | NA | NA | NA |
+
+#### main_20261008 · base · clat_p999_us
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | 17170.432 ± 0.000 [17170.432..17170.432] | 17956.864 ± 0.000 [17956.864..17956.864] | 18481.152 ± 0.000 [18481.152..18481.152] | 18743.296 ± 0.000 [18743.296..18743.296] | 19529.728 ± 0.000 [19529.728..19529.728] | 38010.880 ± 0.000 [38010.880..38010.880] |
+| 8K | 3457.024 ± 0.000 [3457.024..3457.024] | 17432.576 ± 0.000 [17432.576..17432.576] | 18481.152 ± 0.000 [18481.152..18481.152] | 18743.296 ± 0.000 [18743.296..18743.296] | 19529.728 ± 0.000 [19529.728..19529.728] | 38010.880 ± 0.000 [38010.880..38010.880] |
+| 16K | 3915.776 ± 0.000 [3915.776..3915.776] | 4358.144 ± 0.000 [4358.144..4358.144] | 17956.864 ± 0.000 [17956.864..17956.864] | 18743.296 ± 0.000 [18743.296..18743.296] | 19529.728 ± 0.000 [19529.728..19529.728] | 38010.880 ± 0.000 [38010.880..38010.880] |
+| 32K | 5079.040 ± 0.000 [5079.040..5079.040] | 5472.256 ± 0.000 [5472.256..5472.256] | NA | NA | NA | NA |
+| 64K | NA | NA | NA | NA | NA | NA |
+| 128K | NA | NA | NA | NA | NA | NA |
+
+#### main_20261008 · base · lat_mean_us
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | 298.571 ± 0.000 [298.571..298.571] | 576.359 ± 0.000 [576.359..576.359] | 1039.409 ± 0.000 [1039.409..1039.409] | 2071.863 ± 0.000 [2071.863..2071.863] | 4111.872 ± 0.000 [4111.872..4111.872] | 8051.637 ± 0.000 [8051.637..8051.637] |
+| 8K | 469.000 ± 0.000 [469.000..469.000] | 594.826 ± 0.000 [594.826..594.826] | 1135.912 ± 0.000 [1135.912..1135.912] | 2073.364 ± 0.000 [2073.364..2073.364] | 4111.809 ± 0.000 [4111.809..4111.809] | 8041.648 ± 0.000 [8041.648..8041.648] |
+| 16K | 744.459 ± 0.000 [744.459..744.459] | 916.214 ± 0.000 [916.214..916.214] | 1187.410 ± 0.000 [1187.410..1187.410] | 2252.891 ± 0.000 [2252.891..2252.891] | 4111.606 ± 0.000 [4111.606..4111.606] | 8052.035 ± 0.000 [8052.035..8052.035] |
+| 32K | 1349.624 ± 0.000 [1349.624..1349.624] | 1436.508 ± 0.000 [1436.508..1436.508] | NA | NA | NA | NA |
+| 64K | NA | NA | NA | NA | NA | NA |
+| 128K | NA | NA | NA | NA | NA | NA |
+
+#### main_20261008 · base · slat_mean_us
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | 0.846 ± 0.000 [0.846..0.846] | 0.994 ± 0.000 [0.994..0.994] | 1.226 ± 0.000 [1.226..1.226] | 1.661 ± 0.000 [1.661..1.661] | 2.629 ± 0.000 [2.629..2.629] | 4.440 ± 0.000 [4.440..4.440] |
+| 8K | 1.693 ± 0.000 [1.693..1.693] | 1.008 ± 0.000 [1.008..1.008] | 1.215 ± 0.000 [1.215..1.215] | 1.641 ± 0.000 [1.641..1.641] | 2.626 ± 0.000 [2.626..2.626] | 4.380 ± 0.000 [4.380..4.380] |
+| 16K | 1.689 ± 0.000 [1.689..1.689] | 1.855 ± 0.000 [1.855..1.855] | 1.241 ± 0.000 [1.241..1.241] | 1.664 ± 0.000 [1.664..1.664] | 2.533 ± 0.000 [2.533..2.533] | 4.355 ± 0.000 [4.355..4.355] |
+| 32K | 1.955 ± 0.000 [1.955..1.955] | 2.237 ± 0.000 [2.237..2.237] | NA | NA | NA | NA |
+| 64K | NA | NA | NA | NA | NA | NA |
+| 128K | NA | NA | NA | NA | NA | NA |
+
+#### main_20261008 · base · bw_first10s_MiBps
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | 1273.449 ± 0.000 [1273.449..1273.449] | 1285.086 ± 0.000 [1285.086..1285.086] | 1288.664 ± 0.000 [1288.664..1288.664] | 1290.947 ± 0.000 [1290.947..1290.947] | 1293.673 ± 0.000 [1293.673..1293.673] | 1299.198 ± 0.000 [1299.198..1299.198] |
+| 8K | 814.963 ± 0.000 [814.963..814.963] | 1282.384 ± 0.000 [1282.384..1282.384] | 1285.951 ± 0.000 [1285.951..1285.951] | 1290.968 ± 0.000 [1290.968..1290.968] | 1293.673 ± 0.000 [1293.673..1293.673] | 1299.042 ± 0.000 [1299.042..1299.042] |
+| 16K | 430.340 ± 0.000 [430.340..430.340] | 822.686 ± 0.000 [822.686..822.686] | 1278.891 ± 0.000 [1278.891..1278.891] | 1286.222 ± 0.000 [1286.222..1286.222] | 1293.667 ± 0.000 [1293.667..1293.667] | 1299.041 ± 0.000 [1299.041..1299.041] |
+| 32K | 219.732 ± 0.000 [219.732..219.732] | 436.112 ± 0.000 [436.112..436.112] | NA | NA | NA | NA |
+| 64K | NA | NA | NA | NA | NA | NA |
+| 128K | NA | NA | NA | NA | NA | NA |
+
+#### main_20261008 · base · bw_last20s_MiBps
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | 320.740 ± 0.000 [320.740..320.740] | 321.295 ± 0.000 [321.295..321.295] | 244.569 ± 0.000 [244.569..244.569] | 243.187 ± 0.000 [243.187..243.187] | 254.762 ± 0.000 [254.762..254.762] | 275.073 ± 0.000 [275.073..275.073] |
+| 8K | 131.900 ± 0.000 [131.900..131.900] | 323.431 ± 0.000 [323.431..323.431] | 320.270 ± 0.000 [320.270..320.270] | 246.913 ± 0.000 [246.913..246.913] | 254.503 ± 0.000 [254.503..254.503] | 276.863 ± 0.000 [276.863..276.863] |
+| 16K | 86.197 ± 0.000 [86.197..86.197] | 133.554 ± 0.000 [133.554..133.554] | 322.791 ± 0.000 [322.791..322.791] | 318.064 ± 0.000 [318.064..318.064] | 254.826 ± 0.000 [254.826..254.826] | 275.170 ± 0.000 [275.170..275.170] |
+| 32K | 49.795 ± 0.000 [49.795..49.795] | 85.395 ± 0.000 [85.395..85.395] | NA | NA | NA | NA |
+| 64K | NA | NA | NA | NA | NA | NA |
+| 128K | NA | NA | NA | NA | NA | NA |
+
+#### main_20261008 · base · gc_onset_s
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | 6.302 ± 0.000 [6.302..6.302] | 5.745 ± 0.000 [5.745..5.745] | 5.697 ± 0.000 [5.697..5.697] | 5.696 ± 0.000 [5.696..5.696] | 5.698 ± 0.000 [5.698..5.698] | 5.699 ± 0.000 [5.699..5.699] |
+| 8K | 5.685 ± 0.000 [5.685..5.685] | 5.821 ± 0.000 [5.821..5.821] | 5.782 ± 0.000 [5.782..5.782] | 5.696 ± 0.000 [5.696..5.696] | 5.698 ± 0.000 [5.698..5.698] | 5.698 ± 0.000 [5.698..5.698] |
+| 16K | 5.668 ± 0.000 [5.668..5.668] | 5.666 ± 0.000 [5.666..5.666] | 5.924 ± 0.000 [5.924..5.924] | 5.846 ± 0.000 [5.846..5.846] | 5.690 ± 0.000 [5.690..5.690] | 5.697 ± 0.000 [5.697..5.697] |
+| 32K | 5.636 ± 0.000 [5.636..5.636] | 5.639 ± 0.000 [5.639..5.639] | NA | NA | NA | NA |
+| 64K | NA | NA | NA | NA | NA | NA |
+| 128K | NA | NA | NA | NA | NA | NA |
+
+#### main_20261008 · base · gc_onset_last_part_s
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | 6.323 ± 0.000 [6.323..6.323] | 5.764 ± 0.000 [5.764..5.764] | 5.697 ± 0.000 [5.697..5.697] | 5.697 ± 0.000 [5.697..5.697] | 5.698 ± 0.000 [5.698..5.698] | 5.699 ± 0.000 [5.699..5.699] |
+| 8K | 5.691 ± 0.000 [5.691..5.691] | 5.862 ± 0.000 [5.862..5.862] | 5.783 ± 0.000 [5.783..5.783] | 5.696 ± 0.000 [5.696..5.696] | 5.699 ± 0.000 [5.699..5.699] | 5.698 ± 0.000 [5.698..5.698] |
+| 16K | 5.684 ± 0.000 [5.684..5.684] | 5.697 ± 0.000 [5.697..5.697] | 5.946 ± 0.000 [5.946..5.946] | 5.868 ± 0.000 [5.868..5.868] | 5.690 ± 0.000 [5.690..5.690] | 5.697 ± 0.000 [5.697..5.697] |
+| 32K | 5.682 ± 0.000 [5.682..5.682] | 5.673 ± 0.000 [5.673..5.673] | NA | NA | NA | NA |
+| 64K | NA | NA | NA | NA | NA | NA |
+| 128K | NA | NA | NA | NA | NA | NA |
+
+#### main_20261008 · base · bw_pre_gc_MiBps
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | 2008.176 ± 0.000 [2008.176..2008.176] | 2211.020 ± 0.000 [2211.020..2211.020] | 2217.722 ± 0.000 [2217.722..2217.722] | 2217.767 ± 0.000 [2217.767..2217.767] | 2217.883 ± 0.000 [2217.883..2217.883] | 2218.338 ± 0.000 [2218.338..2218.338] |
+| 8K | 1115.468 ± 0.000 [1115.468..1115.468] | 2180.882 ± 0.000 [2180.882..2180.882] | 2198.648 ± 0.000 [2198.648..2198.648] | 2217.773 ± 0.000 [2217.773..2217.773] | 2217.882 ± 0.000 [2217.882..2217.882] | 2217.909 ± 0.000 [2217.909..2217.909] |
+| 16K | 559.153 ± 0.000 [559.153..559.153] | 1117.982 ± 0.000 [1117.982..1117.982] | 2143.227 ± 0.000 [2143.227..2143.227] | 2173.074 ± 0.000 [2173.074..2173.074] | 2217.872 ± 0.000 [2217.872..2217.872] | 2217.932 ± 0.000 [2217.932..2217.932] |
+| 32K | 280.505 ± 0.000 [280.505..280.505] | 561.263 ± 0.000 [561.263..561.263] | NA | NA | NA | NA |
+| 64K | NA | NA | NA | NA | NA | NA |
+| 128K | NA | NA | NA | NA | NA | NA |
+
+#### main_20261008 · base · bw_post_gc_MiBps
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | 241.841 ± 0.000 [241.841..241.841] | 254.313 ± 0.000 [254.313..254.313] | 305.714 ± 0.000 [305.714..305.714] | 307.251 ± 0.000 [307.251..307.251] | 311.737 ± 0.000 [311.737..311.737] | 323.185 ± 0.000 [323.185..323.185] |
+| 8K | 181.225 ± 0.000 [181.225..181.225] | 243.286 ± 0.000 [243.286..243.286] | 263.453 ± 0.000 [263.453..263.453] | 307.144 ± 0.000 [307.144..307.144] | 311.706 ± 0.000 [311.706..311.706] | 323.794 ± 0.000 [323.794..323.794] |
+| 16K | 128.885 ± 0.000 [128.885..128.885] | 188.075 ± 0.000 [188.075..188.075] | 247.764 ± 0.000 [247.764..247.764] | 269.453 ± 0.000 [269.453..269.453] | 311.848 ± 0.000 [311.848..311.848] | 323.166 ± 0.000 [323.166..323.166] |
+| 32K | 73.927 ± 0.000 [73.927..73.927] | 135.522 ± 0.000 [135.522..135.522] | NA | NA | NA | NA |
+| 64K | NA | NA | NA | NA | NA | NA |
+| 128K | NA | NA | NA | NA | NA | NA |
+
+#### main_20261008 · base · gc_cnt
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | 8345.000 ± 0.000 [8345..8345] | 9182.000 ± 0.000 [9182..9182] | 11272.000 ± 0.000 [11272..11272] | 11280.000 ± 0.000 [11280..11280] | 11344.000 ± 0.000 [11344..11344] | 11480.000 ± 0.000 [11480..11480] |
+| 8K | 14444.000 ± 0.000 [14444..14444] | 8386.000 ± 0.000 [8386..8386] | 9460.000 ± 0.000 [9460..9460] | 11276.000 ± 0.000 [11276..11276] | 11344.000 ± 0.000 [11344..11344] | 11480.000 ± 0.000 [11480..11480] |
+| 16K | 14419.000 ± 0.000 [14419..14419] | 15155.000 ± 0.000 [15155..15155] | 8352.000 ± 0.000 [8352..8352] | 9576.000 ± 0.000 [9576..9576] | 11348.000 ± 0.000 [11348..11348] | 11480.000 ± 0.000 [11480..11480] |
+| 32K | 15473.000 ± 0.000 [15473..15473] | 15691.000 ± 0.000 [15691..15691] | NA | NA | NA | NA |
+| 64K | NA | NA | NA | NA | NA | NA |
+| 128K | NA | NA | NA | NA | NA | NA |
+
+#### main_20261008 · base · ftl_host_pgs
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | 6426670 ± 0.000 [6426670..6426670] | 6660944 ± 0.000 [6660944..6660944] | 7387424 ± 0.000 [7387424..7387424] | 7412792 ± 0.000 [7412792..7412792] | 7471616 ± 0.000 [7471616..7471616] | 7632608 ± 0.000 [7632608..7632608] |
+| 8K | 4091942 ± 0.000 [4091942..4091942] | 3226616 ± 0.000 [3226616..3226616] | 3379836 ± 0.000 [3379836..3379836] | 3703888 ± 0.000 [3703888..3703888] | 3735648 ± 0.000 [3735648..3735648] | 3820448 ± 0.000 [3820448..3820448] |
+| 16K | 2578311 ± 0.000 [2578311..2578311] | 2095113 ± 0.000 [2095113..2095113] | 1616643 ± 0.000 [1616643..1616643] | 1704776 ± 0.000 [1704776..1704776] | 1868292 ± 0.000 [1868292..1868292] | 1908056 ± 0.000 [1908056..1908056] |
+| 32K | 1422406 ± 0.000 [1422406..1422406] | 1336448 ± 0.000 [1336448..1336448] | NA | NA | NA | NA |
+| 64K | NA | NA | NA | NA | NA | NA |
+| 128K | NA | NA | NA | NA | NA | NA |
+
+#### main_20261008 · base · ftl_gc_pgs
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | 13784996 ± 0.000 [13784996..13784996] | 15264468 ± 0.000 [15264468..15264468] | 18818284 ± 0.000 [18818284..18818284] | 18808928 ± 0.000 [18808928..18808928] | 18881152 ± 0.000 [18881152..18881152] | 18999456 ± 0.000 [18999456..18999456] |
+| 8K | 12260041 ± 0.000 [12260041..12260041] | 6921205 ± 0.000 [6921205..6921205] | 7867608 ± 0.000 [7867608..7867608] | 9402992 ± 0.000 [9402992..9402992] | 9440736 ± 0.000 [9440736..9440736] | 9495600 ± 0.000 [9495600..9495600] |
+| 16K | 5585060 ± 0.000 [5585060..5585060] | 6444990 ± 0.000 [6444990..6444990] | 3439890 ± 0.000 [3439890..3439890] | 3978204 ± 0.000 [3978204..3978204] | 4721904 ± 0.000 [4721904..4721904] | 4749968 ± 0.000 [4749968..4749968] |
+| 32K | 2929163 ± 0.000 [2929163..2929163] | 3070857 ± 0.000 [3070857..3070857] | NA | NA | NA | NA |
+| 64K | NA | NA | NA | NA | NA | NA |
+| 128K | NA | NA | NA | NA | NA | NA |
+
+#### main_20261008 · base · waf_gc
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | 3.145 ± 0.000 [3.145..3.145] | 3.292 ± 0.000 [3.292..3.292] | 3.547 ± 0.000 [3.547..3.547] | 3.537 ± 0.000 [3.537..3.537] | 3.527 ± 0.000 [3.527..3.527] | 3.489 ± 0.000 [3.489..3.489] |
+| 8K | 3.996 ± 0.000 [3.996..3.996] | 3.145 ± 0.000 [3.145..3.145] | 3.328 ± 0.000 [3.328..3.328] | 3.539 ± 0.000 [3.539..3.539] | 3.527 ± 0.000 [3.527..3.527] | 3.485 ± 0.000 [3.485..3.485] |
+| 16K | 3.166 ± 0.000 [3.166..3.166] | 4.076 ± 0.000 [4.076..4.076] | 3.128 ± 0.000 [3.128..3.128] | 3.334 ± 0.000 [3.334..3.334] | 3.527 ± 0.000 [3.527..3.527] | 3.489 ± 0.000 [3.489..3.489] |
+| 32K | 3.059 ± 0.000 [3.059..3.059] | 3.298 ± 0.000 [3.298..3.298] | NA | NA | NA | NA |
+| 64K | NA | NA | NA | NA | NA | NA |
+| 128K | NA | NA | NA | NA | NA | NA |
+
+#### main_20261008 · base · waf_total
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | 3.145 ± 0.000 [3.145..3.145] | 3.292 ± 0.000 [3.292..3.292] | 3.547 ± 0.000 [3.547..3.547] | 3.537 ± 0.000 [3.537..3.537] | 3.527 ± 0.000 [3.527..3.527] | 3.489 ± 0.000 [3.489..3.489] |
+| 8K | 7.992 ± 0.000 [7.992..7.992] | 3.145 ± 0.000 [3.145..3.145] | 3.328 ± 0.000 [3.328..3.328] | 3.539 ± 0.000 [3.539..3.539] | 3.527 ± 0.000 [3.527..3.527] | 3.485 ± 0.000 [3.485..3.485] |
+| 16K | 12.665 ± 0.000 [12.665..12.665] | 8.152 ± 0.000 [8.152..8.152] | 3.128 ± 0.000 [3.128..3.128] | 3.334 ± 0.000 [3.334..3.334] | 3.527 ± 0.000 [3.527..3.527] | 3.489 ± 0.000 [3.489..3.489] |
+| 32K | 24.474 ± 0.000 [24.474..24.474] | 13.191 ± 0.000 [13.191..13.191] | NA | NA | NA | NA |
+| 64K | NA | NA | NA | NA | NA | NA |
+| 128K | NA | NA | NA | NA | NA | NA |
+
+#### main_20261008 · base · written_GiB
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | 24.516 ± 0.000 [24.516..24.516] | 25.409 ± 0.000 [25.409..25.409] | 28.181 ± 0.000 [28.181..28.181] | 28.278 ± 0.000 [28.278..28.278] | 28.502 ± 0.000 [28.502..28.502] | 29.116 ± 0.000 [29.116..29.116] |
+| 8K | 15.610 ± 0.000 [15.610..15.610] | 24.617 ± 0.000 [24.617..24.617] | 25.786 ± 0.000 [25.786..25.786] | 28.258 ± 0.000 [28.258..28.258] | 28.501 ± 0.000 [28.501..28.501] | 29.148 ± 0.000 [29.148..29.148] |
+| 16K | 9.835 ± 0.000 [9.835..9.835] | 15.985 ± 0.000 [15.985..15.985] | 24.668 ± 0.000 [24.668..24.668] | 26.013 ± 0.000 [26.013..26.013] | 28.508 ± 0.000 [28.508..28.508] | 29.115 ± 0.000 [29.115..29.115] |
+| 32K | 5.426 ± 0.000 [5.426..5.426] | 10.196 ± 0.000 [10.196..10.196] | NA | NA | NA | NA |
+| 64K | NA | NA | NA | NA | NA | NA |
+| 128K | NA | NA | NA | NA | NA | NA |
+
+#### main_20261008 · base · fill_ratio
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | 2.186 ± 0.000 [2.186..2.186] | 2.266 ± 0.000 [2.266..2.266] | 2.513 ± 0.000 [2.513..2.513] | 2.522 ± 0.000 [2.522..2.522] | 2.542 ± 0.000 [2.542..2.542] | 2.596 ± 0.000 [2.596..2.596] |
+| 8K | 1.392 ± 0.000 [1.392..1.392] | 2.195 ± 0.000 [2.195..2.195] | 2.299 ± 0.000 [2.299..2.299] | 2.520 ± 0.000 [2.520..2.520] | 2.542 ± 0.000 [2.542..2.542] | 2.599 ± 0.000 [2.599..2.599] |
+| 16K | 0.877 ± 0.000 [0.877..0.877] | 1.425 ± 0.000 [1.425..1.425] | 2.200 ± 0.000 [2.200..2.200] | 2.320 ± 0.000 [2.320..2.320] | 2.542 ± 0.000 [2.542..2.542] | 2.596 ± 0.000 [2.596..2.596] |
+| 32K | 0.484 ± 0.000 [0.484..0.484] | 0.909 ± 0.000 [0.909..0.909] | NA | NA | NA | NA |
+| 64K | NA | NA | NA | NA | NA | NA |
+| 128K | NA | NA | NA | NA | NA | NA |
+
+#### main_20261008 · base · chmodel_msgs
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] |
+| 8K | 8242206 ± 0.000 [8242206..8242206] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] |
+| 16K | 6757590 ± 0.000 [6757590..6757590] | 9087642 ± 0.000 [9087642..9087642] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] |
+| 32K | 8233550 ± 0.000 [8233550..8233550] | 8786405 ± 0.000 [8786405..8786405] | NA | NA | NA | NA |
+| 64K | NA | NA | NA | NA | NA | NA |
+| 128K | NA | NA | NA | NA | NA | NA |
+
+#### main_20261008 · base · kernel_warn
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] |
+| 8K | 1.000 ± 0.000 [1..1] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] |
+| 16K | 0.000 ± 0.000 [0..0] | 1.000 ± 0.000 [1..1] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] |
+| 32K | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | NA | NA | NA | NA |
+| 64K | NA | NA | NA | NA | NA | NA |
+| 128K | NA | NA | NA | NA | NA | NA |
+
+#### main_20261008 · wbuffix · bw_MiBps
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | 418.567 ± 1.318 [417.635..419.499] | 438.651 ± 0.917 [438.003..439.300] | 480.902 ± 0.012 [480.894..480.911] | 482.331 ± 0.070 [482.281..482.380] | 486.268 ± 0.001 [486.267..486.269] | 496.842 ± 0.014 [496.832..496.852] |
+| 8K | 216.667 ± 0.079 [216.611..216.723] | 418.468 ± 2.244 [416.882..420.055] | 437.914 ± 1.612 [436.773..439.054] | 482.307 ± 0.072 [482.256..482.357] | 486.373 ± 0.013 [486.363..486.382] | 496.721 ± 0.032 [496.698..496.743] |
+| 16K | 129.806 ± 0.169 [129.687..129.926] | 217.784 ± 0.304 [217.569..217.999] | 420.513 ± 0.291 [420.308..420.719] | 442.190 ± 3.815 [439.492..444.888] | 486.312 ± 0.095 [486.245..486.380] | 496.938 ± 0.000 [496.938..496.938] |
+| 32K | 68.268 ± 0.000 [68.268..68.268] | 131.701 ± 0.000 [131.701..131.701] | 219.313 ± 0.000 [219.313..219.313] | 424.493 ± 0.000 [424.493..424.493] | 446.665 ± 0.000 [446.665..446.665] | 496.671 ± 0.000 [496.671..496.671] |
+| 64K | 47.054 ± 0.000 [47.054..47.054] | 93.271 ± 0.000 [93.271..93.271] | 175.157 ± 0.000 [175.157..175.157] | 285.618 ± 0.000 [285.618..285.618] | 645.083 ± 0.000 [645.083..645.083] | 665.964 ± 0.000 [665.964..665.964] |
+| 128K | 28.134 ± 0.000 [28.134..28.134] | 56.112 ± 0.000 [56.112..56.112] | 110.900 ± 0.000 [110.900..110.900] | 204.969 ± 0.000 [204.969..204.969] | 340.655 ± 0.000 [340.655..340.655] | 837.771 ± 0.000 [837.771..837.771] |
+
+#### main_20261008 · wbuffix · iops
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | 107153.202 ± 337.477 [106914.570..107391.835] | 56147.404 ± 117.363 [56064.416..56230.392] | 30777.765 ± 0.780 [30777.213..30778.317] | 15434.597 ± 2.233 [15433.018..15436.176] | 7780.292 ± 0.026 [7780.274..7780.311] | 3974.738 ± 0.114 [3974.658..3974.819] |
+| 8K | 55466.935 ± 20.092 [55452.728..55481.142] | 53563.986 ± 287.134 [53360.952..53767.021] | 28026.503 ± 103.184 [27953.540..28099.465] | 15433.837 ± 2.302 [15432.209..15435.465] | 7781.970 ± 0.209 [7781.822..7782.118] | 3973.771 ± 0.255 [3973.591..3973.951] |
+| 16K | 33230.519 ± 43.171 [33199.993..33261.046] | 27876.480 ± 38.904 [27848.970..27903.989] | 26912.872 ± 18.572 [26899.740..26926.005] | 14150.089 ± 122.098 [14063.753..14236.425] | 7781.005 ± 1.522 [7779.929..7782.081] | 3975.507 ± 0.000 [3975.507..3975.507] |
+| 32K | 17476.663 ± 0.000 [17476.663..17476.663] | 16857.783 ± 0.000 [16857.783..16857.783] | 14036.065 ± 0.000 [14036.065..14036.065] | 13583.792 ± 0.000 [13583.792..13583.792] | 7146.645 ± 0.000 [7146.645..7146.645] | 3973.374 ± 0.000 [3973.374..3973.374] |
+| 64K | 12045.792 ± 0.000 [12045.792..12045.792] | 11938.856 ± 0.000 [11938.856..11938.856] | 11210.111 ± 0.000 [11210.111..11210.111] | 9139.800 ± 0.000 [9139.800..9139.800] | 10321.329 ± 0.000 [10321.329..10321.329] | 5327.718 ± 0.000 [5327.718..5327.718] |
+| 128K | 7202.426 ± 0.000 [7202.426..7202.426] | 7182.418 ± 0.000 [7182.418..7182.418] | 7097.669 ± 0.000 [7097.669..7097.669] | 6559.014 ± 0.000 [6559.014..6559.014] | 5450.488 ± 0.000 [5450.488..5450.488] | 6702.178 ± 0.000 [6702.178..6702.178] |
+
+#### main_20261008 · wbuffix · clat_mean_us
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | 297.612 ± 0.944 [296.945..298.280] | 568.706 ± 1.167 [567.881..569.531] | 1038.234 ± 0.016 [1038.223..1038.246] | 2071.346 ± 0.295 [2071.137..2071.555] | 4110.090 ± 0.023 [4110.074..4110.106] | 8046.083 ± 0.151 [8045.976..8046.190] |
+| 8K | 575.863 ± 0.210 [575.715..576.012] | 596.184 ± 3.206 [593.917..598.451] | 1140.297 ± 4.202 [1137.325..1143.268] | 2071.463 ± 0.297 [2071.253..2071.674] | 4109.205 ± 0.151 [4109.098..4109.312] | 8048.018 ± 0.497 [8047.666..8048.370] |
+| 16K | 961.880 ± 1.245 [960.999..962.760] | 1146.631 ± 1.594 [1145.504..1147.758] | 1187.524 ± 0.828 [1186.938..1188.110] | 2259.628 ± 19.541 [2245.811..2273.445] | 4109.728 ± 0.808 [4109.157..4110.299] | 8044.570 ± 0.000 [8044.570..8044.570] |
+| 32K | 1829.779 ± 0.000 [1829.779..1829.779] | 1896.882 ± 0.000 [1896.882..1896.882] | 2278.255 ± 0.000 [2278.255..2278.255] | 2353.817 ± 0.000 [2353.817..2353.817] | 4474.704 ± 0.000 [4474.704..4474.704] | 8049.000 ± 0.000 [8049.000..8049.000] |
+| 64K | 2655.297 ± 0.000 [2655.297..2655.297] | 2678.985 ± 0.000 [2678.985..2678.985] | 2852.966 ± 0.000 [2852.966..2852.966] | 3499.234 ± 0.000 [3499.234..3499.234] | 3097.577 ± 0.000 [3097.577..3097.577] | 6001.689 ± 0.000 [6001.689..6001.689] |
+| 128K | 4441.680 ± 0.000 [4441.680..4441.680] | 4453.995 ± 0.000 [4453.995..4453.995] | 4506.955 ± 0.000 [4506.955..4506.955] | 4876.811 ± 0.000 [4876.811..4876.811] | 5868.173 ± 0.000 [5868.173..5868.173] | 4770.301 ± 0.000 [4770.301..4770.301] |
+
+#### main_20261008 · wbuffix · clat_p50_us
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | 69.120 ± 0.000 [69.120..69.120] | 121.344 ± 0.000 [121.344..121.344] | 222.208 ± 0.000 [222.208..222.208] | 444.416 ± 0.000 [444.416..444.416] | 897.024 ± 0.000 [897.024..897.024] | 1794.048 ± 0.000 [1794.048..1794.048] |
+| 8K | 151.552 ± 1.448 [150.528..152.576] | 133.120 ± 1.448 [132.096..134.144] | 224.256 ± 0.000 [224.256..224.256] | 444.416 ± 0.000 [444.416..444.416] | 897.024 ± 0.000 [897.024..897.024] | 1794.048 ± 0.000 [1794.048..1794.048] |
+| 16K | 254.976 ± 0.000 [254.976..254.976] | 248.832 ± 0.000 [248.832..248.832] | 246.784 ± 0.000 [246.784..246.784] | 464.896 ± 0.000 [464.896..464.896] | 897.024 ± 0.000 [897.024..897.024] | 1794.048 ± 0.000 [1794.048..1794.048] |
+| 32K | 569.344 ± 0.000 [569.344..569.344] | 561.152 ± 0.000 [561.152..561.152] | 536.576 ± 0.000 [536.576..536.576] | 528.384 ± 0.000 [528.384..528.384] | 978.944 ± 0.000 [978.944..978.944] | 1794.048 ± 0.000 [1794.048..1794.048] |
+| 64K | 937.984 ± 0.000 [937.984..937.984] | 921.600 ± 0.000 [921.600..921.600] | 937.984 ± 0.000 [937.984..937.984] | 978.944 ± 0.000 [978.944..978.944] | 880.640 ± 0.000 [880.640..880.640] | 1597.440 ± 0.000 [1597.440..1597.440] |
+| 128K | 2441.216 ± 0.000 [2441.216..2441.216] | 2441.216 ± 0.000 [2441.216..2441.216] | 2506.752 ± 0.000 [2506.752..2506.752] | 2899.968 ± 0.000 [2899.968..2899.968] | 7307.264 ± 0.000 [7307.264..7307.264] | 2244.608 ± 0.000 [2244.608..2244.608] |
+
+#### main_20261008 · wbuffix · clat_p99_us
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | 13500.416 ± 92.682 [13434.880..13565.952] | 16580.608 ± 0.000 [16580.608..16580.608] | 17694.720 ± 0.000 [17694.720..17694.720] | 18219.008 ± 0.000 [18219.008..18219.008] | 19005.440 ± 0.000 [19005.440..19005.440] | 20447.232 ± 185.364 [20316.160..20578.304] |
+| 8K | 15007.744 ± 0.000 [15007.744..15007.744] | 15400.960 ± 0.000 [15400.960..15400.960] | 17432.576 ± 0.000 [17432.576..17432.576] | 18219.008 ± 0.000 [18219.008..18219.008] | 19005.440 ± 0.000 [19005.440..19005.440] | 20447.232 ± 185.364 [20316.160..20578.304] |
+| 16K | 14090.240 ± 0.000 [14090.240..14090.240] | 16646.144 ± 92.682 [16580.608..16711.680] | 16809.984 ± 139.023 [16711.680..16908.288] | 18219.008 ± 0.000 [18219.008..18219.008] | 19005.440 ± 0.000 [19005.440..19005.440] | 20578.304 ± 0.000 [20578.304..20578.304] |
+| 32K | 14483.456 ± 0.000 [14483.456..14483.456] | 15007.744 ± 0.000 [15007.744..15007.744] | 17432.576 ± 0.000 [17432.576..17432.576] | 17694.720 ± 0.000 [17694.720..17694.720] | 19005.440 ± 0.000 [19005.440..19005.440] | 20316.160 ± 0.000 [20316.160..20316.160] |
+| 64K | 11337.728 ± 0.000 [11337.728..11337.728] | 11468.800 ± 0.000 [11468.800..11468.800] | 11862.016 ± 0.000 [11862.016..11862.016] | 12124.160 ± 0.000 [12124.160..12124.160] | 11993.088 ± 0.000 [11993.088..11993.088] | 22675.456 ± 0.000 [22675.456..22675.456] |
+| 128K | 10158.080 ± 0.000 [10158.080..10158.080] | 10158.080 ± 0.000 [10158.080..10158.080] | 10289.152 ± 0.000 [10289.152..10289.152] | 12648.448 ± 0.000 [12648.448..12648.448] | 16711.680 ± 0.000 [16711.680..16711.680] | 11337.728 ± 0.000 [11337.728..11337.728] |
+
+#### main_20261008 · wbuffix · clat_p999_us
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | 17039.360 ± 185.364 [16908.288..17170.432] | 17825.792 ± 185.364 [17694.720..17956.864] | 18481.152 ± 0.000 [18481.152..18481.152] | 18743.296 ± 0.000 [18743.296..18743.296] | 19529.728 ± 0.000 [19529.728..19529.728] | 38010.880 ± 0.000 [38010.880..38010.880] |
+| 8K | 17170.432 ± 0.000 [17170.432..17170.432] | 17432.576 ± 0.000 [17432.576..17432.576] | 18219.008 ± 0.000 [18219.008..18219.008] | 19005.440 ± 0.000 [19005.440..19005.440] | 19529.728 ± 0.000 [19529.728..19529.728] | 38010.880 ± 0.000 [38010.880..38010.880] |
+| 16K | 15335.424 ± 92.682 [15269.888..15400.960] | 17694.720 ± 0.000 [17694.720..17694.720] | 17956.864 ± 0.000 [17956.864..17956.864] | 18743.296 ± 0.000 [18743.296..18743.296] | 19529.728 ± 0.000 [19529.728..19529.728] | 38010.880 ± 0.000 [38010.880..38010.880] |
+| 32K | 15400.960 ± 0.000 [15400.960..15400.960] | 16056.320 ± 0.000 [16056.320..16056.320] | 17956.864 ± 0.000 [17956.864..17956.864] | 18219.008 ± 0.000 [18219.008..18219.008] | 19791.872 ± 0.000 [19791.872..19791.872] | 38010.880 ± 0.000 [38010.880..38010.880] |
+| 64K | 11730.944 ± 0.000 [11730.944..11730.944] | 11862.016 ± 0.000 [11862.016..11862.016] | 12124.160 ± 0.000 [12124.160..12124.160] | 12386.304 ± 0.000 [12386.304..12386.304] | 12386.304 ± 0.000 [12386.304..12386.304] | 24510.464 ± 0.000 [24510.464..24510.464] |
+| 128K | 16056.320 ± 0.000 [16056.320..16056.320] | 16580.608 ± 0.000 [16580.608..16580.608] | 16056.320 ± 0.000 [16056.320..16056.320] | 18219.008 ± 0.000 [18219.008..18219.008] | 18743.296 ± 0.000 [18743.296..18743.296] | 18219.008 ± 0.000 [18219.008..18219.008] |
+
+#### main_20261008 · wbuffix · lat_mean_us
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | 298.454 ± 0.940 [297.790..299.119] | 569.705 ± 1.191 [568.863..570.547] | 1039.453 ± 0.022 [1039.437..1039.468] | 2072.997 ± 0.311 [2072.777..2073.216] | 4112.692 ± 0.014 [4112.682..4112.701] | 8050.473 ± 0.123 [8050.386..8050.560] |
+| 8K | 576.712 ± 0.213 [576.562..576.863] | 597.190 ± 3.204 [594.925..599.456] | 1141.530 ± 4.203 [1138.558..1144.502] | 2073.108 ± 0.305 [2072.892..2073.324] | 4111.809 ± 0.120 [4111.725..4111.894] | 8052.406 ± 0.488 [8052.061..8052.751] |
+| 16K | 962.750 ± 1.249 [961.867..963.633] | 1147.683 ± 1.601 [1146.551..1148.815] | 1188.765 ± 0.828 [1188.180..1189.350] | 2261.291 ± 19.510 [2247.495..2275.087] | 4112.331 ± 0.815 [4111.755..4112.907] | 8049.002 ± 0.000 [8049.002..8049.002] |
+| 32K | 1830.777 ± 0.000 [1830.777..1830.777] | 1897.970 ± 0.000 [1897.970..1897.970] | 2279.563 ± 0.000 [2279.563..2279.563] | 2355.495 ± 0.000 [2355.495..2355.495] | 4477.327 ± 0.000 [4477.327..4477.327] | 8053.294 ± 0.000 [8053.294..8053.294] |
+| 64K | 2656.258 ± 0.000 [2656.258..2656.258] | 2680.070 ± 0.000 [2680.070..2680.070] | 2854.286 ± 0.000 [2854.286..2854.286] | 3500.922 ± 0.000 [3500.922..3500.922] | 3100.121 ± 0.000 [3100.121..3100.121] | 6005.981 ± 0.000 [6005.981..6005.981] |
+| 128K | 4442.658 ± 0.000 [4442.658..4442.658] | 4455.064 ± 0.000 [4455.064..4455.064] | 4508.221 ± 0.000 [4508.221..4508.221] | 4878.453 ± 0.000 [4878.453..4878.453] | 5870.736 ± 0.000 [5870.736..5870.736] | 4774.283 ± 0.000 [4774.283..4774.283] |
+
+#### main_20261008 · wbuffix · slat_mean_us
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | 0.842 ± 0.004 [0.840..0.845] | 0.999 ± 0.024 [0.982..1.016] | 1.219 ± 0.006 [1.214..1.223] | 1.651 ± 0.016 [1.640..1.662] | 2.602 ± 0.009 [2.596..2.608] | 4.390 ± 0.028 [4.370..4.410] |
+| 8K | 0.849 ± 0.003 [0.846..0.851] | 1.006 ± 0.002 [1.005..1.008] | 1.233 ± 0.001 [1.232..1.234] | 1.645 ± 0.008 [1.639..1.650] | 2.604 ± 0.032 [2.582..2.626] | 4.388 ± 0.009 [4.381..4.394] |
+| 16K | 0.870 ± 0.004 [0.868..0.873] | 1.052 ± 0.007 [1.047..1.057] | 1.241 ± 0.001 [1.240..1.241] | 1.663 ± 0.030 [1.642..1.684] | 2.603 ± 0.007 [2.598..2.608] | 4.432 ± 0.000 [4.432..4.432] |
+| 32K | 0.998 ± 0.000 [0.998..0.998] | 1.088 ± 0.000 [1.088..1.088] | 1.309 ± 0.000 [1.309..1.309] | 1.678 ± 0.000 [1.678..1.678] | 2.623 ± 0.000 [2.623..2.623] | 4.294 ± 0.000 [4.294..4.294] |
+| 64K | 0.961 ± 0.000 [0.961..0.961] | 1.085 ± 0.000 [1.085..1.085] | 1.320 ± 0.000 [1.320..1.320] | 1.688 ± 0.000 [1.688..1.688] | 2.543 ± 0.000 [2.543..2.543] | 4.292 ± 0.000 [4.292..4.292] |
+| 128K | 0.978 ± 0.000 [0.978..0.978] | 1.070 ± 0.000 [1.070..1.070] | 1.266 ± 0.000 [1.266..1.266] | 1.642 ± 0.000 [1.642..1.642] | 2.564 ± 0.000 [2.564..2.564] | 3.982 ± 0.000 [3.982..3.982] |
+
+#### main_20261008 · wbuffix · bw_first10s_MiBps
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | 1273.020 ± 0.246 [1272.846..1273.194] | 1285.448 ± 0.533 [1285.072..1285.825] | 1288.553 ± 0.107 [1288.477..1288.629] | 1290.895 ± 0.090 [1290.831..1290.958] | 1293.670 ± 0.004 [1293.667..1293.673] | 1299.042 ± 0.002 [1299.041..1299.043] |
+| 8K | 736.912 ± 0.314 [736.690..737.134] | 1280.858 ± 0.169 [1280.739..1280.977] | 1285.680 ± 0.264 [1285.493..1285.867] | 1290.772 ± 0.254 [1290.592..1290.952] | 1293.673 ± 0.000 [1293.673..1293.673] | 1299.022 ± 0.013 [1299.013..1299.031] |
+| 16K | 378.772 ± 0.163 [378.657..378.887] | 736.149 ± 0.280 [735.951..736.347] | 1279.434 ± 0.531 [1279.058..1279.809] | 1285.664 ± 0.242 [1285.493..1285.834] | 1293.670 ± 0.004 [1293.667..1293.673] | 1299.043 ± 0.000 [1299.043..1299.043] |
+| 32K | 189.590 ± 0.000 [189.590..189.590] | 376.970 ± 0.000 [376.970..376.970] | 741.204 ± 0.000 [741.204..741.204] | 1278.334 ± 0.000 [1278.334..1278.334] | 1286.819 ± 0.000 [1286.819..1286.819] | 1299.041 ± 0.000 [1299.041..1299.041] |
+| 64K | 123.589 ± 0.000 [123.589..123.589] | 246.791 ± 0.000 [246.791..246.791] | 488.131 ± 0.000 [488.131..488.131] | 908.028 ± 0.000 [908.028..908.028] | 1403.948 ± 0.000 [1403.948..1403.948] | 1411.562 ± 0.000 [1411.562..1411.562] |
+| 128K | 77.282 ± 0.000 [77.282..77.282] | 154.101 ± 0.000 [154.101..154.101] | 307.517 ± 0.000 [307.517..307.517] | 598.712 ± 0.000 [598.712..598.712] | 1051.298 ± 0.000 [1051.298..1051.298] | 1482.975 ± 0.000 [1482.975..1482.975] |
+
+#### main_20261008 · wbuffix · bw_last20s_MiBps
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | 325.297 ± 2.059 [323.842..326.753] | 324.748 ± 5.081 [321.155..328.341] | 244.723 ± 0.162 [244.608..244.837] | 247.458 ± 0.242 [247.287..247.629] | 254.340 ± 0.022 [254.324..254.356] | 275.506 ± 0.088 [275.444..275.568] |
+| 8K | 81.552 ± 0.580 [81.142..81.962] | 321.046 ± 0.336 [320.808..321.283] | 328.025 ± 6.901 [323.145..332.904] | 244.931 ± 3.597 [242.387..247.474] | 254.632 ± 0.175 [254.508..254.756] | 274.940 ± 0.156 [274.829..275.050] |
+| 16K | 58.445 ± 0.272 [58.252..58.637] | 81.434 ± 0.259 [81.251..81.617] | 320.795 ± 1.884 [319.463..322.127] | 322.196 ± 7.249 [317.070..327.321] | 254.348 ± 0.227 [254.187..254.508] | 275.724 ± 0.000 [275.724..275.724] |
+| 32K | 32.347 ± 0.000 [32.347..32.347] | 60.145 ± 0.000 [60.145..60.145] | 81.515 ± 0.000 [81.515..81.515] | 322.079 ± 0.000 [322.079..322.079] | 318.536 ± 0.000 [318.536..318.536] | 274.962 ± 0.000 [274.962..274.962] |
+| 64K | 24.843 ± 0.000 [24.843..24.843] | 48.139 ± 0.000 [48.139..48.139] | 82.853 ± 0.000 [82.853..82.853] | 143.391 ± 0.000 [143.391..143.391] | 518.925 ± 0.000 [518.925..518.925] | 534.135 ± 0.000 [534.135..534.135] |
+| 128K | 14.416 ± 0.000 [14.416..14.416] | 28.748 ± 0.000 [28.748..28.748] | 56.496 ± 0.000 [56.496..56.496] | 98.131 ± 0.000 [98.131..98.131] | 192.600 ± 0.000 [192.600..192.600] | 671.599 ± 0.000 [671.599..671.599] |
+
+#### main_20261008 · wbuffix · gc_onset_s
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | 6.304 ± 0.003 [6.302..6.306] | 5.745 ± 0.002 [5.743..5.746] | 5.693 ± 0.004 [5.690..5.696] | 5.696 ± 0.000 [5.696..5.696] | 5.693 ± 0.005 [5.690..5.697] | 5.697 ± 0.000 [5.697..5.697] |
+| 8K | 5.814 ± 0.005 [5.811..5.817] | 5.821 ± 0.000 [5.821..5.821] | 5.777 ± 0.000 [5.777..5.777] | 5.696 ± 0.000 [5.696..5.696] | 5.697 ± 0.001 [5.697..5.697] | 5.697 ± 0.000 [5.697..5.697] |
+| 16K | 5.919 ± 0.001 [5.918..5.920] | 5.908 ± 0.001 [5.907..5.909] | 5.924 ± 0.000 [5.924..5.924] | 5.846 ± 0.000 [5.846..5.847] | 5.697 ± 0.000 [5.697..5.697] | 5.694 ± 0.000 [5.694..5.694] |
+| 32K | 6.067 ± 0.000 [6.067..6.067] | 6.070 ± 0.000 [6.070..6.070] | 6.069 ± 0.000 [6.069..6.069] | 6.099 ± 0.000 [6.099..6.099] | 5.978 ± 0.000 [5.978..5.978] | 5.698 ± 0.000 [5.698..5.698] |
+| 64K | 3.675 ± 0.000 [3.675..3.675] | 3.671 ± 0.000 [3.671..3.671] | 3.675 ± 0.000 [3.675..3.675] | 3.684 ± 0.000 [3.684..3.684] | 3.874 ± 0.000 [3.874..3.874] | 3.881 ± 0.000 [3.881..3.881] |
+| 128K | 2.476 ± 0.000 [2.476..2.476] | 2.474 ± 0.000 [2.474..2.474] | 2.477 ± 0.000 [2.477..2.477] | 2.477 ± 0.000 [2.477..2.477] | 2.474 ± 0.000 [2.474..2.474] | 3.867 ± 0.000 [3.867..3.867] |
+
+#### main_20261008 · wbuffix · gc_onset_last_part_s
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | 6.325 ± 0.003 [6.322..6.327] | 5.764 ± 0.002 [5.762..5.765] | 5.693 ± 0.004 [5.691..5.696] | 5.696 ± 0.000 [5.696..5.696] | 5.694 ± 0.005 [5.690..5.697] | 5.698 ± 0.000 [5.697..5.698] |
+| 8K | 5.834 ± 0.005 [5.831..5.837] | 5.862 ± 0.000 [5.861..5.862] | 5.778 ± 0.000 [5.778..5.778] | 5.696 ± 0.000 [5.696..5.696] | 5.697 ± 0.001 [5.697..5.698] | 5.697 ± 0.000 [5.697..5.697] |
+| 16K | 5.949 ± 0.001 [5.948..5.950] | 5.975 ± 0.001 [5.975..5.976] | 5.946 ± 0.000 [5.946..5.946] | 5.868 ± 0.000 [5.868..5.868] | 5.697 ± 0.000 [5.697..5.697] | 5.694 ± 0.000 [5.694..5.694] |
+| 32K | 6.149 ± 0.000 [6.149..6.149] | 6.125 ± 0.000 [6.125..6.125] | 6.106 ± 0.000 [6.106..6.106] | 6.143 ± 0.000 [6.143..6.143] | 6.001 ± 0.000 [6.001..6.001] | 5.698 ± 0.000 [5.698..5.698] |
+| 64K | 3.715 ± 0.000 [3.715..3.715] | 3.714 ± 0.000 [3.714..3.714] | 3.718 ± 0.000 [3.718..3.718] | 3.719 ± 0.000 [3.719..3.719] | 3.947 ± 0.000 [3.947..3.947] | 3.899 ± 0.000 [3.899..3.899] |
+| 128K | 2.516 ± 0.000 [2.516..2.516] | 2.514 ± 0.000 [2.514..2.514] | 2.516 ± 0.000 [2.516..2.516] | 2.537 ± 0.000 [2.537..2.537] | 2.521 ± 0.000 [2.521..2.521] | 3.895 ± 0.000 [3.895..3.895] |
+
+#### main_20261008 · wbuffix · bw_pre_gc_MiBps
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | 2007.669 ± 0.664 [2007.199..2008.138] | 2211.019 ± 0.005 [2211.016..2211.023] | 2217.943 ± 0.297 [2217.733..2218.153] | 2217.770 ± 0.004 [2217.767..2217.773] | 2217.878 ± 0.008 [2217.872..2217.883] | 2217.932 ± 0.000 [2217.932..2217.932] |
+| 8K | 1091.777 ± 0.024 [1091.760..1091.793] | 2182.495 ± 0.091 [2182.430..2182.560] | 2200.607 ± 0.066 [2200.560..2200.653] | 2217.773 ± 0.000 [2217.773..2217.773] | 2217.883 ± 0.000 [2217.883..2217.883] | 2217.909 ± 0.000 [2217.909..2217.909] |
+| 16K | 535.565 ± 0.005 [535.562..535.569] | 1071.577 ± 0.636 [1071.128..1072.027] | 2143.243 ± 0.022 [2143.227..2143.259] | 2172.983 ± 0.161 [2172.869..2173.097] | 2217.878 ± 0.008 [2217.872..2217.883] | 2217.932 ± 0.000 [2217.932..2217.932] |
+| 32K | 255.990 ± 0.000 [255.990..255.990] | 512.569 ± 0.000 [512.569..512.569] | 1026.573 ± 0.000 [1026.573..1026.573] | 2032.771 ± 0.000 [2032.771..2032.771] | 2123.535 ± 0.000 [2123.535..2123.535] | 2217.932 ± 0.000 [2217.932..2217.932] |
+| 64K | 219.240 ± 0.000 [219.240..219.240] | 438.600 ± 0.000 [438.600..438.600] | 876.518 ± 0.000 [876.518..876.518] | 1752.214 ± 0.000 [1752.214..1752.214] | 3350.387 ± 0.000 [3350.387..3350.387] | 3348.179 ± 0.000 [3348.179..3348.179] |
+| 128K | 170.170 ± 0.000 [170.170..170.170] | 340.449 ± 0.000 [340.449..340.449] | 680.508 ± 0.000 [680.508..680.508] | 1359.062 ± 0.000 [1359.062..1359.062] | 2716.274 ± 0.000 [2716.274..2716.274] | 3357.214 ± 0.000 [3357.214..3357.214] |
+
+#### main_20261008 · wbuffix · bw_post_gc_MiBps
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | 242.097 ± 1.600 [240.965..243.229] | 259.910 ± 0.886 [259.283..260.537] | 305.753 ± 0.038 [305.726..305.780] | 307.362 ± 0.071 [307.312..307.412] | 311.648 ± 0.014 [311.638..311.658] | 323.221 ± 0.069 [323.172..323.270] |
+| 8K | 128.590 ± 0.327 [128.359..128.822] | 240.839 ± 2.935 [238.764..242.914] | 260.424 ± 2.204 [258.866..261.982] | 307.127 ± 0.322 [306.900..307.355] | 311.755 ± 0.064 [311.710..311.801] | 323.079 ± 0.078 [323.024..323.134] |
+| 16K | 89.026 ± 0.395 [88.747..89.305] | 131.672 ± 0.284 [131.471..131.873] | 246.698 ± 0.325 [246.468..246.928] | 267.591 ± 4.161 [264.649..270.533] | 311.660 ± 0.081 [311.602..311.717] | 323.379 ± 0.000 [323.379..323.379] |
+| 32K | 47.427 ± 0.000 [47.427..47.427] | 89.402 ± 0.000 [89.402..89.402] | 129.631 ± 0.000 [129.631..129.631] | 245.838 ± 0.000 [245.838..245.838] | 277.479 ± 0.000 [277.479..277.479] | 323.071 ± 0.000 [323.071..323.071] |
+| 64K | 36.395 ± 0.000 [36.395..36.395] | 71.891 ± 0.000 [71.891..71.891] | 131.746 ± 0.000 [131.746..131.746] | 194.798 ± 0.000 [194.798..194.798] | 477.616 ± 0.000 [477.616..477.616] | 499.886 ± 0.000 [499.886..499.886] |
+| 128K | 23.239 ± 0.000 [23.239..23.239] | 46.310 ± 0.000 [46.310..46.310] | 91.272 ± 0.000 [91.272..91.272] | 165.200 ± 0.000 [165.200..165.200] | 258.795 ± 0.000 [258.795..258.795] | 681.794 ± 0.000 [681.794..681.794] |
+
+#### main_20261008 · wbuffix · gc_cnt
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | 8359.000 ± 83.439 [8300..8418] | 9436.000 ± 45.255 [9404..9468] | 11272.000 ± 0.000 [11272..11272] | 11278.000 ± 2.828 [11276..11280] | 11344.000 ± 0.000 [11344..11344] | 11478.000 ± 2.828 [11476..11480] |
+| 8K | 8049.500 ± 2.121 [8048..8051] | 8293.000 ± 131.522 [8200..8386] | 9352.000 ± 79.196 [9296..9408] | 11280.000 ± 0.000 [11280..11280] | 11346.000 ± 2.828 [11344..11348] | 11478.000 ± 2.828 [11476..11480] |
+| 16K | 7073.500 ± 24.749 [7056..7091] | 8145.000 ± 35.355 [8120..8170] | 8326.500 ± 17.678 [8314..8339] | 9485.000 ± 190.919 [9350..9620] | 11344.000 ± 0.000 [11344..11344] | 11480.000 ± 0.000 [11480..11480] |
+| 32K | 7217.000 ± 0.000 [7217..7217] | 7315.000 ± 0.000 [7315..7315] | 8250.000 ± 0.000 [8250..8250] | 8401.000 ± 0.000 [8401..8401] | 9540.000 ± 0.000 [9540..9540] | 11480.000 ± 0.000 [11480..11480] |
+| 64K | 15486.000 ± 0.000 [15486..15486] | 15563.000 ± 0.000 [15563..15563] | 15734.000 ± 0.000 [15734..15734] | 16146.000 ± 0.000 [16146..16146] | 15930.000 ± 0.000 [15930..15930] | 16808.000 ± 0.000 [16808..16808] |
+| 128K | 22262.000 ± 0.000 [22262..22262] | 22231.000 ± 0.000 [22231..22231] | 22202.000 ± 0.000 [22202..22202] | 22024.000 ± 0.000 [22024..22024] | 21712.000 ± 0.000 [21712..21712] | 21413.000 ± 0.000 [21413..21413] |
+
+#### main_20261008 · wbuffix · ftl_host_pgs
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | 6429836 ± 20856.822 [6415088..6444584] | 6737857 ± 14163.349 [6727842..6747872] | 7388264 ± 509.117 [7387904..7388624] | 7410644 ± 1159.655 [7409824..7411464] | 7470512 ± 113.137 [7470432..7470592] | 7633024 ± 859.842 [7632416..7633632] |
+| 8K | 3327576 ± 724.077 [3327064..3328088] | 3214080 ± 16964.199 [3202084..3226075] | 3363460 ± 12066.070 [3354928..3371992] | 3704584 ± 1120.057 [3703792..3705376] | 3735968 ± 452.548 [3735648..3736288] | 3815488 ± 429.921 [3815184..3815792] |
+| 16K | 1993962 ± 2449.418 [1992230..1995694] | 1672756 ± 2398.506 [1671060..1674452] | 1614880 ± 1114.400 [1614092..1615668] | 1698222 ± 14433.464 [1688016..1708428] | 1867628 ± 277.186 [1867432..1867824] | 1908784 ± 0.000 [1908784..1908784] |
+| 32K | 1048792 ± 0.000 [1048792..1048792] | 1011585 ± 0.000 [1011585..1011585] | 842179.000 ± 0.000 [842179..842179] | 815109.000 ± 0.000 [815109..815109] | 857626.000 ± 0.000 [857626..857626] | 953880.000 ± 0.000 [953880..953880] |
+| 64K | 722868.000 ± 0.000 [722868..722868] | 716403.000 ± 0.000 [716403..716403] | 672730.000 ± 0.000 [672730..672730] | 548451.000 ± 0.000 [548451..548451] | 619321.000 ± 0.000 [619321..619321] | 639422.000 ± 0.000 [639422..639422] |
+| 128K | 432196.000 ± 0.000 [432196..432196] | 430981.000 ± 0.000 [430981..430981] | 425924.000 ± 0.000 [425924..425924] | 393613.000 ± 0.000 [393613..393613] | 327062.000 ± 0.000 [327062..327062] | 402191.000 ± 0.000 [402191..402191] |
+
+#### main_20261008 · wbuffix · ftl_gc_pgs
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | 13810204 ± 150179.581 [13704011..13916397] | 15708119 ± 78713.713 [15652460..15763778] | 18817590 ± 517.602 [18817224..18817956] | 18807072 ± 4491.542 [18803896..18810248] | 18882280 ± 124.451 [18882192..18882368] | 18994496 ± 4253.954 [18991488..18997504] |
+| 8K | 6476546 ± 1402.900 [6475554..6477538] | 6838582 ± 117677.418 [6755371..6921792] | 7773333 ± 69068.776 [7724494..7822172] | 9406324 ± 1018.234 [9405604..9407044] | 9442464 ± 2443.761 [9440736..9444192] | 9498376 ± 2206.173 [9496816..9499936] |
+| 16K | 2408458 ± 10179.509 [2401260..2415656] | 3278262 ± 15635.545 [3267206..3289318] | 3428498 ± 7935.859 [3422886..3434109] | 3938271 ± 83227.882 [3879420..3997122] | 4720564 ± 277.186 [4720368..4720760] | 4749232 ± 0.000 [4749232..4749232] |
+| 32K | 1189155 ± 0.000 [1189155..1189155] | 1251473 ± 0.000 [1251473..1251473] | 1660230 ± 0.000 [1660230..1660230] | 1725664 ± 0.000 [1725664..1725664] | 1974722 ± 0.000 [1974722..1974722] | 2375124 ± 0.000 [2375124..2375124] |
+| 64K | 1454598 ± 0.000 [1454598..1454598] | 1470904 ± 0.000 [1470904..1470904] | 1536469 ± 0.000 [1536469..1536469] | 1713443 ± 0.000 [1713443..1713443] | 1614792 ± 0.000 [1614792..1614792] | 1707056 ± 0.000 [1707056..1707056] |
+| 128K | 1090213 ± 0.000 [1090213..1090213] | 1089448 ± 0.000 [1089448..1089448] | 1092651 ± 0.000 [1092651..1092651] | 1113559 ± 0.000 [1113559..1113559] | 1160138 ± 0.000 [1160138..1160138] | 1065766 ± 0.000 [1065766..1065766] |
+
+#### main_20261008 · wbuffix · waf_gc
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | 3.148 ± 0.016 [3.136..3.159] | 3.331 ± 0.007 [3.327..3.336] | 3.547 ± 0.000 [3.547..3.547] | 3.538 ± 0.000 [3.538..3.538] | 3.528 ± 0.000 [3.528..3.528] | 3.488 ± 0.000 [3.488..3.489] |
+| 8K | 2.946 ± 0.000 [2.946..2.946] | 3.128 ± 0.025 [3.110..3.146] | 3.311 ± 0.012 [3.302..3.320] | 3.539 ± 0.001 [3.538..3.540] | 3.527 ± 0.000 [3.527..3.528] | 3.489 ± 0.000 [3.489..3.490] |
+| 16K | 2.208 ± 0.004 [2.205..2.210] | 2.960 ± 0.007 [2.955..2.964] | 3.123 ± 0.003 [3.121..3.126] | 3.319 ± 0.029 [3.298..3.340] | 3.528 ± 0.001 [3.527..3.528] | 3.488 ± 0.000 [3.488..3.488] |
+| 32K | 2.134 ± 0.000 [2.134..2.134] | 2.237 ± 0.000 [2.237..2.237] | 2.971 ± 0.000 [2.971..2.971] | 3.117 ± 0.000 [3.117..3.117] | 3.303 ± 0.000 [3.303..3.303] | 3.490 ± 0.000 [3.490..3.490] |
+| 64K | 3.012 ± 0.000 [3.012..3.012] | 3.053 ± 0.000 [3.053..3.053] | 3.284 ± 0.000 [3.284..3.284] | 4.124 ± 0.000 [4.124..4.124] | 3.607 ± 0.000 [3.607..3.607] | 3.670 ± 0.000 [3.670..3.670] |
+| 128K | 3.522 ± 0.000 [3.522..3.522] | 3.528 ± 0.000 [3.528..3.528] | 3.565 ± 0.000 [3.565..3.565] | 3.829 ± 0.000 [3.829..3.829] | 4.547 ± 0.000 [4.547..4.547] | 3.650 ± 0.000 [3.650..3.650] |
+
+#### main_20261008 · wbuffix · waf_total
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | 3.148 ± 0.016 [3.136..3.159] | 3.331 ± 0.007 [3.327..3.336] | 3.547 ± 0.000 [3.547..3.547] | 3.538 ± 0.000 [3.538..3.538] | 3.528 ± 0.000 [3.528..3.528] | 3.488 ± 0.000 [3.488..3.489] |
+| 8K | 5.891 ± 0.000 [5.891..5.891] | 3.128 ± 0.025 [3.110..3.146] | 3.311 ± 0.012 [3.302..3.320] | 3.539 ± 0.001 [3.538..3.540] | 3.527 ± 0.000 [3.527..3.528] | 3.489 ± 0.000 [3.489..3.490] |
+| 16K | 8.831 ± 0.014 [8.821..8.842] | 5.919 ± 0.013 [5.910..5.928] | 3.123 ± 0.003 [3.121..3.126] | 3.319 ± 0.029 [3.298..3.340] | 3.528 ± 0.001 [3.527..3.528] | 3.488 ± 0.000 [3.488..3.488] |
+| 32K | 17.071 ± 0.000 [17.071..17.071] | 8.949 ± 0.000 [8.949..8.949] | 5.943 ± 0.000 [5.943..5.943] | 3.117 ± 0.000 [3.117..3.117] | 3.303 ± 0.000 [3.303..3.303] | 3.490 ± 0.000 [3.490..3.490] |
+| 64K | 48.196 ± 0.000 [48.196..48.196] | 24.425 ± 0.000 [24.425..24.425] | 13.136 ± 0.000 [13.136..13.136] | 8.248 ± 0.000 [8.248..8.248] | 3.607 ± 0.000 [3.607..3.607] | 3.670 ± 0.000 [3.670..3.670] |
+| 128K | 112.720 ± 0.000 [112.720..112.720] | 56.445 ± 0.000 [56.445..56.445] | 28.523 ± 0.000 [28.523..28.523] | 15.316 ± 0.000 [15.316..15.316] | 9.094 ± 0.000 [9.094..9.094] | 3.650 ± 0.000 [3.650..3.650] |
+
+#### main_20261008 · wbuffix · written_GiB
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | 24.528 ± 0.080 [24.472..24.584] | 25.703 ± 0.054 [25.665..25.741] | 28.184 ± 0.002 [28.183..28.185] | 28.269 ± 0.004 [28.266..28.272] | 28.498 ± 0.000 [28.497..28.498] | 29.118 ± 0.003 [29.115..29.120] |
+| 8K | 12.697 ± 0.003 [12.695..12.699] | 24.521 ± 0.129 [24.430..24.613] | 25.661 ± 0.092 [25.596..25.726] | 28.264 ± 0.009 [28.258..28.270] | 28.503 ± 0.003 [28.501..28.506] | 29.110 ± 0.003 [29.108..29.112] |
+| 16K | 7.606 ± 0.009 [7.600..7.613] | 12.763 ± 0.019 [12.750..12.776] | 24.641 ± 0.017 [24.629..24.653] | 25.913 ± 0.220 [25.757..26.069] | 28.498 ± 0.004 [28.495..28.501] | 29.126 ± 0.000 [29.126..29.126] |
+| 32K | 4.001 ± 0.000 [4.001..4.001] | 7.718 ± 0.000 [7.718..7.718] | 12.851 ± 0.000 [12.851..12.851] | 24.875 ± 0.000 [24.875..24.875] | 26.173 ± 0.000 [26.173..26.173] | 29.110 ± 0.000 [29.110..29.110] |
+| 64K | 2.758 ± 0.000 [2.758..2.758] | 5.466 ± 0.000 [5.466..5.466] | 10.265 ± 0.000 [10.265..10.265] | 16.737 ± 0.000 [16.737..16.737] | 37.800 ± 0.000 [37.800..37.800] | 39.027 ± 0.000 [39.027..39.027] |
+| 128K | 1.649 ± 0.000 [1.649..1.649] | 3.288 ± 0.000 [3.288..3.288] | 6.499 ± 0.000 [6.499..6.499] | 12.012 ± 0.000 [12.012..12.012] | 19.962 ± 0.000 [19.962..19.962] | 49.096 ± 0.000 [49.096..49.096] |
+
+#### main_20261008 · wbuffix · fill_ratio
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | 2.187 ± 0.007 [2.182..2.192] | 2.292 ± 0.005 [2.289..2.295] | 2.513 ± 0.000 [2.513..2.513] | 2.521 ± 0.000 [2.521..2.521] | 2.541 ± 0.000 [2.541..2.541] | 2.597 ± 0.000 [2.596..2.597] |
+| 8K | 1.132 ± 0.000 [1.132..1.132] | 2.187 ± 0.012 [2.179..2.195] | 2.288 ± 0.008 [2.283..2.294] | 2.520 ± 0.001 [2.520..2.521] | 2.542 ± 0.000 [2.542..2.542] | 2.596 ± 0.000 [2.596..2.596] |
+| 16K | 0.678 ± 0.001 [0.678..0.679] | 1.138 ± 0.002 [1.137..1.139] | 2.197 ± 0.002 [2.196..2.198] | 2.311 ± 0.020 [2.297..2.325] | 2.541 ± 0.000 [2.541..2.542] | 2.597 ± 0.000 [2.597..2.597] |
+| 32K | 0.357 ± 0.000 [0.357..0.357] | 0.688 ± 0.000 [0.688..0.688] | 1.146 ± 0.000 [1.146..1.146] | 2.218 ± 0.000 [2.218..2.218] | 2.334 ± 0.000 [2.334..2.334] | 2.596 ± 0.000 [2.596..2.596] |
+| 64K | 0.246 ± 0.000 [0.246..0.246] | 0.487 ± 0.000 [0.487..0.487] | 0.915 ± 0.000 [0.915..0.915] | 1.493 ± 0.000 [1.493..1.493] | 3.371 ± 0.000 [3.371..3.371] | 3.480 ± 0.000 [3.480..3.480] |
+| 128K | 0.147 ± 0.000 [0.147..0.147] | 0.293 ± 0.000 [0.293..0.293] | 0.580 ± 0.000 [0.580..0.580] | 1.071 ± 0.000 [1.071..1.071] | 1.780 ± 0.000 [1.780..1.780] | 4.378 ± 0.000 [4.378..4.378] |
+
+#### main_20261008 · wbuffix · chmodel_msgs
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] |
+| 8K | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] |
+| 16K | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] |
+| 32K | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] |
+| 64K | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] |
+| 128K | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] |
+
+#### main_20261008 · wbuffix · kernel_warn
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] |
+| 8K | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] |
+| 16K | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] |
+| 32K | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] |
+| 64K | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] |
+| 128K | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] | 0.000 ± 0.000 [0..0] |
+
+### 11.2.3 변형 비교 (wbuffix − base) / base, 60 s 평균 대역폭
+| map\bs | 4K | 8K | 16K | 32K | 64K | 128K |
+|---|---|---|---|---|---|---|
+| 4K | +0.04% (418.4→418.6) | +1.17% (433.6→438.7) | -0.01% (480.9→480.9) | -0.05% (482.6→482.3) | -0.02% (486.4→486.3) | +0.01% (496.8→496.8) |
+| 8K | -18.67% (266.4→216.7) | -0.39% (420.1→418.5) | -0.49% (440.1→437.9) | +0.01% (482.2→482.3) | +0.00% (486.4→486.4) | -0.13% (497.4→496.7) |
+| 16K | -22.67% (167.9→129.8) | -20.16% (272.8→217.8) | -0.11% (421.0→420.5) | -0.37% (443.8→442.2) | -0.02% (486.4→486.3) | +0.04% (496.7→496.9) |
+| 32K | -26.28% (92.6→68.3) | -24.31% (174.0→131.7) | NA | NA | NA | NA |
+| 64K | NA | NA | NA | NA | NA | NA |
+| 128K | NA | NA | NA | NA | NA | NA |
+
+### 11.2.4 회차별 전체 (analysis/summary_runs.csv 와 같은 값)
+```csv
+variant,map,bs,rep,bw_MiBps,iops,written_GiB,fill_ratio,clat_mean_us,clat_p50_us,clat_p99_us,clat_p999_us,lat_mean_us,slat_mean_us,runtime_s,bw_first10s_MiBps,bw_last20s_MiBps,dev_bytes,chmodel_msgs,kernel_warn,gc_onset_s,gc_onset_last_part_s,bw_pre_gc_MiBps,bw_post_gc_MiBps,gc_cnt,ftl_host_pgs,ftl_gc_pgs,waf_gc,waf_total
+base,4k,4k,1,418.395508,107109.381510,24.515800,2.186170,297.724553,70.144000,13303.808000,17170.432000,298.570561,0.846008,60.001000,1273.448535,320.739526,12040984064,0,0,6.301980,6.322915,2008.175944,241.840956,8345,6426670,13784996,3.144967,3.144967
+base,4k,8k,1,433.589844,55499.541735,25.409485,2.265864,575.365254,120.320000,16449.536000,17956.864000,576.359217,0.993962,60.009000,1285.085596,321.294507,12040984064,0,0,5.745002,5.764206,2211.019886,254.313055,9182,6660944,15264468,3.291637,3.291637
+base,4k,16k,1,480.927734,30779.394364,28.180786,2.512991,1038.183234,222.208000,17694.720000,18481.152000,1039.409494,1.226260,60.003000,1288.663867,244.568652,12040984064,0,0,5.697114,5.697334,2217.721591,305.714252,11272,7387424,18818284,3.547340,3.547340
+base,4k,32k,1,482.594727,15443.059282,28.277557,2.521621,2070.201866,444.416000,18219.008000,18743.296000,2071.862536,1.660670,60.001000,1290.946875,243.187158,12040984064,0,0,5.696309,5.696514,2217.767045,307.250678,11280,7412792,18808928,3.537361,3.537361
+base,4k,64k,1,486.360352,7781.766068,28.501953,2.541631,4109.243368,897.024000,19005.440000,19529.728000,4111.872378,2.629010,60.009000,1293.673291,254.762256,12040984064,0,0,5.697804,5.697992,2217.883256,311.736669,11344,7471616,18881152,3.527051,3.527051
+base,4k,128k,1,496.773438,3974.190646,29.116089,2.596396,8047.197067,1794.048000,20578.304000,38010.880000,8051.636637,4.439570,60.017000,1299.198340,275.072583,12040984064,0,0,5.698692,5.698875,2218.337891,323.184606,11480,7632608,18999456,3.489248,3.489248
+base,8k,4k,1,266.393555,68196.973485,15.609829,1.391990,467.306883,342.016000,2473.984000,3457.024000,469.000362,1.693479,60.003000,814.962646,131.899951,12040984064,8242206,1,5.685446,5.690782,1115.468040,181.224546,14444,4091942,12260041,3.996142,7.992127
+base,8k,8k,1,420.125000,53776.037066,24.617126,2.195206,593.817559,132.096000,15532.032000,17432.576000,594.825788,1.008229,60.001000,1282.384033,323.431494,12040984064,0,0,5.820556,5.861563,2180.882369,243.286341,8386,3226616,6921205,3.145035,3.145035
+base,8k,16k,1,440.075195,28164.830586,25.786102,2.299448,1134.696490,224.256000,17432.576000,18481.152000,1135.911940,1.215451,60.001000,1285.950635,320.270410,12040984064,0,0,5.781899,5.782728,2198.647727,263.452582,9460,3379836,7867608,3.327808,3.327808
+base,8k,32k,1,482.244141,15431.837877,28.258423,2.519915,2071.723042,444.416000,18219.008000,18743.296000,2073.363979,1.640937,60.004000,1290.967676,246.913477,12040984064,0,0,5.696200,5.696348,2217.772727,307.144173,11276,3703888,9402992,3.538682,3.538682
+base,8k,64k,1,486.371094,7781.951504,28.500732,2.541522,4109.183074,897.024000,19005.440000,19529.728000,4111.808720,2.625646,60.005000,1293.672510,254.503271,12040984064,0,0,5.698415,5.698556,2217.881836,311.705705,11344,3735648,9440736,3.527202,3.527202
+base,8k,128k,1,497.387695,3979.102786,29.147705,2.599215,8037.267831,1794.048000,20316.160000,38010.880000,8041.648308,4.380477,60.008000,1299.041748,276.862988,12040984064,0,0,5.698204,5.698335,2217.909091,323.793972,11480,3820448,9495600,3.485468,3.485468
+base,16k,4k,1,167.852539,42970.417653,9.835476,0.877068,742.769526,684.032000,2768.896000,3915.776000,744.458571,1.689045,60.002000,430.340381,86.196948,12040984064,6757590,0,5.668286,5.684406,559.152699,128.884702,14419,2578311,5585060,3.166170,12.664680
+base,16k,8k,1,272.789062,34917.104145,15.984581,1.425408,914.358511,692.224000,3162.112000,4358.144000,916.213581,1.855069,60.003000,822.685986,133.554443,12040984064,9087642,1,5.665941,5.697156,1117.981534,188.074987,15155,2095113,6444990,4.076202,8.152333
+base,16k,16k,1,420.993164,26943.600940,24.668015,2.199744,1186.169263,246.784000,16908.288000,17956.864000,1187.409869,1.240606,60.001000,1278.890625,322.791333,12040984064,0,0,5.923822,5.945612,2143.227273,247.764323,8352,1616643,3439890,3.127798,3.127798
+base,16k,32k,1,443.818359,14202.206005,26.012817,2.319665,2251.226353,464.896000,18219.008000,18743.296000,2252.890533,1.664179,60.018000,1286.221875,318.064355,12040984064,0,0,5.846011,5.867525,2173.073864,269.453009,9576,1704776,3978204,3.333564,3.333564
+base,16k,64k,1,486.387695,7782.215335,28.507874,2.542159,4109.072779,897.024000,19005.440000,19529.728000,4111.605658,2.532879,60.018000,1293.667041,254.825732,12040984064,0,0,5.689829,5.689950,2217.871893,311.847907,11348,1868292,4721904,3.527391,3.527391
+base,16k,128k,1,496.748047,3973.990703,29.114624,2.596265,8047.679688,1794.048000,20316.160000,38010.880000,8052.035086,4.355398,60.017000,1299.040723,275.170215,12040984064,0,0,5.696911,5.697022,2217.931818,323.166284,11480,1908056,4749968,3.489428,3.489428
+base,32k,4k,1,92.599609,23705.581388,5.426048,0.483862,1347.668431,1236.992000,3784.704000,5079.040000,1349.623930,1.955499,60.003000,219.731641,49.794604,12040984064,8233550,0,5.635585,5.682222,280.504972,73.926803,15473,1422406,2929163,3.059302,24.474413
+base,32k,8k,1,174.001953,22272.277310,10.196289,0.909243,1434.271000,1236.992000,4227.072000,5472.256000,1436.508133,2.237133,60.005000,436.111719,85.395361,12040984064,8786405,0,5.638842,5.672789,561.262784,135.522262,15691,1336448,3070857,3.297775,13.191101
+wbuffix,4k,4k,1,419.499023,107391.834694,24.584137,2.192264,296.944530,69.120000,13434.880000,17170.432000,297.789508,0.844979,60.010000,1272.846143,323.841602,12040984064,0,0,6.306407,6.327294,2007.199300,243.228706,8418,6444584,13916397,3.159394,3.159394
+wbuffix,4k,4k,2,417.634766,106914.569514,24.471619,2.182230,298.279554,69.120000,13565.952000,16908.288000,299.119485,0.839931,60.002000,1273.193652,326.753247,12040984064,0,0,6.301740,6.322443,2008.138021,240.965468,8300,6415088,13704011,3.136216,3.136216
+wbuffix,4k,8k,1,439.299805,56230.392320,25.741089,2.295434,567.880647,121.344000,16580.608000,17956.864000,568.862533,0.981886,60.002000,1285.824658,321.154883,12040984064,0,0,5.746240,5.765273,2211.022727,260.536814,9468,6747872,15763778,3.336111,3.336111
+wbuffix,4k,8k,2,438.002930,56064.415593,25.664680,2.288620,569.531176,121.344000,16580.608000,17694.720000,570.546685,1.015509,60.001000,1285.071582,328.340552,12040984064,0,0,5.743215,5.762021,2211.015625,259.283483,9404,6727842,15652460,3.326520,3.326520
+wbuffix,4k,16k,1,480.893555,30777.213123,28.185364,2.513400,1038.245655,222.208000,17694.720000,18481.152000,1039.468445,1.222790,60.017000,1288.477490,244.837354,12040984064,0,0,5.690366,5.690582,2218.153232,305.780211,11272,7388624,18817224,3.546783,3.546783
+wbuffix,4k,16k,2,480.911133,30778.316586,28.182617,2.513155,1038.222883,222.208000,17694.720000,18481.152000,1039.437250,1.214367,60.009000,1288.629199,244.608203,12040984064,0,0,5.696107,5.696325,2217.732955,305.725774,11272,7387904,18817956,3.547131,3.547131
+wbuffix,4k,32k,1,482.379883,15436.176417,28.272491,2.521169,2071.137088,444.416000,18219.008000,18743.296000,2072.777015,1.639927,60.017000,1290.958301,247.629443,12040984064,0,0,5.696178,5.696374,2217.767045,307.411554,11280,7411464,18810248,3.537994,3.537994
+wbuffix,4k,32k,2,482.281250,15433.017862,28.266235,2.520611,2071.554523,444.416000,18219.008000,18743.296000,2073.216483,1.661960,60.016000,1290.831250,247.287500,12040984064,0,0,5.696014,5.696219,2217.772727,307.311676,11276,7409824,18803896,3.537698,3.537698
+wbuffix,4k,64k,1,486.268555,7780.310605,28.498047,2.541283,4110.105730,897.024000,19005.440000,19529.728000,4112.701463,2.595732,60.012000,1293.673291,254.356152,12040984064,0,0,5.696560,5.696747,2217.883256,311.657522,11344,7470592,18882192,3.527536,3.527536
+wbuffix,4k,64k,2,486.266602,7780.273617,28.497437,2.541228,4110.073581,897.024000,19005.440000,19529.728000,4112.681837,2.608257,60.011000,1293.667041,254.324487,12040984064,0,0,5.690118,5.690304,2217.871893,311.637857,11344,7470432,18882368,3.527614,3.527614
+wbuffix,4k,128k,1,496.851562,3974.819185,29.115356,2.596331,8045.976356,1794.048000,20316.160000,38010.880000,8050.386183,4.409827,60.006000,1299.040820,275.568457,12040984064,0,0,5.697382,5.697563,2217.931818,323.172027,11476,7632416,18991488,3.488267,3.488267
+wbuffix,4k,128k,2,496.832031,3974.657603,29.119995,2.596744,8046.189912,1794.048000,20578.304000,38010.880000,8050.559751,4.369839,60.018000,1299.043115,275.443921,12040984064,0,0,5.697290,5.697469,2217.931818,323.269818,11480,7633632,18997504,3.488659,3.488659
+wbuffix,8k,4k,1,216.722656,55481.141981,12.698837,1.132405,575.715251,150.528000,15007.744000,17170.432000,576.561567,0.846317,60.001000,737.134473,81.962451,12040984064,0,0,5.810656,5.830705,1091.793324,128.821615,8051,3328088,6477538,2.946324,5.891168
+wbuffix,8k,4k,2,216.611328,55452.727697,12.695084,1.132070,576.011732,152.576000,15007.744000,17170.432000,576.862725,0.850994,60.014000,736.689746,81.141699,12040984064,0,0,5.817261,5.837219,1091.759943,128.358793,8048,3327064,6475554,2.946327,5.891103
+wbuffix,8k,8k,1,420.054688,53767.020550,24.612999,2.194838,593.917154,132.096000,15400.960000,17432.576000,594.924895,1.007740,60.001000,1280.739014,321.283423,12040984064,0,0,5.820870,5.861784,2182.430398,242.914298,8386,3226075,6921792,3.145577,3.145577
+wbuffix,8k,8k,2,416.881836,53360.951873,24.429962,2.178516,598.450812,134.144000,15400.960000,17432.576000,599.455898,1.005086,60.008000,1280.977441,320.808276,12040984064,0,0,5.820506,5.861485,2182.559659,238.763950,8200,3202084,6755371,3.109680,3.109680
+wbuffix,8k,16k,1,436.773438,27953.540302,25.596069,2.282502,1143.267720,224.256000,17432.576000,18219.008000,1144.501621,1.233901,60.009000,1285.493408,323.145312,12040984064,0,0,5.777140,5.777967,2200.559659,258.866023,9296,3354928,7724494,3.302432,3.302432
+wbuffix,8k,16k,2,439.053711,28099.465009,25.726257,2.294111,1137.325377,224.256000,17432.576000,18219.008000,1138.557584,1.232207,60.001000,1285.867090,332.904102,12040984064,0,0,5.776931,5.777752,2200.653409,261.982413,9408,3371992,7822172,3.319748,3.319748
+wbuffix,8k,32k,1,482.357422,15435.465058,28.269775,2.520927,2071.253005,444.416000,18219.008000,19005.440000,2072.892232,1.639227,60.014000,1290.591992,247.474438,12040984064,0,0,5.696251,5.696408,2217.772727,307.354967,11280,3705376,9405604,3.538367,3.538367
+wbuffix,8k,32k,2,482.255859,15432.209463,28.257690,2.519849,2071.673549,444.416000,18219.008000,19005.440000,2073.323787,1.650238,60.001000,1290.951709,242.387354,12040984064,0,0,5.696278,5.696428,2217.772727,306.899740,11280,3703792,9407044,3.539841,3.539841
+wbuffix,8k,64k,1,486.363281,7781.821818,28.500732,2.541522,4109.312070,897.024000,19005.440000,19529.728000,4111.893736,2.581666,60.006000,1293.673291,254.507666,12040984064,0,0,5.696513,5.696650,2217.883256,311.709853,11344,3735648,9440736,3.527202,3.527202
+wbuffix,8k,64k,2,486.381836,7782.117506,28.505615,2.541958,4109.098033,897.024000,19005.440000,19529.728000,4111.724522,2.626490,60.014000,1293.673291,254.755591,12040984064,0,0,5.697459,5.697600,2217.883256,311.800835,11348,3736288,9444192,3.527694,3.527694
+wbuffix,8k,128k,1,496.698242,3973.591256,29.112183,2.596048,8048.369670,1794.048000,20578.304000,38010.880000,8052.750543,4.380873,60.018000,1299.030615,275.050464,12040984064,0,0,5.697016,5.697147,2217.909091,323.134165,11480,3815792,9499936,3.489637,3.489637
+wbuffix,8k,128k,2,496.743164,3973.951302,29.107544,2.595634,8047.666258,1794.048000,20316.160000,38010.880000,8052.060539,4.394281,60.003000,1299.012500,274.829297,12040984064,0,0,5.697135,5.697266,2217.909091,323.023536,11476,3815184,9496816,3.489216,3.489216
+wbuffix,16k,4k,1,129.925781,33261.045649,7.612976,0.678879,960.999061,254.976000,14090.240000,15400.960000,961.866783,0.867723,60.001000,378.886572,58.637207,12040984064,0,0,5.918050,5.947975,535.561790,89.305176,7091,1995694,2415656,2.210434,8.841727
+wbuffix,16k,4k,2,129.686523,33199.993334,7.599762,0.677701,962.760277,254.976000,14090.240000,15269.888000,963.633315,0.873038,60.007000,378.656641,58.252271,12040984064,0,0,5.919572,5.949622,535.568892,88.746712,7056,1992230,2401260,2.205313,8.821242
+wbuffix,16k,8k,1,217.569336,27848.970137,12.749947,1.136963,1147.758286,248.832000,16580.608000,17694.720000,1148.815284,1.056998,60.008000,736.346631,81.250806,12040984064,0,0,5.907417,5.974808,1071.127841,131.471294,8120,1671060,3267206,2.955170,5.909982
+wbuffix,16k,8k,2,217.999023,27903.989069,12.776413,1.139323,1145.503881,248.832000,16711.680000,17694.720000,1146.550501,1.046620,60.014000,735.950830,81.616895,12040984064,0,0,5.908649,5.976116,1072.026989,131.873468,8170,1674452,3289318,2.964415,5.928199
+wbuffix,16k,16k,1,420.718750,26926.004933,24.653137,2.198417,1186.938444,246.784000,16711.680000,17956.864000,1188.179881,1.241437,60.004000,1279.809277,319.462915,12040984064,0,0,5.923905,5.945624,2143.227273,246.928254,8339,1615668,3434109,3.125504,3.125504
+wbuffix,16k,16k,2,420.307617,26899.740017,24.629089,2.196273,1188.109951,246.784000,16908.288000,17956.864000,1189.350261,1.240310,60.004000,1279.057812,322.126978,12040984064,0,0,5.924007,5.945738,2143.258523,246.467971,8314,1614092,3422886,3.120626,3.120626
+wbuffix,16k,32k,1,439.492188,14063.752854,25.757080,2.296860,2273.445374,464.896000,18219.008000,18743.296000,2275.087219,1.641845,60.013000,1285.834375,327.321289,12040984064,0,0,5.846146,5.867669,2173.096591,264.648688,9350,1688016,3879420,3.298213,3.298213
+wbuffix,16k,32k,2,444.887695,14236.425452,26.068542,2.324634,2245.810777,464.896000,18219.008000,18743.296000,2247.495239,1.684462,60.002000,1285.492773,317.069824,12040984064,0,0,5.846779,5.868307,2172.869318,270.532800,9620,1708428,3997122,3.339649,3.339649
+wbuffix,16k,64k,1,486.379883,7782.081195,28.500732,2.541522,4109.157031,897.024000,19005.440000,19529.728000,4111.755094,2.598063,60.004000,1293.667041,254.508154,12040984064,0,0,5.696652,5.696773,2217.871893,311.717093,11344,1867824,4720368,3.527202,3.527202
+wbuffix,16k,64k,2,486.245117,7779.929343,28.494751,2.540989,4110.299103,897.024000,19005.440000,19529.728000,4112.907009,2.607906,60.008000,1293.673291,254.186914,12040984064,0,0,5.696702,5.696821,2217.883256,311.601912,11344,1867432,4720760,3.527942,3.527942
+wbuffix,16k,128k,1,496.937500,3975.506940,29.125732,2.597256,8044.570397,1794.048000,20578.304000,38010.880000,8049.002266,4.431869,60.017000,1299.043408,275.724219,12040984064,0,0,5.693546,5.693662,2217.931818,323.379139,11480,1908784,4749232,3.488093,3.488093
+wbuffix,32k,4k,1,68.267578,17476.662612,4.000824,0.356769,1829.778939,569.344000,14483.456000,15400.960000,1830.776979,0.998039,60.011000,189.589893,32.346509,12040984064,0,0,6.066725,6.149273,255.990234,47.426586,7217,1048792,1189155,2.133833,17.070664
+wbuffix,32k,8k,1,131.701172,16857.783259,7.717781,0.688225,1896.881530,561.152000,15007.744000,16056.320000,1897.969709,1.088179,60.007000,376.969629,60.144629,12040984064,0,0,6.070340,6.125445,512.569010,89.402118,7315,1011585,1251473,2.237141,8.948563
+wbuffix,32k,16k,1,219.313477,14036.065464,12.850830,1.145959,2278.254542,536.576000,17432.576000,17956.864000,2279.563145,1.308603,60.002000,741.204492,81.514575,12040984064,0,0,6.068833,6.105946,1026.572917,129.630760,8250,842179,1660230,2.971351,5.942609
+wbuffix,32k,32k,1,424.493164,13583.791621,24.875153,2.218215,2353.817362,528.384000,17694.720000,18219.008000,2355.495204,1.677842,60.006000,1278.334375,322.079028,12040984064,0,0,6.098887,6.143369,2032.770833,245.838234,8401,815109,1725664,3.117096,3.117096
+wbuffix,32k,64k,1,446.665039,7146.645112,26.172668,2.333920,4474.704193,978.944000,19005.440000,19791.872000,4477.327461,2.623268,60.002000,1286.819336,318.535962,12040984064,0,0,5.978449,6.000871,2123.535156,277.478695,9540,857626,1974722,3.302544,3.302544
+wbuffix,32k,128k,1,496.670898,3973.374211,29.110107,2.595863,8049.000065,1794.048000,20316.160000,38010.880000,8053.293624,4.293558,60.017000,1299.040625,274.962500,12040984064,0,0,5.697746,5.697844,2217.931818,323.071325,11480,953880,2375124,3.489961,3.489961
+wbuffix,64k,4k,1,47.053711,12045.792368,2.757523,0.245899,2655.297358,937.984000,11337.728000,11730.944000,2656.258098,0.960740,60.010000,123.588672,24.842725,12040984064,0,0,3.675038,3.715039,219.239955,36.395370,15486,722868,1454598,3.012259,48.196152
+wbuffix,64k,8k,1,93.271484,11938.856114,5.465721,0.487400,2678.984933,921.600000,11468.800000,11862.016000,2680.069705,1.084772,60.006000,246.790625,48.139453,12040984064,0,0,3.671269,3.713761,438.600446,71.890565,15563,716403,1470904,3.053180,24.425437
+wbuffix,64k,16k,1,175.157227,11210.111480,10.265045,0.915374,2852.966049,937.984000,11862.016000,12124.160000,2854.286160,1.320112,60.011000,488.131250,82.852856,12040984064,0,0,3.674823,3.718097,876.517857,131.745921,15734,672730,1536469,3.283931,13.135725
+wbuffix,64k,32k,1,285.618164,9139.800357,16.737427,1.492542,3499.234243,978.944000,12124.160000,12386.304000,3500.922222,1.687979,60.007000,908.028125,143.391040,12040984064,0,0,3.683523,3.719467,1752.214286,194.797791,16146,548451,1713443,4.124150,8.248284
+wbuffix,64k,64k,1,645.083008,10321.328578,37.800354,3.370806,3097.577347,880.640000,11993.088000,12386.304000,3100.120742,2.543395,60.004000,1403.947803,518.924536,12040984064,0,0,3.873841,3.946725,3350.386579,477.616375,15930,619321,1614792,3.607359,3.607359
+wbuffix,64k,128k,1,665.963867,5327.717509,39.027222,3.480211,6001.688954,1597.440000,22675.456000,24510.464000,6005.981310,4.292356,60.009000,1411.562500,534.134814,12040984064,0,0,3.880566,3.898662,3348.178571,499.885578,16808,639422,1707056,3.669686,3.669686
+wbuffix,128k,4k,1,28.133789,7202.426384,1.648697,0.147021,4441.680233,2441.216000,10158.080000,16056.320000,4442.658270,0.978037,60.007000,77.282422,14.416333,12040984064,0,0,2.475650,2.515920,170.169922,23.238997,22262,432196,1090213,3.522497,112.719896
+wbuffix,128k,8k,1,56.112305,7182.418132,3.288124,0.293215,4453.994508,2441.216000,10158.080000,16580.608000,4455.064317,1.069809,60.005000,154.100781,28.747534,12040984064,0,0,2.474023,2.514367,340.449219,46.310336,22231,430981,1089448,3.527833,56.445328
+wbuffix,128k,16k,1,110.900391,7097.668683,6.499084,0.579549,4506.955227,2506.752000,10289.152000,16056.320000,4508.221410,1.266183,60.009000,307.517187,56.495557,12040984064,0,0,2.476727,2.516406,680.507812,91.271686,22202,425924,1092651,3.565366,28.522929
+wbuffix,128k,32k,1,204.968750,6559.014181,12.012115,1.071167,4876.810865,2899.968000,12648.448000,18219.008000,4878.452653,1.641788,60.011000,598.712500,98.130542,12040984064,0,0,2.477408,2.536558,1359.062500,165.200364,22024,393613,1113559,3.829071,15.316283
+wbuffix,128k,64k,1,340.655273,5450.488285,19.962280,1.780115,5868.172732,7307.264000,16711.680000,18743.296000,5870.736389,2.563657,60.006000,1051.298486,192.600146,12040984064,0,0,2.474275,2.520778,2716.273682,258.794526,21712,327062,1160138,4.547150,9.094300
+wbuffix,128k,128k,1,837.771484,6702.178007,49.095581,4.378046,4770.301241,2244.608000,11337.728000,18219.008000,4774.282822,3.981581,60.009000,1482.975000,671.598682,12040984064,0,0,3.866567,3.895296,3357.214286,681.794248,21413,402191,1065766,3.649900,3.649900
+```
+
+### 11.2.5 조합별 집계 전체 (analysis/summary_agg.csv 와 같은 값)
+```csv
+variant,map,bs,n,bw_MiBps_mean,bw_MiBps_std,bw_MiBps_min,bw_MiBps_max,iops_mean,iops_std,iops_min,iops_max,written_GiB_mean,written_GiB_std,written_GiB_min,written_GiB_max,fill_ratio_mean,fill_ratio_std,fill_ratio_min,fill_ratio_max,clat_mean_us_mean,clat_mean_us_std,clat_mean_us_min,clat_mean_us_max,clat_p50_us_mean,clat_p50_us_std,clat_p50_us_min,clat_p50_us_max,clat_p99_us_mean,clat_p99_us_std,clat_p99_us_min,clat_p99_us_max,clat_p999_us_mean,clat_p999_us_std,clat_p999_us_min,clat_p999_us_max,lat_mean_us_mean,lat_mean_us_std,lat_mean_us_min,lat_mean_us_max,slat_mean_us_mean,slat_mean_us_std,slat_mean_us_min,slat_mean_us_max,runtime_s_mean,runtime_s_std,runtime_s_min,runtime_s_max,bw_first10s_MiBps_mean,bw_first10s_MiBps_std,bw_first10s_MiBps_min,bw_first10s_MiBps_max,bw_last20s_MiBps_mean,bw_last20s_MiBps_std,bw_last20s_MiBps_min,bw_last20s_MiBps_max,chmodel_msgs_mean,chmodel_msgs_std,chmodel_msgs_min,chmodel_msgs_max,kernel_warn_mean,kernel_warn_std,kernel_warn_min,kernel_warn_max,gc_onset_s_mean,gc_onset_s_std,gc_onset_s_min,gc_onset_s_max,gc_onset_last_part_s_mean,gc_onset_last_part_s_std,gc_onset_last_part_s_min,gc_onset_last_part_s_max,bw_pre_gc_MiBps_mean,bw_pre_gc_MiBps_std,bw_pre_gc_MiBps_min,bw_pre_gc_MiBps_max,bw_post_gc_MiBps_mean,bw_post_gc_MiBps_std,bw_post_gc_MiBps_min,bw_post_gc_MiBps_max,gc_cnt_mean,gc_cnt_std,gc_cnt_min,gc_cnt_max,ftl_host_pgs_mean,ftl_host_pgs_std,ftl_host_pgs_min,ftl_host_pgs_max,ftl_gc_pgs_mean,ftl_gc_pgs_std,ftl_gc_pgs_min,ftl_gc_pgs_max,waf_gc_mean,waf_gc_std,waf_gc_min,waf_gc_max,waf_total_mean,waf_total_std,waf_total_min,waf_total_max
+base,4k,4k,1,418.395508,0.000000,418.395508,418.395508,107109.381510,0.000000,107109.381510,107109.381510,24.515800,0.000000,24.515800,24.515800,2.186170,0.000000,2.186170,2.186170,297.724553,0.000000,297.724553,297.724553,70.144000,0.000000,70.144000,70.144000,13303.808000,0.000000,13303.808000,13303.808000,17170.432000,0.000000,17170.432000,17170.432000,298.570561,0.000000,298.570561,298.570561,0.846008,0.000000,0.846008,0.846008,60.001000,0.000000,60.001000,60.001000,1273.448535,0.000000,1273.448535,1273.448535,320.739526,0.000000,320.739526,320.739526,0.000000,0.000000,0,0,0.000000,0.000000,0,0,6.301980,0.000000,6.301980,6.301980,6.322915,0.000000,6.322915,6.322915,2008.175944,0.000000,2008.175944,2008.175944,241.840956,0.000000,241.840956,241.840956,8345.000000,0.000000,8345,8345,6426670,0.000000,6426670,6426670,13784996,0.000000,13784996,13784996,3.144967,0.000000,3.144967,3.144967,3.144967,0.000000,3.144967,3.144967
+base,4k,8k,1,433.589844,0.000000,433.589844,433.589844,55499.541735,0.000000,55499.541735,55499.541735,25.409485,0.000000,25.409485,25.409485,2.265864,0.000000,2.265864,2.265864,575.365254,0.000000,575.365254,575.365254,120.320000,0.000000,120.320000,120.320000,16449.536000,0.000000,16449.536000,16449.536000,17956.864000,0.000000,17956.864000,17956.864000,576.359217,0.000000,576.359217,576.359217,0.993962,0.000000,0.993962,0.993962,60.009000,0.000000,60.009000,60.009000,1285.085596,0.000000,1285.085596,1285.085596,321.294507,0.000000,321.294507,321.294507,0.000000,0.000000,0,0,0.000000,0.000000,0,0,5.745002,0.000000,5.745002,5.745002,5.764206,0.000000,5.764206,5.764206,2211.019886,0.000000,2211.019886,2211.019886,254.313055,0.000000,254.313055,254.313055,9182.000000,0.000000,9182,9182,6660944,0.000000,6660944,6660944,15264468,0.000000,15264468,15264468,3.291637,0.000000,3.291637,3.291637,3.291637,0.000000,3.291637,3.291637
+base,4k,16k,1,480.927734,0.000000,480.927734,480.927734,30779.394364,0.000000,30779.394364,30779.394364,28.180786,0.000000,28.180786,28.180786,2.512991,0.000000,2.512991,2.512991,1038.183234,0.000000,1038.183234,1038.183234,222.208000,0.000000,222.208000,222.208000,17694.720000,0.000000,17694.720000,17694.720000,18481.152000,0.000000,18481.152000,18481.152000,1039.409494,0.000000,1039.409494,1039.409494,1.226260,0.000000,1.226260,1.226260,60.003000,0.000000,60.003000,60.003000,1288.663867,0.000000,1288.663867,1288.663867,244.568652,0.000000,244.568652,244.568652,0.000000,0.000000,0,0,0.000000,0.000000,0,0,5.697114,0.000000,5.697114,5.697114,5.697334,0.000000,5.697334,5.697334,2217.721591,0.000000,2217.721591,2217.721591,305.714252,0.000000,305.714252,305.714252,11272.000000,0.000000,11272,11272,7387424,0.000000,7387424,7387424,18818284,0.000000,18818284,18818284,3.547340,0.000000,3.547340,3.547340,3.547340,0.000000,3.547340,3.547340
+base,4k,32k,1,482.594727,0.000000,482.594727,482.594727,15443.059282,0.000000,15443.059282,15443.059282,28.277557,0.000000,28.277557,28.277557,2.521621,0.000000,2.521621,2.521621,2070.201866,0.000000,2070.201866,2070.201866,444.416000,0.000000,444.416000,444.416000,18219.008000,0.000000,18219.008000,18219.008000,18743.296000,0.000000,18743.296000,18743.296000,2071.862536,0.000000,2071.862536,2071.862536,1.660670,0.000000,1.660670,1.660670,60.001000,0.000000,60.001000,60.001000,1290.946875,0.000000,1290.946875,1290.946875,243.187158,0.000000,243.187158,243.187158,0.000000,0.000000,0,0,0.000000,0.000000,0,0,5.696309,0.000000,5.696309,5.696309,5.696514,0.000000,5.696514,5.696514,2217.767045,0.000000,2217.767045,2217.767045,307.250678,0.000000,307.250678,307.250678,11280.000000,0.000000,11280,11280,7412792,0.000000,7412792,7412792,18808928,0.000000,18808928,18808928,3.537361,0.000000,3.537361,3.537361,3.537361,0.000000,3.537361,3.537361
+base,4k,64k,1,486.360352,0.000000,486.360352,486.360352,7781.766068,0.000000,7781.766068,7781.766068,28.501953,0.000000,28.501953,28.501953,2.541631,0.000000,2.541631,2.541631,4109.243368,0.000000,4109.243368,4109.243368,897.024000,0.000000,897.024000,897.024000,19005.440000,0.000000,19005.440000,19005.440000,19529.728000,0.000000,19529.728000,19529.728000,4111.872378,0.000000,4111.872378,4111.872378,2.629010,0.000000,2.629010,2.629010,60.009000,0.000000,60.009000,60.009000,1293.673291,0.000000,1293.673291,1293.673291,254.762256,0.000000,254.762256,254.762256,0.000000,0.000000,0,0,0.000000,0.000000,0,0,5.697804,0.000000,5.697804,5.697804,5.697992,0.000000,5.697992,5.697992,2217.883256,0.000000,2217.883256,2217.883256,311.736669,0.000000,311.736669,311.736669,11344.000000,0.000000,11344,11344,7471616,0.000000,7471616,7471616,18881152,0.000000,18881152,18881152,3.527051,0.000000,3.527051,3.527051,3.527051,0.000000,3.527051,3.527051
+base,4k,128k,1,496.773438,0.000000,496.773438,496.773438,3974.190646,0.000000,3974.190646,3974.190646,29.116089,0.000000,29.116089,29.116089,2.596396,0.000000,2.596396,2.596396,8047.197067,0.000000,8047.197067,8047.197067,1794.048000,0.000000,1794.048000,1794.048000,20578.304000,0.000000,20578.304000,20578.304000,38010.880000,0.000000,38010.880000,38010.880000,8051.636637,0.000000,8051.636637,8051.636637,4.439570,0.000000,4.439570,4.439570,60.017000,0.000000,60.017000,60.017000,1299.198340,0.000000,1299.198340,1299.198340,275.072583,0.000000,275.072583,275.072583,0.000000,0.000000,0,0,0.000000,0.000000,0,0,5.698692,0.000000,5.698692,5.698692,5.698875,0.000000,5.698875,5.698875,2218.337891,0.000000,2218.337891,2218.337891,323.184606,0.000000,323.184606,323.184606,11480.000000,0.000000,11480,11480,7632608,0.000000,7632608,7632608,18999456,0.000000,18999456,18999456,3.489248,0.000000,3.489248,3.489248,3.489248,0.000000,3.489248,3.489248
+base,8k,4k,1,266.393555,0.000000,266.393555,266.393555,68196.973485,0.000000,68196.973485,68196.973485,15.609829,0.000000,15.609829,15.609829,1.391990,0.000000,1.391990,1.391990,467.306883,0.000000,467.306883,467.306883,342.016000,0.000000,342.016000,342.016000,2473.984000,0.000000,2473.984000,2473.984000,3457.024000,0.000000,3457.024000,3457.024000,469.000362,0.000000,469.000362,469.000362,1.693479,0.000000,1.693479,1.693479,60.003000,0.000000,60.003000,60.003000,814.962646,0.000000,814.962646,814.962646,131.899951,0.000000,131.899951,131.899951,8242206,0.000000,8242206,8242206,1.000000,0.000000,1,1,5.685446,0.000000,5.685446,5.685446,5.690782,0.000000,5.690782,5.690782,1115.468040,0.000000,1115.468040,1115.468040,181.224546,0.000000,181.224546,181.224546,14444.000000,0.000000,14444,14444,4091942,0.000000,4091942,4091942,12260041,0.000000,12260041,12260041,3.996142,0.000000,3.996142,3.996142,7.992127,0.000000,7.992127,7.992127
+base,8k,8k,1,420.125000,0.000000,420.125000,420.125000,53776.037066,0.000000,53776.037066,53776.037066,24.617126,0.000000,24.617126,24.617126,2.195206,0.000000,2.195206,2.195206,593.817559,0.000000,593.817559,593.817559,132.096000,0.000000,132.096000,132.096000,15532.032000,0.000000,15532.032000,15532.032000,17432.576000,0.000000,17432.576000,17432.576000,594.825788,0.000000,594.825788,594.825788,1.008229,0.000000,1.008229,1.008229,60.001000,0.000000,60.001000,60.001000,1282.384033,0.000000,1282.384033,1282.384033,323.431494,0.000000,323.431494,323.431494,0.000000,0.000000,0,0,0.000000,0.000000,0,0,5.820556,0.000000,5.820556,5.820556,5.861563,0.000000,5.861563,5.861563,2180.882369,0.000000,2180.882369,2180.882369,243.286341,0.000000,243.286341,243.286341,8386.000000,0.000000,8386,8386,3226616,0.000000,3226616,3226616,6921205,0.000000,6921205,6921205,3.145035,0.000000,3.145035,3.145035,3.145035,0.000000,3.145035,3.145035
+base,8k,16k,1,440.075195,0.000000,440.075195,440.075195,28164.830586,0.000000,28164.830586,28164.830586,25.786102,0.000000,25.786102,25.786102,2.299448,0.000000,2.299448,2.299448,1134.696490,0.000000,1134.696490,1134.696490,224.256000,0.000000,224.256000,224.256000,17432.576000,0.000000,17432.576000,17432.576000,18481.152000,0.000000,18481.152000,18481.152000,1135.911940,0.000000,1135.911940,1135.911940,1.215451,0.000000,1.215451,1.215451,60.001000,0.000000,60.001000,60.001000,1285.950635,0.000000,1285.950635,1285.950635,320.270410,0.000000,320.270410,320.270410,0.000000,0.000000,0,0,0.000000,0.000000,0,0,5.781899,0.000000,5.781899,5.781899,5.782728,0.000000,5.782728,5.782728,2198.647727,0.000000,2198.647727,2198.647727,263.452582,0.000000,263.452582,263.452582,9460.000000,0.000000,9460,9460,3379836,0.000000,3379836,3379836,7867608,0.000000,7867608,7867608,3.327808,0.000000,3.327808,3.327808,3.327808,0.000000,3.327808,3.327808
+base,8k,32k,1,482.244141,0.000000,482.244141,482.244141,15431.837877,0.000000,15431.837877,15431.837877,28.258423,0.000000,28.258423,28.258423,2.519915,0.000000,2.519915,2.519915,2071.723042,0.000000,2071.723042,2071.723042,444.416000,0.000000,444.416000,444.416000,18219.008000,0.000000,18219.008000,18219.008000,18743.296000,0.000000,18743.296000,18743.296000,2073.363979,0.000000,2073.363979,2073.363979,1.640937,0.000000,1.640937,1.640937,60.004000,0.000000,60.004000,60.004000,1290.967676,0.000000,1290.967676,1290.967676,246.913477,0.000000,246.913477,246.913477,0.000000,0.000000,0,0,0.000000,0.000000,0,0,5.696200,0.000000,5.696200,5.696200,5.696348,0.000000,5.696348,5.696348,2217.772727,0.000000,2217.772727,2217.772727,307.144173,0.000000,307.144173,307.144173,11276.000000,0.000000,11276,11276,3703888,0.000000,3703888,3703888,9402992,0.000000,9402992,9402992,3.538682,0.000000,3.538682,3.538682,3.538682,0.000000,3.538682,3.538682
+base,8k,64k,1,486.371094,0.000000,486.371094,486.371094,7781.951504,0.000000,7781.951504,7781.951504,28.500732,0.000000,28.500732,28.500732,2.541522,0.000000,2.541522,2.541522,4109.183074,0.000000,4109.183074,4109.183074,897.024000,0.000000,897.024000,897.024000,19005.440000,0.000000,19005.440000,19005.440000,19529.728000,0.000000,19529.728000,19529.728000,4111.808720,0.000000,4111.808720,4111.808720,2.625646,0.000000,2.625646,2.625646,60.005000,0.000000,60.005000,60.005000,1293.672510,0.000000,1293.672510,1293.672510,254.503271,0.000000,254.503271,254.503271,0.000000,0.000000,0,0,0.000000,0.000000,0,0,5.698415,0.000000,5.698415,5.698415,5.698556,0.000000,5.698556,5.698556,2217.881836,0.000000,2217.881836,2217.881836,311.705705,0.000000,311.705705,311.705705,11344.000000,0.000000,11344,11344,3735648,0.000000,3735648,3735648,9440736,0.000000,9440736,9440736,3.527202,0.000000,3.527202,3.527202,3.527202,0.000000,3.527202,3.527202
+base,8k,128k,1,497.387695,0.000000,497.387695,497.387695,3979.102786,0.000000,3979.102786,3979.102786,29.147705,0.000000,29.147705,29.147705,2.599215,0.000000,2.599215,2.599215,8037.267831,0.000000,8037.267831,8037.267831,1794.048000,0.000000,1794.048000,1794.048000,20316.160000,0.000000,20316.160000,20316.160000,38010.880000,0.000000,38010.880000,38010.880000,8041.648308,0.000000,8041.648308,8041.648308,4.380477,0.000000,4.380477,4.380477,60.008000,0.000000,60.008000,60.008000,1299.041748,0.000000,1299.041748,1299.041748,276.862988,0.000000,276.862988,276.862988,0.000000,0.000000,0,0,0.000000,0.000000,0,0,5.698204,0.000000,5.698204,5.698204,5.698335,0.000000,5.698335,5.698335,2217.909091,0.000000,2217.909091,2217.909091,323.793972,0.000000,323.793972,323.793972,11480.000000,0.000000,11480,11480,3820448,0.000000,3820448,3820448,9495600,0.000000,9495600,9495600,3.485468,0.000000,3.485468,3.485468,3.485468,0.000000,3.485468,3.485468
+base,16k,4k,1,167.852539,0.000000,167.852539,167.852539,42970.417653,0.000000,42970.417653,42970.417653,9.835476,0.000000,9.835476,9.835476,0.877068,0.000000,0.877068,0.877068,742.769526,0.000000,742.769526,742.769526,684.032000,0.000000,684.032000,684.032000,2768.896000,0.000000,2768.896000,2768.896000,3915.776000,0.000000,3915.776000,3915.776000,744.458571,0.000000,744.458571,744.458571,1.689045,0.000000,1.689045,1.689045,60.002000,0.000000,60.002000,60.002000,430.340381,0.000000,430.340381,430.340381,86.196948,0.000000,86.196948,86.196948,6757590,0.000000,6757590,6757590,0.000000,0.000000,0,0,5.668286,0.000000,5.668286,5.668286,5.684406,0.000000,5.684406,5.684406,559.152699,0.000000,559.152699,559.152699,128.884702,0.000000,128.884702,128.884702,14419.000000,0.000000,14419,14419,2578311,0.000000,2578311,2578311,5585060,0.000000,5585060,5585060,3.166170,0.000000,3.166170,3.166170,12.664680,0.000000,12.664680,12.664680
+base,16k,8k,1,272.789062,0.000000,272.789062,272.789062,34917.104145,0.000000,34917.104145,34917.104145,15.984581,0.000000,15.984581,15.984581,1.425408,0.000000,1.425408,1.425408,914.358511,0.000000,914.358511,914.358511,692.224000,0.000000,692.224000,692.224000,3162.112000,0.000000,3162.112000,3162.112000,4358.144000,0.000000,4358.144000,4358.144000,916.213581,0.000000,916.213581,916.213581,1.855069,0.000000,1.855069,1.855069,60.003000,0.000000,60.003000,60.003000,822.685986,0.000000,822.685986,822.685986,133.554443,0.000000,133.554443,133.554443,9087642,0.000000,9087642,9087642,1.000000,0.000000,1,1,5.665941,0.000000,5.665941,5.665941,5.697156,0.000000,5.697156,5.697156,1117.981534,0.000000,1117.981534,1117.981534,188.074987,0.000000,188.074987,188.074987,15155.000000,0.000000,15155,15155,2095113,0.000000,2095113,2095113,6444990,0.000000,6444990,6444990,4.076202,0.000000,4.076202,4.076202,8.152333,0.000000,8.152333,8.152333
+base,16k,16k,1,420.993164,0.000000,420.993164,420.993164,26943.600940,0.000000,26943.600940,26943.600940,24.668015,0.000000,24.668015,24.668015,2.199744,0.000000,2.199744,2.199744,1186.169263,0.000000,1186.169263,1186.169263,246.784000,0.000000,246.784000,246.784000,16908.288000,0.000000,16908.288000,16908.288000,17956.864000,0.000000,17956.864000,17956.864000,1187.409869,0.000000,1187.409869,1187.409869,1.240606,0.000000,1.240606,1.240606,60.001000,0.000000,60.001000,60.001000,1278.890625,0.000000,1278.890625,1278.890625,322.791333,0.000000,322.791333,322.791333,0.000000,0.000000,0,0,0.000000,0.000000,0,0,5.923822,0.000000,5.923822,5.923822,5.945612,0.000000,5.945612,5.945612,2143.227273,0.000000,2143.227273,2143.227273,247.764323,0.000000,247.764323,247.764323,8352.000000,0.000000,8352,8352,1616643,0.000000,1616643,1616643,3439890,0.000000,3439890,3439890,3.127798,0.000000,3.127798,3.127798,3.127798,0.000000,3.127798,3.127798
+base,16k,32k,1,443.818359,0.000000,443.818359,443.818359,14202.206005,0.000000,14202.206005,14202.206005,26.012817,0.000000,26.012817,26.012817,2.319665,0.000000,2.319665,2.319665,2251.226353,0.000000,2251.226353,2251.226353,464.896000,0.000000,464.896000,464.896000,18219.008000,0.000000,18219.008000,18219.008000,18743.296000,0.000000,18743.296000,18743.296000,2252.890533,0.000000,2252.890533,2252.890533,1.664179,0.000000,1.664179,1.664179,60.018000,0.000000,60.018000,60.018000,1286.221875,0.000000,1286.221875,1286.221875,318.064355,0.000000,318.064355,318.064355,0.000000,0.000000,0,0,0.000000,0.000000,0,0,5.846011,0.000000,5.846011,5.846011,5.867525,0.000000,5.867525,5.867525,2173.073864,0.000000,2173.073864,2173.073864,269.453009,0.000000,269.453009,269.453009,9576.000000,0.000000,9576,9576,1704776,0.000000,1704776,1704776,3978204,0.000000,3978204,3978204,3.333564,0.000000,3.333564,3.333564,3.333564,0.000000,3.333564,3.333564
+base,16k,64k,1,486.387695,0.000000,486.387695,486.387695,7782.215335,0.000000,7782.215335,7782.215335,28.507874,0.000000,28.507874,28.507874,2.542159,0.000000,2.542159,2.542159,4109.072779,0.000000,4109.072779,4109.072779,897.024000,0.000000,897.024000,897.024000,19005.440000,0.000000,19005.440000,19005.440000,19529.728000,0.000000,19529.728000,19529.728000,4111.605658,0.000000,4111.605658,4111.605658,2.532879,0.000000,2.532879,2.532879,60.018000,0.000000,60.018000,60.018000,1293.667041,0.000000,1293.667041,1293.667041,254.825732,0.000000,254.825732,254.825732,0.000000,0.000000,0,0,0.000000,0.000000,0,0,5.689829,0.000000,5.689829,5.689829,5.689950,0.000000,5.689950,5.689950,2217.871893,0.000000,2217.871893,2217.871893,311.847907,0.000000,311.847907,311.847907,11348.000000,0.000000,11348,11348,1868292,0.000000,1868292,1868292,4721904,0.000000,4721904,4721904,3.527391,0.000000,3.527391,3.527391,3.527391,0.000000,3.527391,3.527391
+base,16k,128k,1,496.748047,0.000000,496.748047,496.748047,3973.990703,0.000000,3973.990703,3973.990703,29.114624,0.000000,29.114624,29.114624,2.596265,0.000000,2.596265,2.596265,8047.679688,0.000000,8047.679688,8047.679688,1794.048000,0.000000,1794.048000,1794.048000,20316.160000,0.000000,20316.160000,20316.160000,38010.880000,0.000000,38010.880000,38010.880000,8052.035086,0.000000,8052.035086,8052.035086,4.355398,0.000000,4.355398,4.355398,60.017000,0.000000,60.017000,60.017000,1299.040723,0.000000,1299.040723,1299.040723,275.170215,0.000000,275.170215,275.170215,0.000000,0.000000,0,0,0.000000,0.000000,0,0,5.696911,0.000000,5.696911,5.696911,5.697022,0.000000,5.697022,5.697022,2217.931818,0.000000,2217.931818,2217.931818,323.166284,0.000000,323.166284,323.166284,11480.000000,0.000000,11480,11480,1908056,0.000000,1908056,1908056,4749968,0.000000,4749968,4749968,3.489428,0.000000,3.489428,3.489428,3.489428,0.000000,3.489428,3.489428
+base,32k,4k,1,92.599609,0.000000,92.599609,92.599609,23705.581388,0.000000,23705.581388,23705.581388,5.426048,0.000000,5.426048,5.426048,0.483862,0.000000,0.483862,0.483862,1347.668431,0.000000,1347.668431,1347.668431,1236.992000,0.000000,1236.992000,1236.992000,3784.704000,0.000000,3784.704000,3784.704000,5079.040000,0.000000,5079.040000,5079.040000,1349.623930,0.000000,1349.623930,1349.623930,1.955499,0.000000,1.955499,1.955499,60.003000,0.000000,60.003000,60.003000,219.731641,0.000000,219.731641,219.731641,49.794604,0.000000,49.794604,49.794604,8233550,0.000000,8233550,8233550,0.000000,0.000000,0,0,5.635585,0.000000,5.635585,5.635585,5.682222,0.000000,5.682222,5.682222,280.504972,0.000000,280.504972,280.504972,73.926803,0.000000,73.926803,73.926803,15473.000000,0.000000,15473,15473,1422406,0.000000,1422406,1422406,2929163,0.000000,2929163,2929163,3.059302,0.000000,3.059302,3.059302,24.474413,0.000000,24.474413,24.474413
+base,32k,8k,1,174.001953,0.000000,174.001953,174.001953,22272.277310,0.000000,22272.277310,22272.277310,10.196289,0.000000,10.196289,10.196289,0.909243,0.000000,0.909243,0.909243,1434.271000,0.000000,1434.271000,1434.271000,1236.992000,0.000000,1236.992000,1236.992000,4227.072000,0.000000,4227.072000,4227.072000,5472.256000,0.000000,5472.256000,5472.256000,1436.508133,0.000000,1436.508133,1436.508133,2.237133,0.000000,2.237133,2.237133,60.005000,0.000000,60.005000,60.005000,436.111719,0.000000,436.111719,436.111719,85.395361,0.000000,85.395361,85.395361,8786405,0.000000,8786405,8786405,0.000000,0.000000,0,0,5.638842,0.000000,5.638842,5.638842,5.672789,0.000000,5.672789,5.672789,561.262784,0.000000,561.262784,561.262784,135.522262,0.000000,135.522262,135.522262,15691.000000,0.000000,15691,15691,1336448,0.000000,1336448,1336448,3070857,0.000000,3070857,3070857,3.297775,0.000000,3.297775,3.297775,13.191101,0.000000,13.191101,13.191101
+wbuffix,4k,4k,2,418.566895,1.318229,417.634766,419.499023,107153.202104,337.477445,106914.569514,107391.834694,24.527878,0.079562,24.471619,24.584137,2.187247,0.007095,2.182230,2.192264,297.612042,0.944005,296.944530,298.279554,69.120000,0.000000,69.120000,69.120000,13500.416000,92.681900,13434.880000,13565.952000,17039.360000,185.363800,16908.288000,17170.432000,298.454497,0.940436,297.789508,299.119485,0.842455,0.003569,0.839931,0.844979,60.006000,0.005657,60.002000,60.010000,1273.019897,0.245727,1272.846143,1273.193652,325.297424,2.058844,323.841602,326.753247,0.000000,0.000000,0,0,0.000000,0.000000,0,0,6.304073,0.003300,6.301740,6.306407,6.324868,0.003430,6.322443,6.327294,2007.668660,0.663776,2007.199300,2008.138021,242.097087,1.600351,240.965468,243.228706,8359.000000,83.438600,8300,8418,6429836,20856.821618,6415088,6444584,13810204,150179.580829,13704011,13916397,3.147805,0.016390,3.136216,3.159394,3.147805,0.016390,3.136216,3.159394
+wbuffix,4k,8k,2,438.651367,0.917029,438.002930,439.299805,56147.403956,117.363269,56064.415593,56230.392320,25.702885,0.054029,25.664680,25.741089,2.292027,0.004818,2.288620,2.295434,568.705911,1.167101,567.880647,569.531176,121.344000,0.000000,121.344000,121.344000,16580.608000,0.000000,16580.608000,16580.608000,17825.792000,185.363800,17694.720000,17956.864000,569.704609,1.190875,568.862533,570.546685,0.998698,0.023775,0.981886,1.015509,60.001500,0.000707,60.001000,60.002000,1285.448120,0.532505,1285.071582,1285.824658,324.747717,5.081035,321.154883,328.340552,0.000000,0.000000,0,0,0.000000,0.000000,0,0,5.744727,0.002139,5.743215,5.746240,5.763647,0.002300,5.762021,5.765273,2211.019176,0.005022,2211.015625,2211.022727,259.910149,0.886238,259.283483,260.536814,9436.000000,45.254834,9404,9468,6737857,14163.348827,6727842,6747872,15708119,78713.712668,15652460,15763778,3.331316,0.006782,3.326520,3.336111,3.331316,0.006782,3.326520,3.336111
+wbuffix,4k,16k,2,480.902344,0.012430,480.893555,480.911133,30777.764855,0.780266,30777.213123,30778.316586,28.183990,0.001942,28.182617,28.185364,2.513277,0.000173,2.513155,2.513400,1038.234269,0.016102,1038.222883,1038.245655,222.208000,0.000000,222.208000,222.208000,17694.720000,0.000000,17694.720000,17694.720000,18481.152000,0.000000,18481.152000,18481.152000,1039.452848,0.022058,1039.437250,1039.468445,1.218579,0.005956,1.214367,1.222790,60.013000,0.005657,60.009000,60.017000,1288.553345,0.107274,1288.477490,1288.629199,244.722778,0.162034,244.608203,244.837354,0.000000,0.000000,0,0,0.000000,0.000000,0,0,5.693237,0.004060,5.690366,5.696107,5.693454,0.004061,5.690582,5.696325,2217.943093,0.297181,2217.732955,2218.153232,305.752992,0.038493,305.725774,305.780211,11272.000000,0.000000,11272,11272,7388264,509.116882,7387904,7388624,18817590,517.602164,18817224,18817956,3.546957,0.000246,3.546783,3.547131,3.546957,0.000246,3.546783,3.547131
+wbuffix,4k,32k,2,482.330566,0.069744,482.281250,482.379883,15434.597140,2.233436,15433.017862,15436.176417,28.269363,0.004424,28.266235,28.272491,2.520890,0.000394,2.520611,2.521169,2071.345805,0.295171,2071.137088,2071.554523,444.416000,0.000000,444.416000,444.416000,18219.008000,0.000000,18219.008000,18219.008000,18743.296000,0.000000,18743.296000,18743.296000,2072.996749,0.310751,2072.777015,2073.216483,1.650944,0.015580,1.639927,1.661960,60.016500,0.000707,60.016000,60.017000,1290.894775,0.089838,1290.831250,1290.958301,247.458472,0.241790,247.287500,247.629443,0.000000,0.000000,0,0,0.000000,0.000000,0,0,5.696096,0.000116,5.696014,5.696178,5.696296,0.000110,5.696219,5.696374,2217.769886,0.004018,2217.767045,2217.772727,307.361615,0.070625,307.311676,307.411554,11278.000000,2.828427,11276,11280,7410644,1159.655121,7409824,7411464,18807072,4491.542274,18803896,18810248,3.537846,0.000209,3.537698,3.537994,3.537846,0.000209,3.537698,3.537994
+wbuffix,4k,64k,2,486.267578,0.001381,486.266602,486.268555,7780.292111,0.026154,7780.273617,7780.310605,28.497742,0.000432,28.497437,28.498047,2.541256,0.000038,2.541228,2.541283,4110.089656,0.022733,4110.073581,4110.105730,897.024000,0.000000,897.024000,897.024000,19005.440000,0.000000,19005.440000,19005.440000,19529.728000,0.000000,19529.728000,19529.728000,4112.691650,0.013877,4112.681837,4112.701463,2.601995,0.008856,2.595732,2.608257,60.011500,0.000707,60.011000,60.012000,1293.670166,0.004419,1293.667041,1293.673291,254.340320,0.022391,254.324487,254.356152,0.000000,0.000000,0,0,0.000000,0.000000,0,0,5.693339,0.004555,5.690118,5.696560,5.693526,0.004556,5.690304,5.696747,2217.877575,0.008035,2217.871893,2217.883256,311.647689,0.013906,311.637857,311.657522,11344.000000,0.000000,11344,11344,7470512,113.137085,7470432,7470592,18882280,124.450793,18882192,18882368,3.527575,0.000055,3.527536,3.527614,3.527575,0.000055,3.527536,3.527614
+wbuffix,4k,128k,2,496.841797,0.013811,496.832031,496.851562,3974.738394,0.114256,3974.657603,3974.819185,29.117676,0.003280,29.115356,29.119995,2.596537,0.000292,2.596331,2.596744,8046.083134,0.151007,8045.976356,8046.189912,1794.048000,0.000000,1794.048000,1794.048000,20447.232000,185.363800,20316.160000,20578.304000,38010.880000,0.000000,38010.880000,38010.880000,8050.472967,0.122731,8050.386183,8050.559751,4.389833,0.028276,4.369839,4.409827,60.012000,0.008485,60.006000,60.018000,1299.041968,0.001623,1299.040820,1299.043115,275.506189,0.088060,275.443921,275.568457,0.000000,0.000000,0,0,0.000000,0.000000,0,0,5.697336,0.000065,5.697290,5.697382,5.697516,0.000066,5.697469,5.697563,2217.931818,0.000000,2217.931818,2217.931818,323.220923,0.069148,323.172027,323.269818,11478.000000,2.828427,11476,11480,7633024,859.841846,7632416,7633632,18994496,4253.954396,18991488,18997504,3.488463,0.000277,3.488267,3.488659,3.488463,0.000277,3.488267,3.488659
+wbuffix,8k,4k,2,216.666992,0.078721,216.611328,216.722656,55466.934839,20.091933,55452.727697,55481.141981,12.696960,0.002654,12.695084,12.698837,1.132238,0.000237,1.132070,1.132405,575.863491,0.209644,575.715251,576.011732,151.552000,1.448155,150.528000,152.576000,15007.744000,0.000000,15007.744000,15007.744000,17170.432000,0.000000,17170.432000,17170.432000,576.712146,0.212951,576.561567,576.862725,0.848655,0.003307,0.846317,0.850994,60.007500,0.009192,60.001000,60.014000,736.912109,0.314469,736.689746,737.134473,81.552075,0.580359,81.141699,81.962451,0.000000,0.000000,0,0,0.000000,0.000000,0,0,5.813959,0.004670,5.810656,5.817261,5.833962,0.004606,5.830705,5.837219,1091.776634,0.023604,1091.759943,1091.793324,128.590204,0.327265,128.358793,128.821615,8049.500000,2.121320,8048,8051,3327576,724.077344,3327064,3328088,6476546,1402.899854,6475554,6477538,2.946325,0.000002,2.946324,2.946327,5.891136,0.000047,5.891103,5.891168
+wbuffix,8k,8k,2,418.468262,2.243545,416.881836,420.054688,53563.986211,287.133915,53360.951873,53767.020550,24.521481,0.129427,24.429962,24.612999,2.186677,0.011541,2.178516,2.194838,596.183983,3.205780,593.917154,598.450812,133.120000,1.448155,132.096000,134.144000,15400.960000,0.000000,15400.960000,15400.960000,17432.576000,0.000000,17432.576000,17432.576000,597.190396,3.203903,594.924895,599.455898,1.006413,0.001877,1.005086,1.007740,60.004500,0.004950,60.001000,60.008000,1280.858228,0.168594,1280.739014,1280.977441,321.045850,0.335979,320.808276,321.283423,0.000000,0.000000,0,0,0.000000,0.000000,0,0,5.820688,0.000257,5.820506,5.820870,5.861635,0.000211,5.861485,5.861784,2182.495028,0.091402,2182.430398,2182.559659,240.839124,2.934739,238.763950,242.914298,8293.000000,131.521861,8200,8386,3214080,16964.198787,3202084,3226075,6838582,117677.417632,6755371,6921792,3.127628,0.025383,3.109680,3.145577,3.127628,0.025383,3.109680,3.145577
+wbuffix,8k,16k,2,437.913574,1.612397,436.773438,439.053711,28026.502656,103.184350,27953.540302,28099.465009,25.661163,0.092057,25.596069,25.726257,2.288307,0.008209,2.282502,2.294111,1140.296549,4.201871,1137.325377,1143.267720,224.256000,0.000000,224.256000,224.256000,17432.576000,0.000000,17432.576000,17432.576000,18219.008000,0.000000,18219.008000,18219.008000,1141.529602,4.203069,1138.557584,1144.501621,1.233054,0.001198,1.232207,1.233901,60.005000,0.005657,60.001000,60.009000,1285.680249,0.264233,1285.493408,1285.867090,328.024707,6.900506,323.145312,332.904102,0.000000,0.000000,0,0,0.000000,0.000000,0,0,5.777035,0.000148,5.776931,5.777140,5.777860,0.000152,5.777752,5.777967,2200.606534,0.066291,2200.559659,2200.653409,260.424218,2.203621,258.866023,261.982413,9352.000000,79.195959,9296,9408,3363460,12066.070114,3354928,3371992,7773333,69068.776173,7724494,7822172,3.311090,0.012244,3.302432,3.319748,3.311090,0.012244,3.302432,3.319748
+wbuffix,8k,32k,2,482.306641,0.071816,482.255859,482.357422,15433.837261,2.302053,15432.209463,15435.465058,28.263733,0.008545,28.257690,28.269775,2.520388,0.000762,2.519849,2.520927,2071.463277,0.297370,2071.253005,2071.673549,444.416000,0.000000,444.416000,444.416000,18219.008000,0.000000,18219.008000,18219.008000,19005.440000,0.000000,19005.440000,19005.440000,2073.108010,0.305155,2072.892232,2073.323787,1.644732,0.007786,1.639227,1.650238,60.007500,0.009192,60.001000,60.014000,1290.771851,0.254358,1290.591992,1290.951709,244.930896,3.597112,242.387354,247.474438,0.000000,0.000000,0,0,0.000000,0.000000,0,0,5.696265,0.000019,5.696251,5.696278,5.696418,0.000014,5.696408,5.696428,2217.772727,0.000000,2217.772727,2217.772727,307.127353,0.321894,306.899740,307.354967,11280.000000,0.000000,11280,11280,3704584,1120.057141,3703792,3705376,9406324,1018.233765,9405604,9407044,3.539104,0.001043,3.538367,3.539841,3.539104,0.001043,3.538367,3.539841
+wbuffix,8k,64k,2,486.372559,0.013120,486.363281,486.381836,7781.969662,0.209083,7781.821818,7782.117506,28.503174,0.003453,28.500732,28.505615,2.541740,0.000308,2.541522,2.541958,4109.205051,0.151347,4109.098033,4109.312070,897.024000,0.000000,897.024000,897.024000,19005.440000,0.000000,19005.440000,19005.440000,19529.728000,0.000000,19529.728000,19529.728000,4111.809129,0.119652,4111.724522,4111.893736,2.604078,0.031695,2.581666,2.626490,60.010000,0.005657,60.006000,60.014000,1293.673291,0.000000,1293.673291,1293.673291,254.631628,0.175309,254.507666,254.755591,0.000000,0.000000,0,0,0.000000,0.000000,0,0,5.696986,0.000669,5.696513,5.697459,5.697125,0.000672,5.696650,5.697600,2217.883256,0.000000,2217.883256,2217.883256,311.755344,0.064334,311.709853,311.800835,11346.000000,2.828427,11344,11348,3735968,452.548340,3735648,3736288,9442464,2443.761036,9440736,9444192,3.527448,0.000348,3.527202,3.527694,3.527448,0.000348,3.527202,3.527694
+wbuffix,8k,128k,2,496.720703,0.031765,496.698242,496.743164,3973.771279,0.254591,3973.591256,3973.951302,29.109863,0.003280,29.107544,29.112183,2.595841,0.000292,2.595634,2.596048,8048.017964,0.497388,8047.666258,8048.369670,1794.048000,0.000000,1794.048000,1794.048000,20447.232000,185.363800,20316.160000,20578.304000,38010.880000,0.000000,38010.880000,38010.880000,8052.405541,0.487907,8052.060539,8052.750543,4.387577,0.009481,4.380873,4.394281,60.010500,0.010607,60.003000,60.018000,1299.021558,0.012809,1299.012500,1299.030615,274.939880,0.156389,274.829297,275.050464,0.000000,0.000000,0,0,0.000000,0.000000,0,0,5.697075,0.000084,5.697016,5.697135,5.697207,0.000084,5.697147,5.697266,2217.909091,0.000000,2217.909091,2217.909091,323.078851,0.078227,323.023536,323.134165,11478.000000,2.828427,11476,11480,3815488,429.920923,3815184,3815792,9498376,2206.173157,9496816,9499936,3.489426,0.000298,3.489216,3.489637,3.489426,0.000298,3.489216,3.489637
+wbuffix,16k,4k,2,129.806152,0.169181,129.686523,129.925781,33230.519492,43.170506,33199.993334,33261.045649,7.606369,0.009344,7.599762,7.612976,0.678290,0.000833,0.677701,0.678879,961.879669,1.245368,960.999061,962.760277,254.976000,0.000000,254.976000,254.976000,14090.240000,0.000000,14090.240000,14090.240000,15335.424000,92.681900,15269.888000,15400.960000,962.750049,1.249126,961.866783,963.633315,0.870380,0.003759,0.867723,0.873038,60.004000,0.004243,60.001000,60.007000,378.771606,0.162586,378.656641,378.886572,58.444739,0.272191,58.252271,58.637207,0.000000,0.000000,0,0,0.000000,0.000000,0,0,5.918811,0.001076,5.918050,5.919572,5.948798,0.001165,5.947975,5.949622,535.565341,0.005022,535.561790,535.568892,89.025944,0.394894,88.746712,89.305176,7073.500000,24.748737,7056,7091,1993962,2449.417890,1992230,1995694,2408458,10179.509222,2401260,2415656,2.207873,0.003621,2.205313,2.210434,8.831485,0.014486,8.821242,8.841727
+wbuffix,16k,8k,2,217.784180,0.303835,217.569336,217.999023,27876.479603,38.904260,27848.970137,27903.989069,12.763180,0.018715,12.749947,12.776413,1.138143,0.001669,1.136963,1.139323,1146.631083,1.594105,1145.503881,1147.758286,248.832000,0.000000,248.832000,248.832000,16646.144000,92.681900,16580.608000,16711.680000,17694.720000,0.000000,17694.720000,17694.720000,1147.682892,1.601443,1146.550501,1148.815284,1.051809,0.007338,1.046620,1.056998,60.011000,0.004243,60.008000,60.014000,736.148730,0.279873,735.950830,736.346631,81.433850,0.258864,81.250806,81.616895,0.000000,0.000000,0,0,0.000000,0.000000,0,0,5.908033,0.000871,5.907417,5.908649,5.975462,0.000925,5.974808,5.976116,1071.577415,0.635793,1071.127841,1072.026989,131.672381,0.284380,131.471294,131.873468,8145.000000,35.355339,8120,8170,1672756,2398.506202,1671060,1674452,3278262,15635.545146,3267206,3289318,2.959792,0.006537,2.955170,2.964415,5.919091,0.012881,5.909982,5.928199
+wbuffix,16k,16k,2,420.513184,0.290715,420.307617,420.718750,26912.872475,18.572100,26899.740017,26926.004933,24.641113,0.017004,24.629089,24.653137,2.197345,0.001516,2.196273,2.198417,1187.524197,0.828381,1186.938444,1188.109951,246.784000,0.000000,246.784000,246.784000,16809.984000,139.022850,16711.680000,16908.288000,17956.864000,0.000000,17956.864000,17956.864000,1188.765071,0.827584,1188.179881,1189.350261,1.240874,0.000797,1.240310,1.241437,60.004000,0.000000,60.004000,60.004000,1279.433545,0.531366,1279.057812,1279.809277,320.794946,1.883777,319.462915,322.126978,0.000000,0.000000,0,0,0.000000,0.000000,0,0,5.923956,0.000072,5.923905,5.924007,5.945681,0.000081,5.945624,5.945738,2143.242898,0.022097,2143.227273,2143.258523,246.698112,0.325470,246.467971,246.928254,8326.500000,17.677670,8314,8339,1614880,1114.400287,1614092,1615668,3428498,7935.859405,3422886,3434109,3.123065,0.003449,3.120626,3.125504,3.123065,0.003449,3.120626,3.125504
+wbuffix,16k,32k,2,442.189941,3.815200,439.492188,444.887695,14150.089153,122.097965,14063.752854,14236.425452,25.912811,0.220237,25.757080,26.068542,2.310747,0.019639,2.296860,2.324634,2259.628076,19.540611,2245.810777,2273.445374,464.896000,0.000000,464.896000,464.896000,18219.008000,0.000000,18219.008000,18219.008000,18743.296000,0.000000,18743.296000,18743.296000,2261.291229,19.510476,2247.495239,2275.087219,1.663153,0.030135,1.641845,1.684462,60.007500,0.007778,60.002000,60.013000,1285.663574,0.241549,1285.492773,1285.834375,322.195557,7.248880,317.069824,327.321289,0.000000,0.000000,0,0,0.000000,0.000000,0,0,5.846462,0.000448,5.846146,5.846779,5.867988,0.000451,5.867669,5.868307,2172.982955,0.160706,2172.869318,2173.096591,267.590744,4.160695,264.648688,270.532800,9485.000000,190.918831,9350,9620,1698222,14433.463618,1688016,1708428,3938271,83227.882359,3879420,3997122,3.318931,0.029300,3.298213,3.339649,3.318931,0.029300,3.298213,3.339649
+wbuffix,16k,64k,2,486.312500,0.095294,486.245117,486.379883,7781.005269,1.521589,7779.929343,7782.081195,28.497742,0.004230,28.494751,28.500732,2.541256,0.000377,2.540989,2.541522,4109.728067,0.807567,4109.157031,4110.299103,897.024000,0.000000,897.024000,897.024000,19005.440000,0.000000,19005.440000,19005.440000,19529.728000,0.000000,19529.728000,19529.728000,4112.331051,0.814527,4111.755094,4112.907009,2.602985,0.006960,2.598063,2.607906,60.006000,0.002828,60.004000,60.008000,1293.670166,0.004419,1293.667041,1293.673291,254.347534,0.227151,254.186914,254.508154,0.000000,0.000000,0,0,0.000000,0.000000,0,0,5.696677,0.000035,5.696652,5.696702,5.696797,0.000034,5.696773,5.696821,2217.877575,0.008035,2217.871893,2217.883256,311.659502,0.081445,311.601912,311.717093,11344.000000,0.000000,11344,11344,1867628,277.185858,1867432,1867824,4720564,277.185858,4720368,4720760,3.527572,0.000524,3.527202,3.527942,3.527572,0.000524,3.527202,3.527942
+wbuffix,16k,128k,1,496.937500,0.000000,496.937500,496.937500,3975.506940,0.000000,3975.506940,3975.506940,29.125732,0.000000,29.125732,29.125732,2.597256,0.000000,2.597256,2.597256,8044.570397,0.000000,8044.570397,8044.570397,1794.048000,0.000000,1794.048000,1794.048000,20578.304000,0.000000,20578.304000,20578.304000,38010.880000,0.000000,38010.880000,38010.880000,8049.002266,0.000000,8049.002266,8049.002266,4.431869,0.000000,4.431869,4.431869,60.017000,0.000000,60.017000,60.017000,1299.043408,0.000000,1299.043408,1299.043408,275.724219,0.000000,275.724219,275.724219,0.000000,0.000000,0,0,0.000000,0.000000,0,0,5.693546,0.000000,5.693546,5.693546,5.693662,0.000000,5.693662,5.693662,2217.931818,0.000000,2217.931818,2217.931818,323.379139,0.000000,323.379139,323.379139,11480.000000,0.000000,11480,11480,1908784,0.000000,1908784,1908784,4749232,0.000000,4749232,4749232,3.488093,0.000000,3.488093,3.488093,3.488093,0.000000,3.488093,3.488093
+wbuffix,32k,4k,1,68.267578,0.000000,68.267578,68.267578,17476.662612,0.000000,17476.662612,17476.662612,4.000824,0.000000,4.000824,4.000824,0.356769,0.000000,0.356769,0.356769,1829.778939,0.000000,1829.778939,1829.778939,569.344000,0.000000,569.344000,569.344000,14483.456000,0.000000,14483.456000,14483.456000,15400.960000,0.000000,15400.960000,15400.960000,1830.776979,0.000000,1830.776979,1830.776979,0.998039,0.000000,0.998039,0.998039,60.011000,0.000000,60.011000,60.011000,189.589893,0.000000,189.589893,189.589893,32.346509,0.000000,32.346509,32.346509,0.000000,0.000000,0,0,0.000000,0.000000,0,0,6.066725,0.000000,6.066725,6.066725,6.149273,0.000000,6.149273,6.149273,255.990234,0.000000,255.990234,255.990234,47.426586,0.000000,47.426586,47.426586,7217.000000,0.000000,7217,7217,1048792,0.000000,1048792,1048792,1189155,0.000000,1189155,1189155,2.133833,0.000000,2.133833,2.133833,17.070664,0.000000,17.070664,17.070664
+wbuffix,32k,8k,1,131.701172,0.000000,131.701172,131.701172,16857.783259,0.000000,16857.783259,16857.783259,7.717781,0.000000,7.717781,7.717781,0.688225,0.000000,0.688225,0.688225,1896.881530,0.000000,1896.881530,1896.881530,561.152000,0.000000,561.152000,561.152000,15007.744000,0.000000,15007.744000,15007.744000,16056.320000,0.000000,16056.320000,16056.320000,1897.969709,0.000000,1897.969709,1897.969709,1.088179,0.000000,1.088179,1.088179,60.007000,0.000000,60.007000,60.007000,376.969629,0.000000,376.969629,376.969629,60.144629,0.000000,60.144629,60.144629,0.000000,0.000000,0,0,0.000000,0.000000,0,0,6.070340,0.000000,6.070340,6.070340,6.125445,0.000000,6.125445,6.125445,512.569010,0.000000,512.569010,512.569010,89.402118,0.000000,89.402118,89.402118,7315.000000,0.000000,7315,7315,1011585,0.000000,1011585,1011585,1251473,0.000000,1251473,1251473,2.237141,0.000000,2.237141,2.237141,8.948563,0.000000,8.948563,8.948563
+wbuffix,32k,16k,1,219.313477,0.000000,219.313477,219.313477,14036.065464,0.000000,14036.065464,14036.065464,12.850830,0.000000,12.850830,12.850830,1.145959,0.000000,1.145959,1.145959,2278.254542,0.000000,2278.254542,2278.254542,536.576000,0.000000,536.576000,536.576000,17432.576000,0.000000,17432.576000,17432.576000,17956.864000,0.000000,17956.864000,17956.864000,2279.563145,0.000000,2279.563145,2279.563145,1.308603,0.000000,1.308603,1.308603,60.002000,0.000000,60.002000,60.002000,741.204492,0.000000,741.204492,741.204492,81.514575,0.000000,81.514575,81.514575,0.000000,0.000000,0,0,0.000000,0.000000,0,0,6.068833,0.000000,6.068833,6.068833,6.105946,0.000000,6.105946,6.105946,1026.572917,0.000000,1026.572917,1026.572917,129.630760,0.000000,129.630760,129.630760,8250.000000,0.000000,8250,8250,842179.000000,0.000000,842179,842179,1660230,0.000000,1660230,1660230,2.971351,0.000000,2.971351,2.971351,5.942609,0.000000,5.942609,5.942609
+wbuffix,32k,32k,1,424.493164,0.000000,424.493164,424.493164,13583.791621,0.000000,13583.791621,13583.791621,24.875153,0.000000,24.875153,24.875153,2.218215,0.000000,2.218215,2.218215,2353.817362,0.000000,2353.817362,2353.817362,528.384000,0.000000,528.384000,528.384000,17694.720000,0.000000,17694.720000,17694.720000,18219.008000,0.000000,18219.008000,18219.008000,2355.495204,0.000000,2355.495204,2355.495204,1.677842,0.000000,1.677842,1.677842,60.006000,0.000000,60.006000,60.006000,1278.334375,0.000000,1278.334375,1278.334375,322.079028,0.000000,322.079028,322.079028,0.000000,0.000000,0,0,0.000000,0.000000,0,0,6.098887,0.000000,6.098887,6.098887,6.143369,0.000000,6.143369,6.143369,2032.770833,0.000000,2032.770833,2032.770833,245.838234,0.000000,245.838234,245.838234,8401.000000,0.000000,8401,8401,815109.000000,0.000000,815109,815109,1725664,0.000000,1725664,1725664,3.117096,0.000000,3.117096,3.117096,3.117096,0.000000,3.117096,3.117096
+wbuffix,32k,64k,1,446.665039,0.000000,446.665039,446.665039,7146.645112,0.000000,7146.645112,7146.645112,26.172668,0.000000,26.172668,26.172668,2.333920,0.000000,2.333920,2.333920,4474.704193,0.000000,4474.704193,4474.704193,978.944000,0.000000,978.944000,978.944000,19005.440000,0.000000,19005.440000,19005.440000,19791.872000,0.000000,19791.872000,19791.872000,4477.327461,0.000000,4477.327461,4477.327461,2.623268,0.000000,2.623268,2.623268,60.002000,0.000000,60.002000,60.002000,1286.819336,0.000000,1286.819336,1286.819336,318.535962,0.000000,318.535962,318.535962,0.000000,0.000000,0,0,0.000000,0.000000,0,0,5.978449,0.000000,5.978449,5.978449,6.000871,0.000000,6.000871,6.000871,2123.535156,0.000000,2123.535156,2123.535156,277.478695,0.000000,277.478695,277.478695,9540.000000,0.000000,9540,9540,857626.000000,0.000000,857626,857626,1974722,0.000000,1974722,1974722,3.302544,0.000000,3.302544,3.302544,3.302544,0.000000,3.302544,3.302544
+wbuffix,32k,128k,1,496.670898,0.000000,496.670898,496.670898,3973.374211,0.000000,3973.374211,3973.374211,29.110107,0.000000,29.110107,29.110107,2.595863,0.000000,2.595863,2.595863,8049.000065,0.000000,8049.000065,8049.000065,1794.048000,0.000000,1794.048000,1794.048000,20316.160000,0.000000,20316.160000,20316.160000,38010.880000,0.000000,38010.880000,38010.880000,8053.293624,0.000000,8053.293624,8053.293624,4.293558,0.000000,4.293558,4.293558,60.017000,0.000000,60.017000,60.017000,1299.040625,0.000000,1299.040625,1299.040625,274.962500,0.000000,274.962500,274.962500,0.000000,0.000000,0,0,0.000000,0.000000,0,0,5.697746,0.000000,5.697746,5.697746,5.697844,0.000000,5.697844,5.697844,2217.931818,0.000000,2217.931818,2217.931818,323.071325,0.000000,323.071325,323.071325,11480.000000,0.000000,11480,11480,953880.000000,0.000000,953880,953880,2375124,0.000000,2375124,2375124,3.489961,0.000000,3.489961,3.489961,3.489961,0.000000,3.489961,3.489961
+wbuffix,64k,4k,1,47.053711,0.000000,47.053711,47.053711,12045.792368,0.000000,12045.792368,12045.792368,2.757523,0.000000,2.757523,2.757523,0.245899,0.000000,0.245899,0.245899,2655.297358,0.000000,2655.297358,2655.297358,937.984000,0.000000,937.984000,937.984000,11337.728000,0.000000,11337.728000,11337.728000,11730.944000,0.000000,11730.944000,11730.944000,2656.258098,0.000000,2656.258098,2656.258098,0.960740,0.000000,0.960740,0.960740,60.010000,0.000000,60.010000,60.010000,123.588672,0.000000,123.588672,123.588672,24.842725,0.000000,24.842725,24.842725,0.000000,0.000000,0,0,0.000000,0.000000,0,0,3.675038,0.000000,3.675038,3.675038,3.715039,0.000000,3.715039,3.715039,219.239955,0.000000,219.239955,219.239955,36.395370,0.000000,36.395370,36.395370,15486.000000,0.000000,15486,15486,722868.000000,0.000000,722868,722868,1454598,0.000000,1454598,1454598,3.012259,0.000000,3.012259,3.012259,48.196152,0.000000,48.196152,48.196152
+wbuffix,64k,8k,1,93.271484,0.000000,93.271484,93.271484,11938.856114,0.000000,11938.856114,11938.856114,5.465721,0.000000,5.465721,5.465721,0.487400,0.000000,0.487400,0.487400,2678.984933,0.000000,2678.984933,2678.984933,921.600000,0.000000,921.600000,921.600000,11468.800000,0.000000,11468.800000,11468.800000,11862.016000,0.000000,11862.016000,11862.016000,2680.069705,0.000000,2680.069705,2680.069705,1.084772,0.000000,1.084772,1.084772,60.006000,0.000000,60.006000,60.006000,246.790625,0.000000,246.790625,246.790625,48.139453,0.000000,48.139453,48.139453,0.000000,0.000000,0,0,0.000000,0.000000,0,0,3.671269,0.000000,3.671269,3.671269,3.713761,0.000000,3.713761,3.713761,438.600446,0.000000,438.600446,438.600446,71.890565,0.000000,71.890565,71.890565,15563.000000,0.000000,15563,15563,716403.000000,0.000000,716403,716403,1470904,0.000000,1470904,1470904,3.053180,0.000000,3.053180,3.053180,24.425437,0.000000,24.425437,24.425437
+wbuffix,64k,16k,1,175.157227,0.000000,175.157227,175.157227,11210.111480,0.000000,11210.111480,11210.111480,10.265045,0.000000,10.265045,10.265045,0.915374,0.000000,0.915374,0.915374,2852.966049,0.000000,2852.966049,2852.966049,937.984000,0.000000,937.984000,937.984000,11862.016000,0.000000,11862.016000,11862.016000,12124.160000,0.000000,12124.160000,12124.160000,2854.286160,0.000000,2854.286160,2854.286160,1.320112,0.000000,1.320112,1.320112,60.011000,0.000000,60.011000,60.011000,488.131250,0.000000,488.131250,488.131250,82.852856,0.000000,82.852856,82.852856,0.000000,0.000000,0,0,0.000000,0.000000,0,0,3.674823,0.000000,3.674823,3.674823,3.718097,0.000000,3.718097,3.718097,876.517857,0.000000,876.517857,876.517857,131.745921,0.000000,131.745921,131.745921,15734.000000,0.000000,15734,15734,672730.000000,0.000000,672730,672730,1536469,0.000000,1536469,1536469,3.283931,0.000000,3.283931,3.283931,13.135725,0.000000,13.135725,13.135725
+wbuffix,64k,32k,1,285.618164,0.000000,285.618164,285.618164,9139.800357,0.000000,9139.800357,9139.800357,16.737427,0.000000,16.737427,16.737427,1.492542,0.000000,1.492542,1.492542,3499.234243,0.000000,3499.234243,3499.234243,978.944000,0.000000,978.944000,978.944000,12124.160000,0.000000,12124.160000,12124.160000,12386.304000,0.000000,12386.304000,12386.304000,3500.922222,0.000000,3500.922222,3500.922222,1.687979,0.000000,1.687979,1.687979,60.007000,0.000000,60.007000,60.007000,908.028125,0.000000,908.028125,908.028125,143.391040,0.000000,143.391040,143.391040,0.000000,0.000000,0,0,0.000000,0.000000,0,0,3.683523,0.000000,3.683523,3.683523,3.719467,0.000000,3.719467,3.719467,1752.214286,0.000000,1752.214286,1752.214286,194.797791,0.000000,194.797791,194.797791,16146.000000,0.000000,16146,16146,548451.000000,0.000000,548451,548451,1713443,0.000000,1713443,1713443,4.124150,0.000000,4.124150,4.124150,8.248284,0.000000,8.248284,8.248284
+wbuffix,64k,64k,1,645.083008,0.000000,645.083008,645.083008,10321.328578,0.000000,10321.328578,10321.328578,37.800354,0.000000,37.800354,37.800354,3.370806,0.000000,3.370806,3.370806,3097.577347,0.000000,3097.577347,3097.577347,880.640000,0.000000,880.640000,880.640000,11993.088000,0.000000,11993.088000,11993.088000,12386.304000,0.000000,12386.304000,12386.304000,3100.120742,0.000000,3100.120742,3100.120742,2.543395,0.000000,2.543395,2.543395,60.004000,0.000000,60.004000,60.004000,1403.947803,0.000000,1403.947803,1403.947803,518.924536,0.000000,518.924536,518.924536,0.000000,0.000000,0,0,0.000000,0.000000,0,0,3.873841,0.000000,3.873841,3.873841,3.946725,0.000000,3.946725,3.946725,3350.386579,0.000000,3350.386579,3350.386579,477.616375,0.000000,477.616375,477.616375,15930.000000,0.000000,15930,15930,619321.000000,0.000000,619321,619321,1614792,0.000000,1614792,1614792,3.607359,0.000000,3.607359,3.607359,3.607359,0.000000,3.607359,3.607359
+wbuffix,64k,128k,1,665.963867,0.000000,665.963867,665.963867,5327.717509,0.000000,5327.717509,5327.717509,39.027222,0.000000,39.027222,39.027222,3.480211,0.000000,3.480211,3.480211,6001.688954,0.000000,6001.688954,6001.688954,1597.440000,0.000000,1597.440000,1597.440000,22675.456000,0.000000,22675.456000,22675.456000,24510.464000,0.000000,24510.464000,24510.464000,6005.981310,0.000000,6005.981310,6005.981310,4.292356,0.000000,4.292356,4.292356,60.009000,0.000000,60.009000,60.009000,1411.562500,0.000000,1411.562500,1411.562500,534.134814,0.000000,534.134814,534.134814,0.000000,0.000000,0,0,0.000000,0.000000,0,0,3.880566,0.000000,3.880566,3.880566,3.898662,0.000000,3.898662,3.898662,3348.178571,0.000000,3348.178571,3348.178571,499.885578,0.000000,499.885578,499.885578,16808.000000,0.000000,16808,16808,639422.000000,0.000000,639422,639422,1707056,0.000000,1707056,1707056,3.669686,0.000000,3.669686,3.669686,3.669686,0.000000,3.669686,3.669686
+wbuffix,128k,4k,1,28.133789,0.000000,28.133789,28.133789,7202.426384,0.000000,7202.426384,7202.426384,1.648697,0.000000,1.648697,1.648697,0.147021,0.000000,0.147021,0.147021,4441.680233,0.000000,4441.680233,4441.680233,2441.216000,0.000000,2441.216000,2441.216000,10158.080000,0.000000,10158.080000,10158.080000,16056.320000,0.000000,16056.320000,16056.320000,4442.658270,0.000000,4442.658270,4442.658270,0.978037,0.000000,0.978037,0.978037,60.007000,0.000000,60.007000,60.007000,77.282422,0.000000,77.282422,77.282422,14.416333,0.000000,14.416333,14.416333,0.000000,0.000000,0,0,0.000000,0.000000,0,0,2.475650,0.000000,2.475650,2.475650,2.515920,0.000000,2.515920,2.515920,170.169922,0.000000,170.169922,170.169922,23.238997,0.000000,23.238997,23.238997,22262.000000,0.000000,22262,22262,432196.000000,0.000000,432196,432196,1090213,0.000000,1090213,1090213,3.522497,0.000000,3.522497,3.522497,112.719896,0.000000,112.719896,112.719896
+wbuffix,128k,8k,1,56.112305,0.000000,56.112305,56.112305,7182.418132,0.000000,7182.418132,7182.418132,3.288124,0.000000,3.288124,3.288124,0.293215,0.000000,0.293215,0.293215,4453.994508,0.000000,4453.994508,4453.994508,2441.216000,0.000000,2441.216000,2441.216000,10158.080000,0.000000,10158.080000,10158.080000,16580.608000,0.000000,16580.608000,16580.608000,4455.064317,0.000000,4455.064317,4455.064317,1.069809,0.000000,1.069809,1.069809,60.005000,0.000000,60.005000,60.005000,154.100781,0.000000,154.100781,154.100781,28.747534,0.000000,28.747534,28.747534,0.000000,0.000000,0,0,0.000000,0.000000,0,0,2.474023,0.000000,2.474023,2.474023,2.514367,0.000000,2.514367,2.514367,340.449219,0.000000,340.449219,340.449219,46.310336,0.000000,46.310336,46.310336,22231.000000,0.000000,22231,22231,430981.000000,0.000000,430981,430981,1089448,0.000000,1089448,1089448,3.527833,0.000000,3.527833,3.527833,56.445328,0.000000,56.445328,56.445328
+wbuffix,128k,16k,1,110.900391,0.000000,110.900391,110.900391,7097.668683,0.000000,7097.668683,7097.668683,6.499084,0.000000,6.499084,6.499084,0.579549,0.000000,0.579549,0.579549,4506.955227,0.000000,4506.955227,4506.955227,2506.752000,0.000000,2506.752000,2506.752000,10289.152000,0.000000,10289.152000,10289.152000,16056.320000,0.000000,16056.320000,16056.320000,4508.221410,0.000000,4508.221410,4508.221410,1.266183,0.000000,1.266183,1.266183,60.009000,0.000000,60.009000,60.009000,307.517187,0.000000,307.517187,307.517187,56.495557,0.000000,56.495557,56.495557,0.000000,0.000000,0,0,0.000000,0.000000,0,0,2.476727,0.000000,2.476727,2.476727,2.516406,0.000000,2.516406,2.516406,680.507812,0.000000,680.507812,680.507812,91.271686,0.000000,91.271686,91.271686,22202.000000,0.000000,22202,22202,425924.000000,0.000000,425924,425924,1092651,0.000000,1092651,1092651,3.565366,0.000000,3.565366,3.565366,28.522929,0.000000,28.522929,28.522929
+wbuffix,128k,32k,1,204.968750,0.000000,204.968750,204.968750,6559.014181,0.000000,6559.014181,6559.014181,12.012115,0.000000,12.012115,12.012115,1.071167,0.000000,1.071167,1.071167,4876.810865,0.000000,4876.810865,4876.810865,2899.968000,0.000000,2899.968000,2899.968000,12648.448000,0.000000,12648.448000,12648.448000,18219.008000,0.000000,18219.008000,18219.008000,4878.452653,0.000000,4878.452653,4878.452653,1.641788,0.000000,1.641788,1.641788,60.011000,0.000000,60.011000,60.011000,598.712500,0.000000,598.712500,598.712500,98.130542,0.000000,98.130542,98.130542,0.000000,0.000000,0,0,0.000000,0.000000,0,0,2.477408,0.000000,2.477408,2.477408,2.536558,0.000000,2.536558,2.536558,1359.062500,0.000000,1359.062500,1359.062500,165.200364,0.000000,165.200364,165.200364,22024.000000,0.000000,22024,22024,393613.000000,0.000000,393613,393613,1113559,0.000000,1113559,1113559,3.829071,0.000000,3.829071,3.829071,15.316283,0.000000,15.316283,15.316283
+wbuffix,128k,64k,1,340.655273,0.000000,340.655273,340.655273,5450.488285,0.000000,5450.488285,5450.488285,19.962280,0.000000,19.962280,19.962280,1.780115,0.000000,1.780115,1.780115,5868.172732,0.000000,5868.172732,5868.172732,7307.264000,0.000000,7307.264000,7307.264000,16711.680000,0.000000,16711.680000,16711.680000,18743.296000,0.000000,18743.296000,18743.296000,5870.736389,0.000000,5870.736389,5870.736389,2.563657,0.000000,2.563657,2.563657,60.006000,0.000000,60.006000,60.006000,1051.298486,0.000000,1051.298486,1051.298486,192.600146,0.000000,192.600146,192.600146,0.000000,0.000000,0,0,0.000000,0.000000,0,0,2.474275,0.000000,2.474275,2.474275,2.520778,0.000000,2.520778,2.520778,2716.273682,0.000000,2716.273682,2716.273682,258.794526,0.000000,258.794526,258.794526,21712.000000,0.000000,21712,21712,327062.000000,0.000000,327062,327062,1160138,0.000000,1160138,1160138,4.547150,0.000000,4.547150,4.547150,9.094300,0.000000,9.094300,9.094300
+wbuffix,128k,128k,1,837.771484,0.000000,837.771484,837.771484,6702.178007,0.000000,6702.178007,6702.178007,49.095581,0.000000,49.095581,49.095581,4.378046,0.000000,4.378046,4.378046,4770.301241,0.000000,4770.301241,4770.301241,2244.608000,0.000000,2244.608000,2244.608000,11337.728000,0.000000,11337.728000,11337.728000,18219.008000,0.000000,18219.008000,18219.008000,4774.282822,0.000000,4774.282822,4774.282822,3.981581,0.000000,3.981581,3.981581,60.009000,0.000000,60.009000,60.009000,1482.975000,0.000000,1482.975000,1482.975000,671.598682,0.000000,671.598682,671.598682,0.000000,0.000000,0,0,0.000000,0.000000,0,0,3.866567,0.000000,3.866567,3.866567,3.895296,0.000000,3.895296,3.895296,3357.214286,0.000000,3357.214286,3357.214286,681.794248,0.000000,681.794248,681.794248,21413.000000,0.000000,21413,21413,402191.000000,0.000000,402191,402191,1065766,0.000000,1065766,1065766,3.649900,0.000000,3.649900,3.649900,3.649900,0.000000,3.649900,3.649900
+```
+
+### 11.2.6 파티션별 GC 로그 (회차마다: 첫 GC 줄의 fio 시작 기준 시각·내용, rmmod 통계)
+```
+[base map4k bs4k r1]
+  +6.302s first GC part=0 victim line=343 vpc=1898 ipc=150 free_lines=2 host_pgs=778240
+  +6.304s first GC part=2 victim line=340 vpc=1890 ipc=158 free_lines=2 host_pgs=778240
+  +6.321s first GC part=3 victim line=194 vpc=1893 ipc=155 free_lines=2 host_pgs=778240
+  +6.323s first GC part=1 victim line=106 vpc=1897 ipc=151 free_lines=2 host_pgs=778240
+  stats part=0 host_pgs=1606708 gc_pgs=3447763 gc_cnt=2087 free_lines=2
+  stats part=1 host_pgs=1606877 gc_pgs=3443562 gc_cnt=2085 free_lines=2
+  stats part=2 host_pgs=1606769 gc_pgs=3455825 gc_cnt=2091 free_lines=2
+  stats part=3 host_pgs=1606316 gc_pgs=3437846 gc_cnt=2082 free_lines=2
+  (kernel) [61167.172638] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [61167.240256] NVMeVirt: Virtual NVMe device closed
+[base map4k bs8k r1]
+  +5.745s first GC part=2 victim line=313 vpc=1896 ipc=152 free_lines=2 host_pgs=778240
+  +5.745s first GC part=3 victim line=313 vpc=1896 ipc=152 free_lines=2 host_pgs=778240
+  +5.764s first GC part=0 victim line=60 vpc=1895 ipc=153 free_lines=2 host_pgs=778240
+  +5.764s first GC part=1 victim line=60 vpc=1895 ipc=153 free_lines=2 host_pgs=778240
+  stats part=0 host_pgs=1665151 gc_pgs=3811116 gc_cnt=2293 free_lines=2
+  stats part=1 host_pgs=1665151 gc_pgs=3811116 gc_cnt=2293 free_lines=2
+  stats part=2 host_pgs=1665321 gc_pgs=3821118 gc_cnt=2298 free_lines=2
+  stats part=3 host_pgs=1665321 gc_pgs=3821118 gc_cnt=2298 free_lines=2
+  (kernel) [61236.830850] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [61236.897600] NVMeVirt: Virtual NVMe device closed
+[base map4k bs16k r1]
+  +5.697s first GC part=0 victim line=291 vpc=1902 ipc=146 free_lines=2 host_pgs=778240
+  +5.697s first GC part=1 victim line=291 vpc=1902 ipc=146 free_lines=2 host_pgs=778240
+  +5.697s first GC part=2 victim line=291 vpc=1902 ipc=146 free_lines=2 host_pgs=778240
+  +5.697s first GC part=3 victim line=291 vpc=1902 ipc=146 free_lines=2 host_pgs=778240
+  stats part=0 host_pgs=1846856 gc_pgs=4704571 gc_cnt=2818 free_lines=2
+  stats part=1 host_pgs=1846856 gc_pgs=4704571 gc_cnt=2818 free_lines=2
+  stats part=2 host_pgs=1846856 gc_pgs=4704571 gc_cnt=2818 free_lines=2
+  stats part=3 host_pgs=1846856 gc_pgs=4704571 gc_cnt=2818 free_lines=2
+  (kernel) [61306.485193] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [61306.551850] NVMeVirt: Virtual NVMe device closed
+[base map4k bs32k r1]
+  +5.696s first GC part=0 victim line=26 vpc=1880 ipc=168 free_lines=2 host_pgs=778240
+  +5.696s first GC part=1 victim line=26 vpc=1880 ipc=168 free_lines=2 host_pgs=778240
+  +5.696s first GC part=2 victim line=26 vpc=1880 ipc=168 free_lines=2 host_pgs=778240
+  +5.697s first GC part=3 victim line=26 vpc=1880 ipc=168 free_lines=2 host_pgs=778240
+  stats part=0 host_pgs=1853198 gc_pgs=4702232 gc_cnt=2820 free_lines=2
+  stats part=1 host_pgs=1853198 gc_pgs=4702232 gc_cnt=2820 free_lines=2
+  stats part=2 host_pgs=1853198 gc_pgs=4702232 gc_cnt=2820 free_lines=2
+  stats part=3 host_pgs=1853198 gc_pgs=4702232 gc_cnt=2820 free_lines=2
+  (kernel) [61376.151625] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [61376.218308] NVMeVirt: Virtual NVMe device closed
+[base map4k bs64k r1]
+  +5.698s first GC part=0 victim line=103 vpc=1876 ipc=172 free_lines=2 host_pgs=778240
+  +5.698s first GC part=1 victim line=103 vpc=1876 ipc=172 free_lines=2 host_pgs=778240
+  +5.698s first GC part=2 victim line=103 vpc=1876 ipc=172 free_lines=2 host_pgs=778240
+  +5.698s first GC part=3 victim line=103 vpc=1876 ipc=172 free_lines=2 host_pgs=778240
+  stats part=0 host_pgs=1867904 gc_pgs=4720288 gc_cnt=2836 free_lines=2
+  stats part=1 host_pgs=1867904 gc_pgs=4720288 gc_cnt=2836 free_lines=2
+  stats part=2 host_pgs=1867904 gc_pgs=4720288 gc_cnt=2836 free_lines=2
+  stats part=3 host_pgs=1867904 gc_pgs=4720288 gc_cnt=2836 free_lines=2
+  (kernel) [61445.836138] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [61445.902774] NVMeVirt: Virtual NVMe device closed
+[base map4k bs128k r1]
+  +5.699s first GC part=0 victim line=38 vpc=1848 ipc=200 free_lines=2 host_pgs=778240
+  +5.699s first GC part=1 victim line=38 vpc=1848 ipc=200 free_lines=2 host_pgs=778240
+  +5.699s first GC part=2 victim line=38 vpc=1848 ipc=200 free_lines=2 host_pgs=778240
+  +5.699s first GC part=3 victim line=38 vpc=1848 ipc=200 free_lines=2 host_pgs=778240
+  stats part=0 host_pgs=1908152 gc_pgs=4749864 gc_cnt=2870 free_lines=2
+  stats part=1 host_pgs=1908152 gc_pgs=4749864 gc_cnt=2870 free_lines=2
+  stats part=2 host_pgs=1908152 gc_pgs=4749864 gc_cnt=2870 free_lines=2
+  stats part=3 host_pgs=1908152 gc_pgs=4749864 gc_cnt=2870 free_lines=2
+  (kernel) [61515.517735] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [61515.584599] NVMeVirt: Virtual NVMe device closed
+[base map8k bs4k r1]
+  +5.685s first GC part=3 victim line=8 vpc=375 ipc=649 free_lines=2 host_pgs=389120
+  +5.688s first GC part=0 victim line=2 vpc=355 ipc=669 free_lines=2 host_pgs=389120
+  +5.691s first GC part=2 victim line=0 vpc=364 ipc=660 free_lines=2 host_pgs=389120
+  +5.691s first GC part=1 victim line=11 vpc=376 ipc=648 free_lines=2 host_pgs=389120
+  stats part=0 host_pgs=1022622 gc_pgs=3063323 gc_cnt=3609 free_lines=2
+  stats part=1 host_pgs=1023088 gc_pgs=3065941 gc_cnt=3612 free_lines=1
+  stats part=2 host_pgs=1023126 gc_pgs=3065884 gc_cnt=3612 free_lines=1
+  stats part=3 host_pgs=1023106 gc_pgs=3064893 gc_cnt=3611 free_lines=1
+  (kernel) [61543.507167] systemd-journald[350]: /dev/kmsg buffer overrun, some messages lost. (Dropped 93650 similar message(s))
+  (kernel) [61545.301839] systemd-journald[350]: /dev/kmsg buffer overrun, some messages lost.
+  (kernel) [61545.302903] systemd-journald[350]: /dev/kmsg buffer overrun, some messages lost.
+  (kernel) [61585.557539] ldm_validate_partition_table(): Disk read failed.
+  (kernel) [61585.557542] Dev nvme1n1: unable to read RDB block 0
+  (kernel) [61585.557546]  nvme1n1: unable to read partition table
+  (kernel) [61585.557549] nvme1n1: partition table beyond EOD, truncated
+  (kernel) [61585.609360] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+[base map8k bs8k r1]
+  +5.821s first GC part=0 victim line=26 vpc=939 ipc=85 free_lines=2 host_pgs=389120
+  +5.821s first GC part=1 victim line=84 vpc=939 ipc=85 free_lines=2 host_pgs=389120
+  +5.841s first GC part=3 victim line=96 vpc=945 ipc=79 free_lines=2 host_pgs=389120
+  +5.862s first GC part=2 victim line=95 vpc=942 ipc=82 free_lines=2 host_pgs=389120
+  stats part=0 host_pgs=806511 gc_pgs=1726898 gc_cnt=2093 free_lines=2
+  stats part=1 host_pgs=806454 gc_pgs=1724947 gc_cnt=2091 free_lines=2
+  stats part=2 host_pgs=806877 gc_pgs=1732637 gc_cnt=2099 free_lines=2
+  stats part=3 host_pgs=806774 gc_pgs=1736723 gc_cnt=2103 free_lines=2
+  (kernel) [61655.240057] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [61655.280800] NVMeVirt: Virtual NVMe device closed
+[base map8k bs16k r1]
+  +5.782s first GC part=0 victim line=104 vpc=941 ipc=83 free_lines=2 host_pgs=389120
+  +5.782s first GC part=1 victim line=104 vpc=941 ipc=83 free_lines=2 host_pgs=389120
+  +5.783s first GC part=2 victim line=226 vpc=944 ipc=80 free_lines=2 host_pgs=389120
+  +5.783s first GC part=3 victim line=226 vpc=944 ipc=80 free_lines=2 host_pgs=389120
+  stats part=0 host_pgs=845104 gc_pgs=1966795 gc_cnt=2365 free_lines=2
+  stats part=1 host_pgs=845104 gc_pgs=1966795 gc_cnt=2365 free_lines=2
+  stats part=2 host_pgs=844814 gc_pgs=1967009 gc_cnt=2365 free_lines=2
+  stats part=3 host_pgs=844814 gc_pgs=1967009 gc_cnt=2365 free_lines=2
+  (kernel) [61724.863874] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [61724.904493] NVMeVirt: Virtual NVMe device closed
+[base map8k bs32k r1]
+  +5.696s first GC part=0 victim line=26 vpc=940 ipc=84 free_lines=2 host_pgs=389120
+  +5.696s first GC part=1 victim line=26 vpc=940 ipc=84 free_lines=2 host_pgs=389120
+  +5.696s first GC part=2 victim line=26 vpc=940 ipc=84 free_lines=2 host_pgs=389120
+  +5.696s first GC part=3 victim line=26 vpc=940 ipc=84 free_lines=2 host_pgs=389120
+  stats part=0 host_pgs=925972 gc_pgs=2350748 gc_cnt=2819 free_lines=2
+  stats part=1 host_pgs=925972 gc_pgs=2350748 gc_cnt=2819 free_lines=2
+  stats part=2 host_pgs=925972 gc_pgs=2350748 gc_cnt=2819 free_lines=2
+  stats part=3 host_pgs=925972 gc_pgs=2350748 gc_cnt=2819 free_lines=2
+  (kernel) [61794.501602] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [61794.542592] NVMeVirt: Virtual NVMe device closed
+[base map8k bs64k r1]
+  +5.698s first GC part=0 victim line=103 vpc=938 ipc=86 free_lines=2 host_pgs=389120
+  +5.698s first GC part=1 victim line=103 vpc=938 ipc=86 free_lines=2 host_pgs=389120
+  +5.699s first GC part=2 victim line=103 vpc=938 ipc=86 free_lines=2 host_pgs=389120
+  +5.699s first GC part=3 victim line=103 vpc=938 ipc=86 free_lines=2 host_pgs=389120
+  stats part=0 host_pgs=933912 gc_pgs=2360184 gc_cnt=2836 free_lines=2
+  stats part=1 host_pgs=933912 gc_pgs=2360184 gc_cnt=2836 free_lines=2
+  stats part=2 host_pgs=933912 gc_pgs=2360184 gc_cnt=2836 free_lines=2
+  stats part=3 host_pgs=933912 gc_pgs=2360184 gc_cnt=2836 free_lines=2
+  (kernel) [61864.108432] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [61864.149122] NVMeVirt: Virtual NVMe device closed
+[base map8k bs128k r1]
+  +5.698s first GC part=0 victim line=38 vpc=924 ipc=100 free_lines=2 host_pgs=389120
+  +5.698s first GC part=1 victim line=38 vpc=924 ipc=100 free_lines=2 host_pgs=389120
+  +5.698s first GC part=2 victim line=38 vpc=924 ipc=100 free_lines=2 host_pgs=389120
+  +5.698s first GC part=3 victim line=38 vpc=924 ipc=100 free_lines=2 host_pgs=389120
+  stats part=0 host_pgs=955112 gc_pgs=2373900 gc_cnt=2870 free_lines=2
+  stats part=1 host_pgs=955112 gc_pgs=2373900 gc_cnt=2870 free_lines=2
+  stats part=2 host_pgs=955112 gc_pgs=2373900 gc_cnt=2870 free_lines=2
+  stats part=3 host_pgs=955112 gc_pgs=2373900 gc_cnt=2870 free_lines=2
+  (kernel) [61933.739311] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [61933.780735] NVMeVirt: Virtual NVMe device closed
+[base map16k bs4k r1]
+  +5.668s first GC part=2 victim line=6 vpc=171 ipc=341 free_lines=2 host_pgs=194560
+  +5.673s first GC part=1 victim line=8 vpc=164 ipc=348 free_lines=2 host_pgs=194560
+  +5.684s first GC part=3 victim line=10 vpc=168 ipc=344 free_lines=2 host_pgs=194560
+  +5.684s first GC part=0 victim line=4 vpc=169 ipc=343 free_lines=2 host_pgs=194560
+  stats part=0 host_pgs=644251 gc_pgs=1397218 gc_cnt=3606 free_lines=2
+  stats part=1 host_pgs=644540 gc_pgs=1389794 gc_cnt=3592 free_lines=2
+  stats part=2 host_pgs=645196 gc_pgs=1402940 gc_cnt=3619 free_lines=1
+  stats part=3 host_pgs=644324 gc_pgs=1395108 gc_cnt=3602 free_lines=2
+  (kernel) [61965.081395] systemd-journald[350]: /dev/kmsg buffer overrun, some messages lost. (Dropped 6330 similar message(s))
+  (kernel) [61966.808829] systemd-journald[350]: /dev/kmsg buffer overrun, some messages lost.
+  (kernel) [61968.132131] systemd-journald[350]: /dev/kmsg buffer overrun, some messages lost.
+  (kernel) [62004.296160] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [62004.323863] NVMeVirt: Virtual NVMe device closed
+[base map16k bs8k r1]
+  +5.666s first GC part=2 victim line=2 vpc=183 ipc=329 free_lines=2 host_pgs=194560
+  +5.676s first GC part=1 victim line=8 vpc=171 ipc=341 free_lines=2 host_pgs=194560
+  +5.676s first GC part=3 victim line=10 vpc=178 ipc=334 free_lines=2 host_pgs=194560
+  +5.697s first GC part=0 victim line=4 vpc=177 ipc=335 free_lines=2 host_pgs=194560
+  stats part=0 host_pgs=524049 gc_pgs=1610601 gc_cnt=3788 free_lines=2
+  stats part=1 host_pgs=523663 gc_pgs=1607896 gc_cnt=3782 free_lines=2
+  stats part=2 host_pgs=523873 gc_pgs=1614352 gc_cnt=3795 free_lines=1
+  stats part=3 host_pgs=523528 gc_pgs=1612141 gc_cnt=3790 free_lines=2
+  (kernel) [62028.442123] systemd-journald[350]: /dev/kmsg buffer overrun, some messages lost. (Dropped 2747 similar message(s))
+  (kernel) [62029.513128] systemd-journald[350]: /dev/kmsg buffer overrun, some messages lost.
+  (kernel) [62029.515013] systemd-journald[350]: /dev/kmsg buffer overrun, some messages lost.
+  (kernel) [62075.039480] ldm_validate_partition_table(): Disk read failed.
+  (kernel) [62075.039484] Dev nvme1n1: unable to read RDB block 0
+  (kernel) [62075.039487]  nvme1n1: unable to read partition table
+  (kernel) [62075.039491] nvme1n1: partition table beyond EOD, truncated
+  (kernel) [62075.112067] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+[base map16k bs16k r1]
+  +5.924s first GC part=0 victim line=135 vpc=468 ipc=44 free_lines=2 host_pgs=194560
+  +5.925s first GC part=1 victim line=144 vpc=465 ipc=47 free_lines=2 host_pgs=194560
+  +5.945s first GC part=2 victim line=218 vpc=466 ipc=46 free_lines=2 host_pgs=194560
+  +5.946s first GC part=3 victim line=182 vpc=466 ipc=46 free_lines=2 host_pgs=194560
+  stats part=0 host_pgs=404231 gc_pgs=862454 gc_cnt=2093 free_lines=2
+  stats part=1 host_pgs=404310 gc_pgs=862363 gc_cnt=2093 free_lines=2
+  stats part=2 host_pgs=404261 gc_pgs=859375 gc_cnt=2087 free_lines=2
+  stats part=3 host_pgs=403841 gc_pgs=855698 gc_cnt=2079 free_lines=2
+  (kernel) [62144.723993] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [62144.751549] NVMeVirt: Virtual NVMe device closed
+[base map16k bs32k r1]
+  +5.846s first GC part=0 victim line=152 vpc=465 ipc=47 free_lines=2 host_pgs=194560
+  +5.846s first GC part=1 victim line=152 vpc=465 ipc=47 free_lines=2 host_pgs=194560
+  +5.867s first GC part=2 victim line=344 vpc=469 ipc=43 free_lines=2 host_pgs=194560
+  +5.868s first GC part=3 victim line=344 vpc=469 ipc=43 free_lines=2 host_pgs=194560
+  stats part=0 host_pgs=426259 gc_pgs=996022 gc_cnt=2397 free_lines=2
+  stats part=1 host_pgs=426259 gc_pgs=996022 gc_cnt=2397 free_lines=2
+  stats part=2 host_pgs=426129 gc_pgs=993080 gc_cnt=2391 free_lines=2
+  stats part=3 host_pgs=426129 gc_pgs=993080 gc_cnt=2391 free_lines=2
+  (kernel) [62214.339914] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [62214.367809] NVMeVirt: Virtual NVMe device closed
+[base map16k bs64k r1]
+  +5.690s first GC part=0 victim line=103 vpc=469 ipc=43 free_lines=2 host_pgs=194560
+  +5.690s first GC part=1 victim line=103 vpc=469 ipc=43 free_lines=2 host_pgs=194560
+  +5.690s first GC part=2 victim line=103 vpc=469 ipc=43 free_lines=2 host_pgs=194560
+  +5.690s first GC part=3 victim line=103 vpc=469 ipc=43 free_lines=2 host_pgs=194560
+  stats part=0 host_pgs=467073 gc_pgs=1180476 gc_cnt=2837 free_lines=2
+  stats part=1 host_pgs=467073 gc_pgs=1180476 gc_cnt=2837 free_lines=2
+  stats part=2 host_pgs=467073 gc_pgs=1180476 gc_cnt=2837 free_lines=2
+  stats part=3 host_pgs=467073 gc_pgs=1180476 gc_cnt=2837 free_lines=2
+  (kernel) [62283.956905] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [62283.984629] NVMeVirt: Virtual NVMe device closed
+[base map16k bs128k r1]
+  +5.697s first GC part=0 victim line=38 vpc=462 ipc=50 free_lines=2 host_pgs=194560
+  +5.697s first GC part=1 victim line=38 vpc=462 ipc=50 free_lines=2 host_pgs=194560
+  +5.697s first GC part=2 victim line=38 vpc=462 ipc=50 free_lines=2 host_pgs=194560
+  +5.697s first GC part=3 victim line=38 vpc=462 ipc=50 free_lines=2 host_pgs=194560
+  stats part=0 host_pgs=477014 gc_pgs=1187492 gc_cnt=2870 free_lines=2
+  stats part=1 host_pgs=477014 gc_pgs=1187492 gc_cnt=2870 free_lines=2
+  stats part=2 host_pgs=477014 gc_pgs=1187492 gc_cnt=2870 free_lines=2
+  stats part=3 host_pgs=477014 gc_pgs=1187492 gc_cnt=2870 free_lines=2
+  (kernel) [62353.578854] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [62353.606737] NVMeVirt: Virtual NVMe device closed
+[base map32k bs4k r1]
+  +5.636s first GC part=0 victim line=6 vpc=79 ipc=177 free_lines=2 host_pgs=97280
+  +5.659s first GC part=1 victim line=34 vpc=77 ipc=179 free_lines=2 host_pgs=97280
+  +5.670s first GC part=2 victim line=26 vpc=82 ipc=174 free_lines=2 host_pgs=97280
+  +5.682s first GC part=3 victim line=29 vpc=80 ipc=176 free_lines=2 host_pgs=97280
+  stats part=0 host_pgs=355557 gc_pgs=728946 gc_cnt=3855 free_lines=2
+  stats part=1 host_pgs=356504 gc_pgs=743601 gc_cnt=3916 free_lines=2
+  stats part=2 host_pgs=355413 gc_pgs=731391 gc_cnt=3864 free_lines=2
+  stats part=3 host_pgs=354932 gc_pgs=725225 gc_cnt=3838 free_lines=2
+  (kernel) [62377.652252] systemd-journald[350]: /dev/kmsg buffer overrun, some messages lost. (Dropped 4618 similar message(s))
+  (kernel) [62379.791518] systemd-journald[350]: /dev/kmsg buffer overrun, some messages lost.
+  (kernel) [62381.035264] systemd-journald[350]: /dev/kmsg buffer overrun, some messages lost.
+  (kernel) [62424.743825] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [62424.764682] NVMeVirt: Virtual NVMe device closed
+[base map32k bs8k r1]
+  +5.639s first GC part=0 victim line=3 vpc=84 ipc=172 free_lines=2 host_pgs=97280
+  +5.658s first GC part=1 victim line=12 vpc=80 ipc=176 free_lines=2 host_pgs=97280
+  +5.666s first GC part=2 victim line=0 vpc=83 ipc=173 free_lines=2 host_pgs=97280
+  +5.673s first GC part=3 victim line=14 vpc=78 ipc=178 free_lines=2 host_pgs=97280
+  stats part=0 host_pgs=333894 gc_pgs=764658 gc_cnt=3910 free_lines=2
+  stats part=1 host_pgs=334612 gc_pgs=777271 gc_cnt=3962 free_lines=1
+  stats part=2 host_pgs=334004 gc_pgs=770953 gc_cnt=3935 free_lines=2
+  stats part=3 host_pgs=333938 gc_pgs=757975 gc_cnt=3884 free_lines=2
+  (kernel) [62448.331541] systemd-journald[350]: /dev/kmsg buffer overrun, some messages lost. (Dropped 3673 similar message(s))
+  (kernel) [62450.007775] systemd-journald[350]: /dev/kmsg buffer overrun, some messages lost.
+  (kernel) [62451.097202] systemd-journald[350]: /dev/kmsg buffer overrun, some messages lost.
+  (kernel) [62496.325173] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [62496.346133] NVMeVirt: Virtual NVMe device closed
+[wbuffix map4k bs4k r1]
+  +6.306s first GC part=0 victim line=343 vpc=1898 ipc=150 free_lines=2 host_pgs=778240
+  +6.308s first GC part=2 victim line=340 vpc=1889 ipc=159 free_lines=2 host_pgs=778240
+  +6.326s first GC part=3 victim line=194 vpc=1892 ipc=156 free_lines=2 host_pgs=778240
+  +6.327s first GC part=1 victim line=106 vpc=1897 ipc=151 free_lines=2 host_pgs=778240
+  stats part=0 host_pgs=1611157 gc_pgs=3480054 gc_cnt=2105 free_lines=2
+  stats part=1 host_pgs=1611328 gc_pgs=3477894 gc_cnt=2104 free_lines=2
+  stats part=2 host_pgs=1611255 gc_pgs=3490134 gc_cnt=2110 free_lines=2
+  stats part=3 host_pgs=1610844 gc_pgs=3468315 gc_cnt=2099 free_lines=2
+  (kernel) [62859.400181] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [62859.468494] NVMeVirt: Virtual NVMe device closed
+[wbuffix map4k bs4k r2]
+  +6.302s first GC part=0 victim line=343 vpc=1898 ipc=150 free_lines=2 host_pgs=778240
+  +6.304s first GC part=2 victim line=340 vpc=1889 ipc=159 free_lines=2 host_pgs=778240
+  +6.321s first GC part=3 victim line=194 vpc=1893 ipc=155 free_lines=2 host_pgs=778240
+  +6.322s first GC part=1 victim line=106 vpc=1897 ipc=151 free_lines=2 host_pgs=778240
+  stats part=0 host_pgs=1603803 gc_pgs=3423892 gc_cnt=2074 free_lines=2
+  stats part=1 host_pgs=1604031 gc_pgs=3427756 gc_cnt=2076 free_lines=2
+  stats part=2 host_pgs=1603793 gc_pgs=3434083 gc_cnt=2079 free_lines=2
+  stats part=3 host_pgs=1603461 gc_pgs=3418280 gc_cnt=2071 free_lines=2
+  (kernel) [65392.081236] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [65392.148453] NVMeVirt: Virtual NVMe device closed
+[wbuffix map4k bs8k r1]
+  +5.746s first GC part=2 victim line=313 vpc=1896 ipc=152 free_lines=2 host_pgs=778240
+  +5.746s first GC part=3 victim line=313 vpc=1896 ipc=152 free_lines=2 host_pgs=778240
+  +5.765s first GC part=0 victim line=60 vpc=1895 ipc=153 free_lines=2 host_pgs=778240
+  +5.765s first GC part=1 victim line=60 vpc=1895 ipc=153 free_lines=2 host_pgs=778240
+  stats part=0 host_pgs=1687000 gc_pgs=3938806 gc_cnt=2366 free_lines=2
+  stats part=1 host_pgs=1687000 gc_pgs=3938806 gc_cnt=2366 free_lines=2
+  stats part=2 host_pgs=1686936 gc_pgs=3943083 gc_cnt=2368 free_lines=2
+  stats part=3 host_pgs=1686936 gc_pgs=3943083 gc_cnt=2368 free_lines=2
+  (kernel) [62929.815477] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [62929.882398] NVMeVirt: Virtual NVMe device closed
+[wbuffix map4k bs8k r2]
+  +5.743s first GC part=2 victim line=313 vpc=1896 ipc=152 free_lines=2 host_pgs=778240
+  +5.743s first GC part=3 victim line=313 vpc=1896 ipc=152 free_lines=2 host_pgs=778240
+  +5.762s first GC part=0 victim line=60 vpc=1896 ipc=152 free_lines=2 host_pgs=778240
+  +5.762s first GC part=1 victim line=60 vpc=1896 ipc=152 free_lines=2 host_pgs=778240
+  stats part=0 host_pgs=1681930 gc_pgs=3911133 gc_cnt=2350 free_lines=2
+  stats part=1 host_pgs=1681930 gc_pgs=3911133 gc_cnt=2350 free_lines=2
+  stats part=2 host_pgs=1681991 gc_pgs=3915097 gc_cnt=2352 free_lines=2
+  stats part=3 host_pgs=1681991 gc_pgs=3915097 gc_cnt=2352 free_lines=2
+  (kernel) [65462.506154] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [65462.573518] NVMeVirt: Virtual NVMe device closed
+[wbuffix map4k bs16k r1]
+  +5.690s first GC part=0 victim line=291 vpc=1902 ipc=146 free_lines=2 host_pgs=778240
+  +5.690s first GC part=1 victim line=291 vpc=1902 ipc=146 free_lines=2 host_pgs=778240
+  +5.691s first GC part=2 victim line=291 vpc=1902 ipc=146 free_lines=2 host_pgs=778240
+  +5.691s first GC part=3 victim line=291 vpc=1902 ipc=146 free_lines=2 host_pgs=778240
+  stats part=0 host_pgs=1847156 gc_pgs=4704306 gc_cnt=2818 free_lines=2
+  stats part=1 host_pgs=1847156 gc_pgs=4704306 gc_cnt=2818 free_lines=2
+  stats part=2 host_pgs=1847156 gc_pgs=4704306 gc_cnt=2818 free_lines=2
+  stats part=3 host_pgs=1847156 gc_pgs=4704306 gc_cnt=2818 free_lines=2
+  (kernel) [63000.235680] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [63000.302572] NVMeVirt: Virtual NVMe device closed
+[wbuffix map4k bs16k r2]
+  +5.696s first GC part=0 victim line=291 vpc=1902 ipc=146 free_lines=2 host_pgs=778240
+  +5.696s first GC part=1 victim line=291 vpc=1902 ipc=146 free_lines=2 host_pgs=778240
+  +5.696s first GC part=2 victim line=291 vpc=1902 ipc=146 free_lines=2 host_pgs=778240
+  +5.696s first GC part=3 victim line=291 vpc=1902 ipc=146 free_lines=2 host_pgs=778240
+  stats part=0 host_pgs=1846976 gc_pgs=4704489 gc_cnt=2818 free_lines=2
+  stats part=1 host_pgs=1846976 gc_pgs=4704489 gc_cnt=2818 free_lines=2
+  stats part=2 host_pgs=1846976 gc_pgs=4704489 gc_cnt=2818 free_lines=2
+  stats part=3 host_pgs=1846976 gc_pgs=4704489 gc_cnt=2818 free_lines=2
+  (kernel) [65532.907080] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [65532.974016] NVMeVirt: Virtual NVMe device closed
+[wbuffix map4k bs32k r1]
+  +5.696s first GC part=0 victim line=26 vpc=1880 ipc=168 free_lines=2 host_pgs=778240
+  +5.696s first GC part=1 victim line=26 vpc=1880 ipc=168 free_lines=2 host_pgs=778240
+  +5.696s first GC part=2 victim line=26 vpc=1880 ipc=168 free_lines=2 host_pgs=778240
+  +5.696s first GC part=3 victim line=26 vpc=1880 ipc=168 free_lines=2 host_pgs=778240
+  stats part=0 host_pgs=1852866 gc_pgs=4702562 gc_cnt=2820 free_lines=2
+  stats part=1 host_pgs=1852866 gc_pgs=4702562 gc_cnt=2820 free_lines=2
+  stats part=2 host_pgs=1852866 gc_pgs=4702562 gc_cnt=2820 free_lines=2
+  stats part=3 host_pgs=1852866 gc_pgs=4702562 gc_cnt=2820 free_lines=2
+  (kernel) [63070.649752] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [63070.717111] NVMeVirt: Virtual NVMe device closed
+[wbuffix map4k bs32k r2]
+  +5.696s first GC part=0 victim line=26 vpc=1880 ipc=168 free_lines=2 host_pgs=778240
+  +5.696s first GC part=1 victim line=26 vpc=1880 ipc=168 free_lines=2 host_pgs=778240
+  +5.696s first GC part=2 victim line=26 vpc=1880 ipc=168 free_lines=2 host_pgs=778240
+  +5.696s first GC part=3 victim line=26 vpc=1880 ipc=168 free_lines=2 host_pgs=778240
+  stats part=0 host_pgs=1852456 gc_pgs=4700974 gc_cnt=2819 free_lines=2
+  stats part=1 host_pgs=1852456 gc_pgs=4700974 gc_cnt=2819 free_lines=2
+  stats part=2 host_pgs=1852456 gc_pgs=4700974 gc_cnt=2819 free_lines=2
+  stats part=3 host_pgs=1852456 gc_pgs=4700974 gc_cnt=2819 free_lines=2
+  (kernel) [65603.344093] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [65603.411815] NVMeVirt: Virtual NVMe device closed
+[wbuffix map4k bs64k r1]
+  +5.697s first GC part=0 victim line=103 vpc=1876 ipc=172 free_lines=2 host_pgs=778240
+  +5.697s first GC part=1 victim line=103 vpc=1876 ipc=172 free_lines=2 host_pgs=778240
+  +5.697s first GC part=2 victim line=103 vpc=1876 ipc=172 free_lines=2 host_pgs=778240
+  +5.697s first GC part=3 victim line=103 vpc=1876 ipc=172 free_lines=2 host_pgs=778240
+  stats part=0 host_pgs=1867648 gc_pgs=4720548 gc_cnt=2836 free_lines=3
+  stats part=1 host_pgs=1867648 gc_pgs=4720548 gc_cnt=2836 free_lines=3
+  stats part=2 host_pgs=1867648 gc_pgs=4720548 gc_cnt=2836 free_lines=3
+  stats part=3 host_pgs=1867648 gc_pgs=4720548 gc_cnt=2836 free_lines=3
+  (kernel) [63141.074742] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [63141.142177] NVMeVirt: Virtual NVMe device closed
+[wbuffix map4k bs64k r2]
+  +5.690s first GC part=0 victim line=103 vpc=1876 ipc=172 free_lines=2 host_pgs=778240
+  +5.690s first GC part=1 victim line=103 vpc=1876 ipc=172 free_lines=2 host_pgs=778240
+  +5.690s first GC part=2 victim line=103 vpc=1876 ipc=172 free_lines=2 host_pgs=778240
+  +5.690s first GC part=3 victim line=103 vpc=1876 ipc=172 free_lines=2 host_pgs=778240
+  stats part=0 host_pgs=1867608 gc_pgs=4720592 gc_cnt=2836 free_lines=3
+  stats part=1 host_pgs=1867608 gc_pgs=4720592 gc_cnt=2836 free_lines=3
+  stats part=2 host_pgs=1867608 gc_pgs=4720592 gc_cnt=2836 free_lines=3
+  stats part=3 host_pgs=1867608 gc_pgs=4720592 gc_cnt=2836 free_lines=3
+  (kernel) [65673.702168] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [65673.769400] NVMeVirt: Virtual NVMe device closed
+[wbuffix map4k bs128k r1]
+  +5.697s first GC part=0 victim line=38 vpc=1848 ipc=200 free_lines=2 host_pgs=778240
+  +5.697s first GC part=1 victim line=38 vpc=1848 ipc=200 free_lines=2 host_pgs=778240
+  +5.698s first GC part=2 victim line=38 vpc=1848 ipc=200 free_lines=2 host_pgs=778240
+  +5.698s first GC part=3 victim line=38 vpc=1848 ipc=200 free_lines=2 host_pgs=778240
+  stats part=0 host_pgs=1908104 gc_pgs=4747872 gc_cnt=2869 free_lines=2
+  stats part=1 host_pgs=1908104 gc_pgs=4747872 gc_cnt=2869 free_lines=2
+  stats part=2 host_pgs=1908104 gc_pgs=4747872 gc_cnt=2869 free_lines=2
+  stats part=3 host_pgs=1908104 gc_pgs=4747872 gc_cnt=2869 free_lines=2
+  (kernel) [63211.504696] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [63211.571966] NVMeVirt: Virtual NVMe device closed
+[wbuffix map4k bs128k r2]
+  +5.697s first GC part=0 victim line=38 vpc=1848 ipc=200 free_lines=2 host_pgs=778240
+  +5.697s first GC part=1 victim line=38 vpc=1848 ipc=200 free_lines=2 host_pgs=778240
+  +5.697s first GC part=2 victim line=38 vpc=1848 ipc=200 free_lines=2 host_pgs=778240
+  +5.697s first GC part=3 victim line=38 vpc=1848 ipc=200 free_lines=2 host_pgs=778240
+  stats part=0 host_pgs=1908408 gc_pgs=4749376 gc_cnt=2870 free_lines=2
+  stats part=1 host_pgs=1908408 gc_pgs=4749376 gc_cnt=2870 free_lines=2
+  stats part=2 host_pgs=1908408 gc_pgs=4749376 gc_cnt=2870 free_lines=2
+  stats part=3 host_pgs=1908408 gc_pgs=4749376 gc_cnt=2870 free_lines=2
+  (kernel) [65744.124113] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [65744.191402] NVMeVirt: Virtual NVMe device closed
+[wbuffix map8k bs4k r1]
+  +5.811s first GC part=3 victim line=8 vpc=376 ipc=648 free_lines=2 host_pgs=389120
+  +5.821s first GC part=0 victim line=2 vpc=355 ipc=669 free_lines=2 host_pgs=389120
+  +5.831s first GC part=2 victim line=0 vpc=364 ipc=660 free_lines=2 host_pgs=389120
+  +5.831s first GC part=1 victim line=11 vpc=376 ipc=648 free_lines=2 host_pgs=389120
+  stats part=0 host_pgs=831830 gc_pgs=1618840 gc_cnt=2012 free_lines=2
+  stats part=1 host_pgs=832138 gc_pgs=1619514 gc_cnt=2013 free_lines=2
+  stats part=2 host_pgs=831799 gc_pgs=1618832 gc_cnt=2012 free_lines=2
+  stats part=3 host_pgs=832321 gc_pgs=1620352 gc_cnt=2014 free_lines=2
+  (kernel) [63281.903543] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [63281.945081] NVMeVirt: Virtual NVMe device closed
+[wbuffix map8k bs4k r2]
+  +5.817s first GC part=3 victim line=8 vpc=376 ipc=648 free_lines=2 host_pgs=389120
+  +5.827s first GC part=0 victim line=2 vpc=355 ipc=669 free_lines=2 host_pgs=389120
+  +5.837s first GC part=2 victim line=0 vpc=364 ipc=660 free_lines=2 host_pgs=389120
+  +5.837s first GC part=1 victim line=11 vpc=376 ipc=648 free_lines=2 host_pgs=389120
+  stats part=0 host_pgs=831598 gc_pgs=1620076 gc_cnt=2013 free_lines=1
+  stats part=1 host_pgs=831918 gc_pgs=1621769 gc_cnt=2015 free_lines=2
+  stats part=2 host_pgs=831536 gc_pgs=1614041 gc_cnt=2007 free_lines=1
+  stats part=3 host_pgs=832012 gc_pgs=1619668 gc_cnt=2013 free_lines=2
+  (kernel) [65814.529172] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [65814.570130] NVMeVirt: Virtual NVMe device closed
+[wbuffix map8k bs8k r1]
+  +5.821s first GC part=0 victim line=26 vpc=939 ipc=85 free_lines=2 host_pgs=389120
+  +5.822s first GC part=1 victim line=84 vpc=939 ipc=85 free_lines=2 host_pgs=389120
+  +5.842s first GC part=3 victim line=96 vpc=945 ipc=79 free_lines=2 host_pgs=389120
+  +5.862s first GC part=2 victim line=95 vpc=942 ipc=82 free_lines=2 host_pgs=389120
+  stats part=0 host_pgs=806378 gc_pgs=1722965 gc_cnt=2089 free_lines=2
+  stats part=1 host_pgs=806313 gc_pgs=1727120 gc_cnt=2093 free_lines=2
+  stats part=2 host_pgs=806732 gc_pgs=1733804 gc_cnt=2100 free_lines=2
+  stats part=3 host_pgs=806652 gc_pgs=1737903 gc_cnt=2104 free_lines=2
+  (kernel) [63352.286335] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [63352.327469] NVMeVirt: Virtual NVMe device closed
+[wbuffix map8k bs8k r2]
+  +5.821s first GC part=0 victim line=26 vpc=939 ipc=85 free_lines=2 host_pgs=389120
+  +5.821s first GC part=1 victim line=84 vpc=939 ipc=85 free_lines=2 host_pgs=389120
+  +5.841s first GC part=3 victim line=96 vpc=945 ipc=79 free_lines=2 host_pgs=389120
+  +5.861s first GC part=2 victim line=95 vpc=942 ipc=82 free_lines=2 host_pgs=389120
+  stats part=0 host_pgs=800432 gc_pgs=1683960 gc_cnt=2045 free_lines=2
+  stats part=1 host_pgs=800383 gc_pgs=1686891 gc_cnt=2048 free_lines=2
+  stats part=2 host_pgs=800604 gc_pgs=1689701 gc_cnt=2051 free_lines=2
+  stats part=3 host_pgs=800665 gc_pgs=1694819 gc_cnt=2056 free_lines=2
+  (kernel) [65884.886252] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [65884.927324] NVMeVirt: Virtual NVMe device closed
+[wbuffix map8k bs16k r1]
+  +5.777s first GC part=0 victim line=104 vpc=941 ipc=83 free_lines=2 host_pgs=389120
+  +5.777s first GC part=1 victim line=104 vpc=941 ipc=83 free_lines=2 host_pgs=389120
+  +5.778s first GC part=2 victim line=226 vpc=944 ipc=80 free_lines=2 host_pgs=389120
+  +5.778s first GC part=3 victim line=226 vpc=944 ipc=80 free_lines=2 host_pgs=389120
+  stats part=0 host_pgs=838932 gc_pgs=1929943 gc_cnt=2323 free_lines=2
+  stats part=1 host_pgs=838932 gc_pgs=1929943 gc_cnt=2323 free_lines=2
+  stats part=2 host_pgs=838532 gc_pgs=1932304 gc_cnt=2325 free_lines=2
+  stats part=3 host_pgs=838532 gc_pgs=1932304 gc_cnt=2325 free_lines=2
+  (kernel) [63422.670094] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [63422.711171] NVMeVirt: Virtual NVMe device closed
+[wbuffix map8k bs16k r2]
+  +5.777s first GC part=0 victim line=104 vpc=941 ipc=83 free_lines=2 host_pgs=389120
+  +5.777s first GC part=1 victim line=104 vpc=941 ipc=83 free_lines=2 host_pgs=389120
+  +5.778s first GC part=2 victim line=226 vpc=944 ipc=80 free_lines=2 host_pgs=389120
+  +5.778s first GC part=3 victim line=226 vpc=944 ipc=80 free_lines=2 host_pgs=389120
+  stats part=0 host_pgs=843177 gc_pgs=1953356 gc_cnt=2350 free_lines=2
+  stats part=1 host_pgs=843177 gc_pgs=1953356 gc_cnt=2350 free_lines=2
+  stats part=2 host_pgs=842819 gc_pgs=1957730 gc_cnt=2354 free_lines=2
+  stats part=3 host_pgs=842819 gc_pgs=1957730 gc_cnt=2354 free_lines=2
+  (kernel) [65955.275359] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [65955.316708] NVMeVirt: Virtual NVMe device closed
+[wbuffix map8k bs32k r1]
+  +5.696s first GC part=0 victim line=26 vpc=940 ipc=84 free_lines=2 host_pgs=389120
+  +5.696s first GC part=1 victim line=26 vpc=940 ipc=84 free_lines=2 host_pgs=389120
+  +5.696s first GC part=2 victim line=26 vpc=940 ipc=84 free_lines=2 host_pgs=389120
+  +5.696s first GC part=3 victim line=26 vpc=940 ipc=84 free_lines=2 host_pgs=389120
+  stats part=0 host_pgs=926344 gc_pgs=2351401 gc_cnt=2820 free_lines=2
+  stats part=1 host_pgs=926344 gc_pgs=2351401 gc_cnt=2820 free_lines=2
+  stats part=2 host_pgs=926344 gc_pgs=2351401 gc_cnt=2820 free_lines=2
+  stats part=3 host_pgs=926344 gc_pgs=2351401 gc_cnt=2820 free_lines=2
+  (kernel) [63493.018793] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [63493.060429] NVMeVirt: Virtual NVMe device closed
+[wbuffix map8k bs32k r2]
+  +5.696s first GC part=0 victim line=26 vpc=940 ipc=84 free_lines=2 host_pgs=389120
+  +5.696s first GC part=1 victim line=26 vpc=940 ipc=84 free_lines=2 host_pgs=389120
+  +5.696s first GC part=2 victim line=26 vpc=940 ipc=84 free_lines=2 host_pgs=389120
+  +5.696s first GC part=3 victim line=26 vpc=940 ipc=84 free_lines=2 host_pgs=389120
+  stats part=0 host_pgs=925948 gc_pgs=2351761 gc_cnt=2820 free_lines=2
+  stats part=1 host_pgs=925948 gc_pgs=2351761 gc_cnt=2820 free_lines=2
+  stats part=2 host_pgs=925948 gc_pgs=2351761 gc_cnt=2820 free_lines=2
+  stats part=3 host_pgs=925948 gc_pgs=2351761 gc_cnt=2820 free_lines=2
+  (kernel) [66025.654480] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [66025.695561] NVMeVirt: Virtual NVMe device closed
+[wbuffix map8k bs64k r1]
+  +5.697s first GC part=0 victim line=103 vpc=938 ipc=86 free_lines=2 host_pgs=389120
+  +5.697s first GC part=1 victim line=103 vpc=938 ipc=86 free_lines=2 host_pgs=389120
+  +5.697s first GC part=2 victim line=103 vpc=938 ipc=86 free_lines=2 host_pgs=389120
+  +5.697s first GC part=3 victim line=103 vpc=938 ipc=86 free_lines=2 host_pgs=389120
+  stats part=0 host_pgs=933912 gc_pgs=2360184 gc_cnt=2836 free_lines=2
+  stats part=1 host_pgs=933912 gc_pgs=2360184 gc_cnt=2836 free_lines=2
+  stats part=2 host_pgs=933912 gc_pgs=2360184 gc_cnt=2836 free_lines=2
+  stats part=3 host_pgs=933912 gc_pgs=2360184 gc_cnt=2836 free_lines=2
+  (kernel) [63563.401470] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [63563.442969] NVMeVirt: Virtual NVMe device closed
+[wbuffix map8k bs64k r2]
+  +5.697s first GC part=0 victim line=103 vpc=938 ipc=86 free_lines=2 host_pgs=389120
+  +5.698s first GC part=1 victim line=103 vpc=938 ipc=86 free_lines=2 host_pgs=389120
+  +5.698s first GC part=2 victim line=103 vpc=938 ipc=86 free_lines=2 host_pgs=389120
+  +5.698s first GC part=3 victim line=103 vpc=938 ipc=86 free_lines=2 host_pgs=389120
+  stats part=0 host_pgs=934072 gc_pgs=2361048 gc_cnt=2837 free_lines=2
+  stats part=1 host_pgs=934072 gc_pgs=2361048 gc_cnt=2837 free_lines=2
+  stats part=2 host_pgs=934072 gc_pgs=2361048 gc_cnt=2837 free_lines=2
+  stats part=3 host_pgs=934072 gc_pgs=2361048 gc_cnt=2837 free_lines=2
+  (kernel) [66096.026595] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [66096.068072] NVMeVirt: Virtual NVMe device closed
+[wbuffix map8k bs128k r1]
+  +5.697s first GC part=0 victim line=38 vpc=924 ipc=100 free_lines=2 host_pgs=389120
+  +5.697s first GC part=1 victim line=38 vpc=924 ipc=100 free_lines=2 host_pgs=389120
+  +5.697s first GC part=2 victim line=38 vpc=924 ipc=100 free_lines=2 host_pgs=389120
+  +5.697s first GC part=3 victim line=38 vpc=924 ipc=100 free_lines=2 host_pgs=389120
+  stats part=0 host_pgs=953948 gc_pgs=2374984 gc_cnt=2870 free_lines=2
+  stats part=1 host_pgs=953948 gc_pgs=2374984 gc_cnt=2870 free_lines=2
+  stats part=2 host_pgs=953948 gc_pgs=2374984 gc_cnt=2870 free_lines=2
+  stats part=3 host_pgs=953948 gc_pgs=2374984 gc_cnt=2870 free_lines=2
+  (kernel) [63633.778117] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [63633.819758] NVMeVirt: Virtual NVMe device closed
+[wbuffix map8k bs128k r2]
+  +5.697s first GC part=0 victim line=38 vpc=924 ipc=100 free_lines=2 host_pgs=389120
+  +5.697s first GC part=1 victim line=38 vpc=924 ipc=100 free_lines=2 host_pgs=389120
+  +5.697s first GC part=2 victim line=38 vpc=924 ipc=100 free_lines=2 host_pgs=389120
+  +5.697s first GC part=3 victim line=38 vpc=924 ipc=100 free_lines=2 host_pgs=389120
+  stats part=0 host_pgs=953796 gc_pgs=2374204 gc_cnt=2869 free_lines=2
+  stats part=1 host_pgs=953796 gc_pgs=2374204 gc_cnt=2869 free_lines=2
+  stats part=2 host_pgs=953796 gc_pgs=2374204 gc_cnt=2869 free_lines=2
+  stats part=3 host_pgs=953796 gc_pgs=2374204 gc_cnt=2869 free_lines=2
+  (kernel) [66166.394719] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [66166.435897] NVMeVirt: Virtual NVMe device closed
+[wbuffix map16k bs4k r1]
+  +5.918s first GC part=2 victim line=6 vpc=172 ipc=340 free_lines=2 host_pgs=194560
+  +5.929s first GC part=1 victim line=8 vpc=164 ipc=348 free_lines=2 host_pgs=194560
+  +5.947s first GC part=3 victim line=10 vpc=168 ipc=344 free_lines=2 host_pgs=194560
+  +5.948s first GC part=0 victim line=4 vpc=169 ipc=343 free_lines=2 host_pgs=194560
+  stats part=0 host_pgs=498067 gc_pgs=602329 gc_cnt=1768 free_lines=2
+  stats part=1 host_pgs=499054 gc_pgs=600320 gc_cnt=1766 free_lines=2
+  stats part=2 host_pgs=500105 gc_pgs=611573 gc_cnt=1790 free_lines=2
+  stats part=3 host_pgs=498468 gc_pgs=601434 gc_cnt=1767 free_lines=2
+  (kernel) [63704.128751] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [63704.156452] NVMeVirt: Virtual NVMe device closed
+[wbuffix map16k bs4k r2]
+  +5.920s first GC part=2 victim line=6 vpc=171 ipc=341 free_lines=2 host_pgs=194560
+  +5.931s first GC part=1 victim line=8 vpc=164 ipc=348 free_lines=2 host_pgs=194560
+  +5.949s first GC part=3 victim line=10 vpc=168 ipc=344 free_lines=2 host_pgs=194560
+  +5.950s first GC part=0 victim line=4 vpc=169 ipc=343 free_lines=2 host_pgs=194560
+  stats part=0 host_pgs=497178 gc_pgs=597630 gc_cnt=1757 free_lines=1
+  stats part=1 host_pgs=498195 gc_pgs=597137 gc_cnt=1758 free_lines=1
+  stats part=2 host_pgs=499228 gc_pgs=608304 gc_cnt=1782 free_lines=1
+  stats part=3 host_pgs=497629 gc_pgs=598189 gc_cnt=1759 free_lines=2
+  (kernel) [66236.750872] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [66236.778614] NVMeVirt: Virtual NVMe device closed
+[wbuffix map16k bs8k r1]
+  +5.907s first GC part=2 victim line=2 vpc=183 ipc=329 free_lines=2 host_pgs=194560
+  +5.925s first GC part=1 victim line=8 vpc=171 ipc=341 free_lines=2 host_pgs=194560
+  +5.925s first GC part=3 victim line=10 vpc=178 ipc=334 free_lines=2 host_pgs=194560
+  +5.975s first GC part=0 victim line=4 vpc=177 ipc=335 free_lines=2 host_pgs=194560
+  stats part=0 host_pgs=417869 gc_pgs=816704 gc_cnt=2030 free_lines=1
+  stats part=1 host_pgs=418039 gc_pgs=818048 gc_cnt=2033 free_lines=2
+  stats part=2 host_pgs=417739 gc_pgs=818878 gc_cnt=2034 free_lines=2
+  stats part=3 host_pgs=417413 gc_pgs=813576 gc_cnt=2023 free_lines=1
+  (kernel) [63774.476325] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [63774.503908] NVMeVirt: Virtual NVMe device closed
+[wbuffix map16k bs8k r2]
+  +5.909s first GC part=2 victim line=2 vpc=183 ipc=329 free_lines=2 host_pgs=194560
+  +5.926s first GC part=1 victim line=8 vpc=171 ipc=341 free_lines=2 host_pgs=194560
+  +5.926s first GC part=3 victim line=10 vpc=178 ipc=334 free_lines=2 host_pgs=194560
+  +5.976s first GC part=0 victim line=4 vpc=177 ipc=335 free_lines=2 host_pgs=194560
+  stats part=0 host_pgs=418708 gc_pgs=820934 gc_cnt=2040 free_lines=2
+  stats part=1 host_pgs=418899 gc_pgs=823853 gc_cnt=2046 free_lines=1
+  stats part=2 host_pgs=418579 gc_pgs=823136 gc_cnt=2044 free_lines=2
+  stats part=3 host_pgs=418266 gc_pgs=821395 gc_cnt=2040 free_lines=2
+  (kernel) [66307.077035] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [66307.104883] NVMeVirt: Virtual NVMe device closed
+[wbuffix map16k bs16k r1]
+  +5.924s first GC part=0 victim line=135 vpc=468 ipc=44 free_lines=2 host_pgs=194560
+  +5.925s first GC part=1 victim line=144 vpc=465 ipc=47 free_lines=2 host_pgs=194560
+  +5.945s first GC part=2 victim line=218 vpc=466 ipc=46 free_lines=2 host_pgs=194560
+  +5.946s first GC part=3 victim line=182 vpc=466 ipc=46 free_lines=2 host_pgs=194560
+  stats part=0 host_pgs=403961 gc_pgs=860651 gc_cnt=2089 free_lines=3
+  stats part=1 host_pgs=404071 gc_pgs=862084 gc_cnt=2092 free_lines=2
+  stats part=2 host_pgs=404028 gc_pgs=856503 gc_cnt=2081 free_lines=2
+  stats part=3 host_pgs=403608 gc_pgs=854871 gc_cnt=2077 free_lines=2
+  (kernel) [63844.823906] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [63844.851609] NVMeVirt: Virtual NVMe device closed
+[wbuffix map16k bs16k r2]
+  +5.924s first GC part=0 victim line=135 vpc=468 ipc=44 free_lines=2 host_pgs=194560
+  +5.925s first GC part=1 victim line=144 vpc=465 ipc=47 free_lines=2 host_pgs=194560
+  +5.946s first GC part=2 victim line=218 vpc=466 ipc=46 free_lines=2 host_pgs=194560
+  +5.946s first GC part=3 victim line=182 vpc=466 ipc=46 free_lines=2 host_pgs=194560
+  stats part=0 host_pgs=403560 gc_pgs=857982 gc_cnt=2083 free_lines=2
+  stats part=1 host_pgs=403674 gc_pgs=858356 gc_cnt=2084 free_lines=2
+  stats part=2 host_pgs=403645 gc_pgs=854344 gc_cnt=2076 free_lines=2
+  stats part=3 host_pgs=403213 gc_pgs=852204 gc_cnt=2071 free_lines=2
+  (kernel) [66377.436208] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [66377.464362] NVMeVirt: Virtual NVMe device closed
+[wbuffix map16k bs32k r1]
+  +5.846s first GC part=0 victim line=152 vpc=465 ipc=47 free_lines=2 host_pgs=194560
+  +5.846s first GC part=1 victim line=152 vpc=465 ipc=47 free_lines=2 host_pgs=194560
+  +5.868s first GC part=2 victim line=344 vpc=469 ipc=43 free_lines=2 host_pgs=194560
+  +5.868s first GC part=3 victim line=344 vpc=469 ipc=43 free_lines=2 host_pgs=194560
+  stats part=0 host_pgs=422172 gc_pgs=971490 gc_cnt=2341 free_lines=2
+  stats part=1 host_pgs=422172 gc_pgs=971490 gc_cnt=2341 free_lines=2
+  stats part=2 host_pgs=421836 gc_pgs=968220 gc_cnt=2334 free_lines=2
+  stats part=3 host_pgs=421836 gc_pgs=968220 gc_cnt=2334 free_lines=2
+  (kernel) [63915.161440] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [63915.189295] NVMeVirt: Virtual NVMe device closed
+[wbuffix map16k bs32k r2]
+  +5.847s first GC part=0 victim line=152 vpc=465 ipc=47 free_lines=2 host_pgs=194560
+  +5.847s first GC part=1 victim line=152 vpc=465 ipc=47 free_lines=2 host_pgs=194560
+  +5.868s first GC part=2 victim line=344 vpc=469 ipc=43 free_lines=2 host_pgs=194560
+  +5.868s first GC part=3 victim line=344 vpc=469 ipc=43 free_lines=2 host_pgs=194560
+  stats part=0 host_pgs=427184 gc_pgs=1000738 gc_cnt=2408 free_lines=2
+  stats part=1 host_pgs=427184 gc_pgs=1000738 gc_cnt=2408 free_lines=2
+  stats part=2 host_pgs=427030 gc_pgs=997823 gc_cnt=2402 free_lines=2
+  stats part=3 host_pgs=427030 gc_pgs=997823 gc_cnt=2402 free_lines=2
+  (kernel) [66447.788342] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [66447.816226] NVMeVirt: Virtual NVMe device closed
+[wbuffix map16k bs64k r1]
+  +5.697s first GC part=0 victim line=103 vpc=469 ipc=43 free_lines=2 host_pgs=194560
+  +5.697s first GC part=1 victim line=103 vpc=469 ipc=43 free_lines=2 host_pgs=194560
+  +5.697s first GC part=2 victim line=103 vpc=469 ipc=43 free_lines=2 host_pgs=194560
+  +5.697s first GC part=3 victim line=103 vpc=469 ipc=43 free_lines=2 host_pgs=194560
+  stats part=0 host_pgs=466956 gc_pgs=1180092 gc_cnt=2836 free_lines=2
+  stats part=1 host_pgs=466956 gc_pgs=1180092 gc_cnt=2836 free_lines=2
+  stats part=2 host_pgs=466956 gc_pgs=1180092 gc_cnt=2836 free_lines=2
+  stats part=3 host_pgs=466956 gc_pgs=1180092 gc_cnt=2836 free_lines=2
+  (kernel) [63985.515976] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [63985.543921] NVMeVirt: Virtual NVMe device closed
+[wbuffix map16k bs64k r2]
+  +5.697s first GC part=0 victim line=103 vpc=469 ipc=43 free_lines=2 host_pgs=194560
+  +5.697s first GC part=1 victim line=103 vpc=469 ipc=43 free_lines=2 host_pgs=194560
+  +5.697s first GC part=2 victim line=103 vpc=469 ipc=43 free_lines=2 host_pgs=194560
+  +5.697s first GC part=3 victim line=103 vpc=469 ipc=43 free_lines=2 host_pgs=194560
+  stats part=0 host_pgs=466858 gc_pgs=1180190 gc_cnt=2836 free_lines=2
+  stats part=1 host_pgs=466858 gc_pgs=1180190 gc_cnt=2836 free_lines=2
+  stats part=2 host_pgs=466858 gc_pgs=1180190 gc_cnt=2836 free_lines=2
+  stats part=3 host_pgs=466858 gc_pgs=1180190 gc_cnt=2836 free_lines=2
+  (kernel) [66518.139529] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [66518.167430] NVMeVirt: Virtual NVMe device closed
+[wbuffix map16k bs128k r1]
+  +5.694s first GC part=0 victim line=38 vpc=462 ipc=50 free_lines=2 host_pgs=194560
+  +5.694s first GC part=1 victim line=38 vpc=462 ipc=50 free_lines=2 host_pgs=194560
+  +5.694s first GC part=2 victim line=38 vpc=462 ipc=50 free_lines=2 host_pgs=194560
+  +5.694s first GC part=3 victim line=38 vpc=462 ipc=50 free_lines=2 host_pgs=194560
+  stats part=0 host_pgs=477196 gc_pgs=1187308 gc_cnt=2870 free_lines=2
+  stats part=1 host_pgs=477196 gc_pgs=1187308 gc_cnt=2870 free_lines=2
+  stats part=2 host_pgs=477196 gc_pgs=1187308 gc_cnt=2870 free_lines=2
+  stats part=3 host_pgs=477196 gc_pgs=1187308 gc_cnt=2870 free_lines=2
+  (kernel) [64055.859500] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [64055.887251] NVMeVirt: Virtual NVMe device closed
+[wbuffix map32k bs4k r1]
+  +6.067s first GC part=0 victim line=6 vpc=79 ipc=177 free_lines=2 host_pgs=97280
+  +6.104s first GC part=1 victim line=34 vpc=77 ipc=179 free_lines=2 host_pgs=97280
+  +6.127s first GC part=2 victim line=26 vpc=82 ipc=174 free_lines=2 host_pgs=97280
+  +6.149s first GC part=3 victim line=29 vpc=80 ipc=176 free_lines=2 host_pgs=97280
+  stats part=0 host_pgs=262571 gc_pgs=297104 gc_cnt=1805 free_lines=2
+  stats part=1 host_pgs=262639 gc_pgs=301910 gc_cnt=1824 free_lines=2
+  stats part=2 host_pgs=262094 gc_pgs=297570 gc_cnt=1805 free_lines=2
+  stats part=3 host_pgs=261488 gc_pgs=292571 gc_cnt=1783 free_lines=2
+  (kernel) [64126.218024] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [64126.238873] NVMeVirt: Virtual NVMe device closed
+[wbuffix map32k bs8k r1]
+  +6.070s first GC part=0 victim line=3 vpc=84 ipc=172 free_lines=2 host_pgs=97280
+  +6.096s first GC part=1 victim line=12 vpc=80 ipc=176 free_lines=2 host_pgs=97280
+  +6.112s first GC part=2 victim line=0 vpc=83 ipc=173 free_lines=2 host_pgs=97280
+  +6.125s first GC part=3 victim line=14 vpc=78 ipc=178 free_lines=2 host_pgs=97280
+  stats part=0 host_pgs=252597 gc_pgs=311430 gc_cnt=1822 free_lines=2
+  stats part=1 host_pgs=253410 gc_pgs=318068 gc_cnt=1851 free_lines=2
+  stats part=2 host_pgs=252532 gc_pgs=312770 gc_cnt=1827 free_lines=2
+  stats part=3 host_pgs=253046 gc_pgs=309205 gc_cnt=1815 free_lines=2
+  (kernel) [64196.546515] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [64196.567589] NVMeVirt: Virtual NVMe device closed
+[wbuffix map32k bs16k r1]
+  +6.069s first GC part=1 victim line=12 vpc=86 ipc=170 free_lines=2 host_pgs=97280
+  +6.094s first GC part=2 victim line=0 vpc=84 ipc=172 free_lines=2 host_pgs=97280
+  +6.105s first GC part=0 victim line=8 vpc=84 ipc=172 free_lines=2 host_pgs=97280
+  +6.106s first GC part=3 victim line=47 vpc=83 ipc=173 free_lines=2 host_pgs=97280
+  stats part=0 host_pgs=210528 gc_pgs=414177 gc_cnt=2059 free_lines=2
+  stats part=1 host_pgs=210666 gc_pgs=416098 gc_cnt=2067 free_lines=2
+  stats part=2 host_pgs=210677 gc_pgs=418891 gc_cnt=2078 free_lines=2
+  stats part=3 host_pgs=210308 gc_pgs=411064 gc_cnt=2046 free_lines=2
+  (kernel) [64266.885016] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [64266.905847] NVMeVirt: Virtual NVMe device closed
+[wbuffix map32k bs32k r1]
+  +6.099s first GC part=0 victim line=74 vpc=229 ipc=27 free_lines=2 host_pgs=97280
+  +6.122s first GC part=1 victim line=143 vpc=231 ipc=25 free_lines=2 host_pgs=97280
+  +6.143s first GC part=2 victim line=49 vpc=230 ipc=26 free_lines=2 host_pgs=97280
+  +6.143s first GC part=3 victim line=344 vpc=227 ipc=29 free_lines=2 host_pgs=97280
+  stats part=0 host_pgs=203856 gc_pgs=430769 gc_cnt=2098 free_lines=2
+  stats part=1 host_pgs=203604 gc_pgs=429996 gc_cnt=2094 free_lines=2
+  stats part=2 host_pgs=203957 gc_pgs=433473 gc_cnt=2109 free_lines=2
+  stats part=3 host_pgs=203692 gc_pgs=431426 gc_cnt=2100 free_lines=2
+  (kernel) [64337.207482] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [64337.228116] NVMeVirt: Virtual NVMe device closed
+[wbuffix map32k bs64k r1]
+  +5.978s first GC part=0 victim line=117 vpc=230 ipc=26 free_lines=2 host_pgs=97280
+  +5.978s first GC part=1 victim line=117 vpc=230 ipc=26 free_lines=2 host_pgs=97280
+  +6.001s first GC part=2 victim line=328 vpc=229 ipc=27 free_lines=2 host_pgs=97280
+  +6.001s first GC part=3 victim line=328 vpc=229 ipc=27 free_lines=2 host_pgs=97280
+  stats part=0 host_pgs=214497 gc_pgs=495122 gc_cnt=2391 free_lines=2
+  stats part=1 host_pgs=214497 gc_pgs=495122 gc_cnt=2391 free_lines=2
+  stats part=2 host_pgs=214316 gc_pgs=492239 gc_cnt=2379 free_lines=2
+  stats part=3 host_pgs=214316 gc_pgs=492239 gc_cnt=2379 free_lines=2
+  (kernel) [64407.533944] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [64407.554626] NVMeVirt: Virtual NVMe device closed
+[wbuffix map32k bs128k r1]
+  +5.698s first GC part=0 victim line=38 vpc=231 ipc=25 free_lines=2 host_pgs=97280
+  +5.698s first GC part=1 victim line=38 vpc=231 ipc=25 free_lines=2 host_pgs=97280
+  +5.698s first GC part=2 victim line=38 vpc=231 ipc=25 free_lines=2 host_pgs=97280
+  +5.698s first GC part=3 victim line=38 vpc=231 ipc=25 free_lines=2 host_pgs=97280
+  stats part=0 host_pgs=238470 gc_pgs=593781 gc_cnt=2870 free_lines=2
+  stats part=1 host_pgs=238470 gc_pgs=593781 gc_cnt=2870 free_lines=2
+  stats part=2 host_pgs=238470 gc_pgs=593781 gc_cnt=2870 free_lines=2
+  stats part=3 host_pgs=238470 gc_pgs=593781 gc_cnt=2870 free_lines=2
+  (kernel) [64477.885411] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [64477.906308] NVMeVirt: Virtual NVMe device closed
+[wbuffix map64k bs4k r1]
+  +3.675s first GC part=1 victim line=3 vpc=33 ipc=95 free_lines=2 host_pgs=48640
+  +3.689s first GC part=2 victim line=41 vpc=34 ipc=94 free_lines=2 host_pgs=48640
+  +3.697s first GC part=3 victim line=47 vpc=34 ipc=94 free_lines=2 host_pgs=48640
+  +3.715s first GC part=0 victim line=23 vpc=34 ipc=94 free_lines=2 host_pgs=48640
+  stats part=0 host_pgs=181041 gc_pgs=366210 gc_cnt=3894 free_lines=1
+  stats part=1 host_pgs=180556 gc_pgs=363486 gc_cnt=3869 free_lines=2
+  stats part=2 host_pgs=181081 gc_pgs=365527 gc_cnt=3889 free_lines=2
+  stats part=3 host_pgs=180190 gc_pgs=359375 gc_cnt=3834 free_lines=2
+  (kernel) [64548.230513] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [64548.247151] NVMeVirt: Virtual NVMe device closed
+[wbuffix map64k bs8k r1]
+  +3.671s first GC part=1 victim line=3 vpc=35 ipc=93 free_lines=2 host_pgs=48640
+  +3.685s first GC part=2 victim line=41 vpc=35 ipc=93 free_lines=2 host_pgs=48640
+  +3.691s first GC part=3 victim line=2 vpc=34 ipc=94 free_lines=2 host_pgs=48640
+  +3.714s first GC part=0 victim line=23 vpc=28 ipc=100 free_lines=2 host_pgs=48640
+  stats part=0 host_pgs=179054 gc_pgs=370626 gc_cnt=3913 free_lines=2
+  stats part=1 host_pgs=179257 gc_pgs=371187 gc_cnt=3919 free_lines=2
+  stats part=2 host_pgs=179413 gc_pgs=366676 gc_cnt=3885 free_lines=2
+  stats part=3 host_pgs=178679 gc_pgs=362415 gc_cnt=3846 free_lines=2
+  (kernel) [64618.555126] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [64618.571686] NVMeVirt: Virtual NVMe device closed
+[wbuffix map64k bs16k r1]
+  +3.675s first GC part=1 victim line=3 vpc=34 ipc=94 free_lines=2 host_pgs=48640
+  +3.685s first GC part=2 victim line=41 vpc=39 ipc=89 free_lines=2 host_pgs=48640
+  +3.686s first GC part=3 victim line=8 vpc=37 ipc=91 free_lines=2 host_pgs=48640
+  +3.718s first GC part=0 victim line=23 vpc=29 ipc=99 free_lines=2 host_pgs=48640
+  stats part=0 host_pgs=168047 gc_pgs=388039 gc_cnt=3963 free_lines=2
+  stats part=1 host_pgs=168049 gc_pgs=381763 gc_cnt=3914 free_lines=2
+  stats part=2 host_pgs=168409 gc_pgs=385609 gc_cnt=3947 free_lines=2
+  stats part=3 host_pgs=168225 gc_pgs=381058 gc_cnt=3910 free_lines=1
+  (kernel) [64688.820981] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [64688.837415] NVMeVirt: Virtual NVMe device closed
+[wbuffix map64k bs32k r1]
+  +3.684s first GC part=2 victim line=5 vpc=40 ipc=88 free_lines=2 host_pgs=48640
+  +3.684s first GC part=1 victim line=3 vpc=41 ipc=87 free_lines=2 host_pgs=48640
+  +3.695s first GC part=3 victim line=8 vpc=41 ipc=87 free_lines=2 host_pgs=48640
+  +3.719s first GC part=0 victim line=15 vpc=41 ipc=87 free_lines=2 host_pgs=48640
+  stats part=0 host_pgs=137080 gc_pgs=427825 gc_cnt=4032 free_lines=2
+  stats part=1 host_pgs=136988 gc_pgs=428931 gc_cnt=4040 free_lines=1
+  stats part=2 host_pgs=137159 gc_pgs=427862 gc_cnt=4033 free_lines=2
+  stats part=3 host_pgs=137224 gc_pgs=428825 gc_cnt=4041 free_lines=1
+  (kernel) [64759.159008] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [64759.175253] NVMeVirt: Virtual NVMe device closed
+[wbuffix map64k bs64k r1]
+  +3.874s first GC part=0 victim line=217 vpc=112 ipc=16 free_lines=2 host_pgs=48640
+  +3.894s first GC part=3 victim line=328 vpc=112 ipc=16 free_lines=2 host_pgs=48640
+  +3.895s first GC part=1 victim line=267 vpc=112 ipc=16 free_lines=2 host_pgs=48640
+  +3.947s first GC part=2 victim line=117 vpc=110 ipc=18 free_lines=2 host_pgs=48640
+  stats part=0 host_pgs=154630 gc_pgs=404735 gc_cnt=3989 free_lines=2
+  stats part=1 host_pgs=154960 gc_pgs=402100 gc_cnt=3971 free_lines=2
+  stats part=2 host_pgs=154847 gc_pgs=404378 gc_cnt=3988 free_lines=2
+  stats part=3 host_pgs=154884 gc_pgs=403579 gc_cnt=3982 free_lines=2
+  (kernel) [64829.458191] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [64829.474517] NVMeVirt: Virtual NVMe device closed
+[wbuffix map64k bs128k r1]
+  +3.881s first GC part=2 victim line=245 vpc=113 ipc=15 free_lines=2 host_pgs=48640
+  +3.881s first GC part=3 victim line=245 vpc=113 ipc=15 free_lines=2 host_pgs=48640
+  +3.899s first GC part=0 victim line=215 vpc=112 ipc=16 free_lines=2 host_pgs=48640
+  +3.899s first GC part=1 victim line=215 vpc=112 ipc=16 free_lines=2 host_pgs=48640
+  stats part=0 host_pgs=159978 gc_pgs=427787 gc_cnt=4211 free_lines=2
+  stats part=1 host_pgs=159978 gc_pgs=427787 gc_cnt=4211 free_lines=2
+  stats part=2 host_pgs=159733 gc_pgs=425741 gc_cnt=4193 free_lines=2
+  stats part=3 host_pgs=159733 gc_pgs=425741 gc_cnt=4193 free_lines=2
+  (kernel) [64899.782513] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [64899.798866] NVMeVirt: Virtual NVMe device closed
+[wbuffix map128k bs4k r1]
+  +2.476s first GC part=1 victim line=8 vpc=12 ipc=52 free_lines=2 host_pgs=24320
+  +2.477s first GC part=2 victim line=6 vpc=18 ipc=46 free_lines=2 host_pgs=24320
+  +2.488s first GC part=3 victim line=48 vpc=16 ipc=48 free_lines=2 host_pgs=24320
+  +2.516s first GC part=0 victim line=40 vpc=14 ipc=50 free_lines=2 host_pgs=24320
+  stats part=0 host_pgs=108009 gc_pgs=271088 gc_cnt=5542 free_lines=2
+  stats part=1 host_pgs=108001 gc_pgs=270075 gc_cnt=5526 free_lines=2
+  stats part=2 host_pgs=108164 gc_pgs=274967 gc_cnt=5605 free_lines=1
+  stats part=3 host_pgs=108022 gc_pgs=274083 gc_cnt=5589 free_lines=2
+  (kernel) [64970.092968] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [64970.106914] NVMeVirt: Virtual NVMe device closed
+[wbuffix map128k bs8k r1]
+  +2.474s first GC part=2 victim line=5 vpc=16 ipc=48 free_lines=2 host_pgs=24320
+  +2.482s first GC part=1 victim line=8 vpc=11 ipc=53 free_lines=2 host_pgs=24320
+  +2.490s first GC part=3 victim line=23 vpc=17 ipc=47 free_lines=2 host_pgs=24320
+  +2.514s first GC part=0 victim line=6 vpc=16 ipc=48 free_lines=2 host_pgs=24320
+  stats part=0 host_pgs=107676 gc_pgs=270848 gc_cnt=5533 free_lines=1
+  stats part=1 host_pgs=107691 gc_pgs=269622 gc_cnt=5514 free_lines=2
+  stats part=2 host_pgs=107905 gc_pgs=275287 gc_cnt=5606 free_lines=1
+  stats part=3 host_pgs=107709 gc_pgs=273691 gc_cnt=5578 free_lines=2
+  (kernel) [65040.420493] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [65040.434824] NVMeVirt: Virtual NVMe device closed
+[wbuffix map128k bs16k r1]
+  +2.477s first GC part=2 victim line=5 vpc=16 ipc=48 free_lines=2 host_pgs=24320
+  +2.486s first GC part=1 victim line=8 vpc=11 ipc=53 free_lines=2 host_pgs=24320
+  +2.493s first GC part=3 victim line=16 vpc=16 ipc=48 free_lines=2 host_pgs=24320
+  +2.516s first GC part=0 victim line=6 vpc=16 ipc=48 free_lines=2 host_pgs=24320
+  stats part=0 host_pgs=106247 gc_pgs=269523 gc_cnt=5490 free_lines=1
+  stats part=1 host_pgs=106542 gc_pgs=271664 gc_cnt=5528 free_lines=2
+  stats part=2 host_pgs=106611 gc_pgs=276587 gc_cnt=5606 free_lines=2
+  stats part=3 host_pgs=106524 gc_pgs=274877 gc_cnt=5578 free_lines=2
+  (kernel) [65110.744093] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [65110.758254] NVMeVirt: Virtual NVMe device closed
+[wbuffix map128k bs32k r1]
+  +2.477s first GC part=2 victim line=5 vpc=18 ipc=46 free_lines=2 host_pgs=24320
+  +2.480s first GC part=1 victim line=9 vpc=16 ipc=48 free_lines=2 host_pgs=24320
+  +2.499s first GC part=3 victim line=23 vpc=17 ipc=47 free_lines=2 host_pgs=24320
+  +2.537s first GC part=0 victim line=9 vpc=13 ipc=51 free_lines=2 host_pgs=24320
+  stats part=0 host_pgs=98515 gc_pgs=277003 gc_cnt=5486 free_lines=1
+  stats part=1 host_pgs=98478 gc_pgs=281130 gc_cnt=5550 free_lines=2
+  stats part=2 host_pgs=98332 gc_pgs=279098 gc_cnt=5516 free_lines=2
+  stats part=3 host_pgs=98288 gc_pgs=276328 gc_cnt=5472 free_lines=2
+  (kernel) [65181.077800] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [65181.091839] NVMeVirt: Virtual NVMe device closed
+[wbuffix map128k bs64k r1]
+  +2.474s first GC part=2 victim line=4 vpc=17 ipc=47 free_lines=2 host_pgs=24320
+  +2.485s first GC part=1 victim line=8 vpc=14 ipc=50 free_lines=2 host_pgs=24320
+  +2.491s first GC part=3 victim line=8 vpc=16 ipc=48 free_lines=2 host_pgs=24320
+  +2.521s first GC part=0 victim line=13 vpc=17 ipc=47 free_lines=2 host_pgs=24320
+  stats part=0 host_pgs=81890 gc_pgs=291319 gc_cnt=5450 free_lines=2
+  stats part=1 host_pgs=81618 gc_pgs=288646 gc_cnt=5404 free_lines=1
+  stats part=2 host_pgs=81759 gc_pgs=290933 gc_cnt=5442 free_lines=2
+  stats part=3 host_pgs=81795 gc_pgs=289240 gc_cnt=5416 free_lines=1
+  (kernel) [65251.399561] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [65251.414016] NVMeVirt: Virtual NVMe device closed
+[wbuffix map128k bs128k r1]
+  +3.867s first GC part=1 victim line=186 vpc=54 ipc=10 free_lines=2 host_pgs=24320
+  +3.879s first GC part=2 victim line=354 vpc=53 ipc=11 free_lines=2 host_pgs=24320
+  +3.881s first GC part=3 victim line=244 vpc=53 ipc=11 free_lines=2 host_pgs=24320
+  +3.895s first GC part=0 victim line=157 vpc=54 ipc=10 free_lines=2 host_pgs=24320
+  stats part=0 host_pgs=100632 gc_pgs=264619 gc_cnt=5326 free_lines=2
+  stats part=1 host_pgs=100597 gc_pgs=266635 gc_cnt=5357 free_lines=2
+  stats part=2 host_pgs=100488 gc_pgs=266227 gc_cnt=5349 free_lines=2
+  stats part=3 host_pgs=100474 gc_pgs=268285 gc_cnt=5381 free_lines=3
+  (kernel) [65321.717358] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+  (kernel) [65321.731492] NVMeVirt: Virtual NVMe device closed
+```
+
+### 11.2.7 1 초 평균 대역폭 시계열 (MiB/s, t=1..60 s, fio_bw.1.log 의 0.5 s 값 두 개 평균)
+형식: variant map bs rep | gc_onset_s | 값 60개 (공백 구분)
+```
+base 4k 4k r1 | 6.302 | 2007 2005 2002 2002 1997 2036 252 129 150 154 182 181 178 206 178 183 182 189 207 196 173 190 180 208 189 185 208 191 178 203 210 200 203 207 223 209 241 215 229 234 238 256 271 283 305 330 371 408 494 551 1031 534 131 140 159 181 173 203 173 181
+base 4k 8k r1 | 5.745 | 2216 2212 2212 2215 2208 1186 128 139 157 178 181 179 237 181 152 210 154 190 193 220 190 207 194 253 190 199 270 208 168 196 258 274 300 311 269 236 233 257 271 362 361 324 398 411 501 742 1363 123 139 147 170 193 182 192 187 198 189 192 201 212
+base 4k 16k r1 | 5.697 | 2234 2232 2233 2233 2233 1092 130 146 167 187 208 232 222 204 220 228 232 239 243 248 257 267 272 286 291 306 316 332 350 369 394 428 461 507 587 706 936 1472 127 140 158 179 201 226 240 204 211 222 231 236 246 244 250 262 268 286 288 302 315 322
+base 4k 32k r1 | 5.696 | 2233 2233 2233 2233 2233 1098 137 151 169 188 211 231 222 207 217 227 232 239 245 253 256 270 272 288 292 304 314 336 358 368 401 432 465 526 598 735 1018 1291 133 147 164 184 205 228 228 204 218 230 234 241 243 253 256 261 277 278 298 304 316 330
+base 4k 64k r1 | 5.698 | 2235 2233 2233 2231 2233 1104 144 156 174 193 214 236 221 212 217 225 238 237 251 257 268 270 276 289 302 310 322 345 363 393 405 447 490 558 650 817 1440 595 147 161 178 201 217 229 216 212 219 235 239 247 246 260 264 272 283 288 298 317 331 344
+base 4k 128k r1 | 5.699 | 2235 2233 2233 2233 2233 1112 159 169 183 202 219 229 224 224 233 243 251 257 260 264 271 283 285 301 318 331 341 375 390 423 448 491 562 652 831 1422 676 159 170 188 208 220 226 226 229 231 239 248 254 258 259 278 278 294 304 313 331 347 372 387
+base 8k 4k r1 | 5.685 | 1128 1116 1116 1116 1117 828 512 454 404 358 325 299 274 251 231 215 202 192 184 179 174 172 168 163 158 149 148 141 132 131 131 134 134 132 131 132 133 132 133 132 131 132 132 133 132 131 133 130 134 133 132 132 131 130 132 132 132 132 131 131
+base 8k 8k r1 | 5.821 | 2176 2183 2182 2183 2176 1343 132 136 149 165 170 175 192 170 182 179 162 168 177 175 202 174 191 203 201 189 199 219 214 190 189 224 231 218 213 211 222 248 230 242 267 272 281 302 341 362 397 484 606 1102 567 124 141 148 162 178 189 175 170 161
+base 8k 16k r1 | 5.782 | 2202 2192 2199 2201 2196 1258 130 142 161 179 197 221 204 188 187 202 208 190 199 217 225 198 247 239 195 227 256 212 251 231 203 259 255 238 295 307 314 335 340 436 390 527 494 663 1468 128 143 154 169 175 202 186 202 200 191 178 171 213 210 214
+base 8k 32k r1 | 5.696 | 2234 2233 2233 2233 2233 1098 137 151 169 188 211 231 222 208 214 225 235 240 244 249 261 265 280 283 297 301 324 330 355 372 396 432 471 523 600 724 1013 1304 132 146 162 183 209 228 228 203 216 227 238 241 243 250 256 262 274 280 297 302 314 326
+base 8k 64k r1 | 5.698 | 2235 2229 2233 2233 2233 1105 144 156 174 193 214 236 221 214 217 225 237 237 250 261 264 270 281 285 303 310 322 345 364 392 406 449 493 558 651 828 1454 565 147 161 179 202 217 229 218 208 222 233 238 247 247 258 260 273 284 287 300 314 328 346
+base 8k 128k r1 | 5.698 | 2234 2233 2233 2233 2231 1113 157 171 183 202 219 227 226 224 234 245 253 256 258 268 265 282 293 299 318 325 349 360 385 413 448 498 556 656 821 1385 733 159 170 188 205 222 226 226 228 234 236 248 256 260 268 272 284 292 308 322 331 352 371 394
+base 16k 4k r1 | 5.668 | 570 558 558 558 558 431 291 276 260 243 223 203 189 181 171 162 155 149 142 139 134 130 128 127 126 124 122 122 120 119 118 117 115 114 112 110 108 106 104 102 99 97 96 94 93 91 90 88 87 86 85 84 82 82 81 80 79 77 77 76
+base 16k 8k r1 | 5.666 | 1138 1117 1116 1116 1115 849 526 468 429 378 331 304 277 259 251 244 238 231 223 214 200 188 176 164 152 144 138 136 135 135 134 133 133 133 133 133 134 134 134 133 134 134 135 134 133 134 133 134 134 133 133 133 134 133 134 134 134 134 133 133
+base 16k 16k r1 | 5.924 | 2141 2141 2142 2149 2140 1512 136 136 144 148 167 180 188 168 177 179 164 173 188 188 192 190 196 193 186 202 190 207 218 209 199 214 237 217 237 218 241 237 249 240 265 266 286 312 314 352 393 454 660 1288 356 132 152 155 168 170 174 177 172 172
+base 16k 32k r1 | 5.846 | 2177 2175 2169 2167 2174 1378 137 148 160 178 194 196 200 189 199 171 220 200 205 175 224 223 243 212 235 224 232 239 249 230 242 262 282 257 318 360 324 322 360 425 520 508 596 1222 645 139 155 164 182 201 204 208 193 200 183 219 188 198 210 224
+base 16k 64k r1 | 5.690 | 2235 2233 2233 2233 2233 1101 144 156 174 193 216 234 221 214 217 225 237 237 251 261 264 270 280 286 303 310 322 345 364 392 406 449 493 560 651 834 1463 549 150 160 181 198 217 233 213 209 225 230 243 241 249 246 264 269 283 291 304 314 333 345
+base 16k 128k r1 | 5.697 | 2234 2233 2233 2233 2233 1110 157 171 183 202 219 229 225 224 234 245 253 256 259 269 270 282 288 305 312 332 346 356 388 418 441 498 563 650 825 1399 716 159 174 185 209 223 222 227 228 237 235 244 258 256 267 276 280 286 303 312 336 347 370 389
+base 32k 4k r1 | 5.636 | 291 279 278 280 278 224 153 145 138 131 120 110 102 99 95 92 90 89 88 86 85 83 83 81 80 77 77 74 73 71 69 67 65 63 63 62 60 60 58 57 56 55 54 54 53 52 52 51 50 49 49 48 48 47 47 47 47 46 46 45
+base 32k 8k r1 | 5.639 | 582 557 557 559 557 446 300 284 267 250 228 208 197 190 182 178 175 173 170 167 164 162 156 150 147 142 137 132 129 126 123 119 116 112 110 107 105 104 102 100 98 96 94 92 91 90 89 88 87 85 84 83 82 81 81 79 78 78 77 76
+wbuffix 4k 4k r1 | 6.306 | 2004 2001 2004 1995 1999 2040 258 129 146 152 176 176 204 211 167 177 177 198 206 186 175 191 193 171 177 198 196 204 197 194 209 198 192 240 231 209 212 221 250 234 245 284 279 292 347 344 348 414 495 728 1233 125 134 153 165 176 169 188 177 172
+wbuffix 4k 4k r2 | 6.302 | 2006 1998 2002 1997 2003 2043 250 129 148 156 170 170 180 186 169 156 175 165 204 199 170 183 185 188 177 194 213 184 230 188 194 189 177 239 211 231 203 212 218 233 240 254 261 277 300 335 335 392 461 652 1105 627 125 136 160 180 160 183 178 173
+wbuffix 4k 8k r1 | 5.746 | 2217 2210 2208 2214 2211 1188 126 144 160 179 182 180 236 175 178 207 213 195 154 154 195 232 247 228 186 255 229 271 237 287 250 245 254 216 222 263 348 289 351 416 324 360 581 717 1036 802 130 146 165 182 201 156 221 188 192 199 201 213 199 211
+wbuffix 4k 8k r2 | 5.743 | 2217 2212 2212 2215 2210 1182 126 143 156 178 190 203 225 187 154 196 177 212 188 182 230 201 254 240 240 272 165 167 270 224 206 230 240 199 309 299 332 317 295 284 369 495 429 481 731 1435 124 134 152 161 194 206 242 192 203 219 169 196 158 235
+wbuffix 4k 16k r1 | 5.690 | 2236 2233 2233 2233 2233 1090 130 145 162 189 208 232 226 204 216 228 233 244 240 247 262 261 277 280 292 305 321 329 347 371 397 422 466 516 586 693 940 1475 127 139 157 178 205 226 240 200 211 226 232 237 242 250 246 260 274 278 292 296 318 328
+wbuffix 4k 16k r2 | 5.696 | 2234 2233 2233 2233 2233 1090 130 146 164 189 208 232 222 204 220 228 233 240 245 248 255 267 272 283 293 308 314 333 348 369 396 429 463 511 582 705 940 1467 127 141 158 179 201 226 240 205 211 222 231 240 243 242 247 265 270 283 287 302 312 328
+wbuffix 4k 32k r1 | 5.696 | 2234 2233 2233 2233 2233 1098 137 151 169 188 211 231 222 208 215 224 237 238 244 254 256 266 280 282 296 303 320 337 350 370 399 426 475 516 606 719 1014 1313 133 144 164 184 205 232 233 210 216 227 236 242 243 250 256 263 276 278 299 305 315 330
+wbuffix 4k 32k r2 | 5.696 | 2234 2233 2233 2233 2233 1098 137 148 169 190 212 231 222 208 214 224 235 240 244 249 260 264 274 289 290 308 323 329 356 373 400 427 468 520 595 726 1008 1324 132 147 164 184 205 228 228 205 215 232 232 240 242 250 258 264 275 277 298 300 317 333
+wbuffix 4k 64k r1 | 5.697 | 2235 2233 2233 2233 2233 1101 144 156 174 193 214 235 221 210 220 225 238 237 251 256 269 270 276 290 303 310 322 345 364 384 413 448 494 547 652 830 1439 588 147 161 178 198 217 234 214 211 223 229 243 242 252 253 265 271 280 293 300 313 330 343
+wbuffix 4k 64k r2 | 5.690 | 2235 2233 2233 2233 2233 1102 144 156 174 193 218 231 221 214 217 227 235 240 248 261 264 270 276 290 303 310 322 345 364 391 406 449 493 549 659 821 1449 578 147 161 178 198 221 230 214 212 222 229 243 242 252 253 265 272 278 292 300 314 329 344
+wbuffix 4k 128k r1 | 5.697 | 2234 2233 2234 2232 2233 1111 157 171 183 202 219 226 228 224 233 245 254 256 260 266 267 281 295 300 315 319 347 368 389 404 451 485 556 636 819 1312 835 161 170 188 204 221 227 223 228 237 239 249 253 260 266 272 278 292 298 322 329 348 368 393
+wbuffix 4k 128k r2 | 5.697 | 2234 2233 2233 2233 2233 1111 157 171 183 202 219 225 229 224 234 245 253 256 258 268 265 282 294 298 316 323 346 361 392 410 449 487 557 657 824 1386 740 160 170 188 204 222 227 228 228 231 238 246 253 258 262 276 279 287 304 312 338 352 369 394
+wbuffix 8k 4k r1 | 5.811 | 1090 1092 1093 1091 1091 777 289 297 268 280 216 214 201 191 193 181 167 157 150 142 135 130 131 121 118 124 112 111 108 119 106 104 101 106 105 93 94 95 84 87 82 83 83 75 80 81 82 84 82 81 86 84 79 80 85 86 80 84 78 84
+wbuffix 8k 4k r2 | 5.817 | 1090 1091 1093 1091 1092 777 291 297 263 282 215 212 202 191 200 179 167 156 151 141 139 133 124 123 120 123 111 109 103 126 118 103 104 95 105 94 92 95 85 94 88 82 82 82 78 82 82 82 83 75 81 80 84 82 77 86 80 76 78 83
+wbuffix 8k 8k r1 | 5.821 | 2181 2187 2181 2182 2179 1328 130 138 143 158 174 177 199 172 178 180 175 159 176 180 180 196 192 196 202 187 201 208 190 203 222 240 213 198 211 220 228 252 247 263 260 271 297 301 335 362 399 472 575 1009 638 130 140 145 160 157 185 185 181 159
+wbuffix 8k 8k r2 | 5.821 | 2180 2187 2181 2182 2180 1328 131 137 150 155 167 181 178 178 169 168 171 175 179 185 170 192 185 169 178 195 197 210 195 197 198 196 227 206 215 203 236 216 223 232 250 279 268 286 303 342 347 389 457 575 988 675 130 143 140 162 160 179 174 169
+wbuffix 8k 16k r1 | 5.777 | 2202 2198 2204 2201 2197 1247 130 141 161 174 156 213 201 194 188 196 210 207 216 200 188 186 191 202 222 210 217 228 226 250 250 215 290 226 314 255 304 270 282 384 377 351 414 460 644 1168 603 134 150 171 174 201 200 220 186 212 197 184 206 211
+wbuffix 8k 16k r2 | 5.777 | 2202 2198 2204 2202 2197 1247 132 141 158 173 194 221 200 182 184 187 196 186 227 184 208 235 207 183 245 248 212 176 217 236 247 259 345 241 222 272 279 262 319 305 367 421 476 647 855 1208 128 146 160 174 181 199 226 176 190 216 225 220 196 201
+wbuffix 8k 32k r1 | 5.696 | 2234 2233 2233 2233 2233 1097 137 151 166 188 215 231 222 208 215 229 232 239 244 254 250 263 278 284 296 303 321 336 356 374 392 421 462 524 595 729 1010 1310 132 147 164 184 205 228 231 206 215 229 233 243 246 245 257 268 271 283 291 310 311 330
+wbuffix 8k 32k r2 | 5.696 | 2234 2233 2233 2233 2233 1098 137 151 167 190 211 231 222 208 215 229 232 239 247 252 256 267 276 286 295 309 316 336 355 374 399 429 464 525 594 731 1013 1303 132 146 163 182 206 229 227 204 217 227 238 241 242 250 257 262 275 277 297 301 314 324
+wbuffix 8k 64k r1 | 5.697 | 2235 2233 2233 2233 2233 1101 144 156 174 193 216 233 221 212 218 225 238 237 251 256 269 270 276 291 303 310 322 345 364 386 411 449 493 548 658 824 1449 578 147 161 178 198 221 229 215 211 222 233 238 245 249 258 260 273 282 290 300 314 328 346
+wbuffix 8k 64k r2 | 5.697 | 2235 2233 2233 2233 2232 1103 144 156 174 193 218 231 221 214 217 229 233 239 248 261 264 270 278 288 303 310 322 345 364 392 406 449 494 553 656 820 1454 572 147 161 178 202 217 229 218 208 222 232 238 247 247 258 262 270 283 293 299 310 332 348
+wbuffix 8k 128k r1 | 5.697 | 2234 2233 2233 2233 2233 1111 157 171 183 202 219 226 228 224 234 245 253 256 258 268 265 285 290 299 318 328 346 360 385 417 444 498 561 651 825 1389 726 159 170 188 205 223 226 227 225 235 238 244 253 256 267 281 280 286 300 315 336 341 373 390
+wbuffix 8k 128k r2 | 5.697 | 2234 2233 2233 2233 2233 1111 157 171 183 202 219 229 225 224 234 245 253 256 258 271 268 282 288 305 312 332 346 357 386 419 441 498 563 650 825 1398 715 159 172 187 209 219 226 227 228 237 234 244 253 256 271 277 280 286 301 314 336 340 370 389
+wbuffix 16k 4k r1 | 5.918 | 536 533 538 536 535 430 176 163 176 165 150 140 142 133 121 122 112 116 107 109 96 99 95 89 94 85 80 79 78 83 75 74 83 73 67 75 65 65 64 72 64 64 61 60 62 61 58 56 63 57 56 61 55 53 56 61 54 53 56 53
+wbuffix 16k 4k r2 | 5.920 | 536 533 538 536 535 430 175 163 177 163 151 142 140 131 120 121 111 112 107 103 97 101 95 90 94 89 83 81 79 80 75 75 72 72 70 70 71 70 67 62 64 64 63 61 61 59 60 60 58 57 56 55 53 56 56 57 59 55 54 59
+wbuffix 16k 8k r1 | 5.907 | 1071 1068 1075 1075 1072 837 324 287 287 268 243 228 209 205 190 177 180 154 152 143 144 134 127 125 113 112 129 115 109 115 109 115 92 99 95 89 99 90 93 85 82 80 82 80 81 80 80 78 89 85 84 80 80 85 82 79 78 80 78 80
+wbuffix 16k 8k r2 | 5.909 | 1071 1071 1076 1075 1071 834 325 289 285 262 247 228 198 201 182 178 184 156 151 142 143 130 144 133 120 134 115 108 109 112 103 101 107 100 101 106 89 86 94 88 87 79 83 80 81 81 82 83 84 80 81 80 80 80 78 84 84 81 82 82
+wbuffix 16k 16k r1 | 5.924 | 2141 2141 2143 2149 2140 1512 136 139 146 153 171 178 180 178 173 174 180 178 178 199 174 188 185 184 194 194 197 199 215 197 196 232 233 215 215 261 235 257 239 259 280 283 288 312 344 371 406 414 574 1234 416 128 144 154 165 175 171 177 182 169
+wbuffix 16k 16k r2 | 5.924 | 2141 2141 2143 2149 2140 1512 136 131 146 153 181 163 173 173 186 170 170 181 184 192 186 190 195 188 199 185 201 196 205 200 219 218 227 202 222 204 222 247 246 263 266 273 284 301 336 346 383 442 606 957 784 129 144 152 150 177 183 178 180 173
+wbuffix 16k 32k r1 | 5.846 | 2177 2175 2169 2167 2173 1378 139 148 159 175 198 192 198 194 200 206 206 215 182 200 206 216 220 193 224 193 246 225 270 226 223 264 236 232 318 243 325 271 327 324 383 468 508 567 837 1137 135 149 163 176 196 210 187 205 200 206 205 196 207 213
+wbuffix 16k 32k r2 | 5.847 | 2176 2174 2169 2167 2174 1378 138 147 161 171 197 183 201 193 198 214 188 210 186 218 231 245 241 206 224 239 223 261 266 210 278 279 278 242 320 280 361 401 372 356 494 606 793 1438 135 143 162 173 185 192 205 192 197 183 203 228 198 201 202 213
+wbuffix 16k 64k r1 | 5.697 | 2235 2233 2233 2233 2233 1101 144 156 174 193 216 234 221 214 217 225 238 237 251 257 268 270 276 290 303 310 322 345 364 392 406 449 493 552 657 821 1453 574 147 161 178 198 221 229 218 209 222 233 238 247 247 258 260 273 284 287 300 314 328 346
+wbuffix 16k 64k r2 | 5.697 | 2235 2233 2233 2233 2233 1101 144 156 174 193 217 233 221 213 217 225 238 237 251 259 266 270 276 290 303 310 322 345 364 388 410 449 493 550 658 821 1450 578 147 161 178 198 221 229 214 212 221 231 245 242 246 252 264 275 278 291 308 312 327 341
+wbuffix 16k 128k r1 | 5.694 | 2234 2233 2233 2233 2233 1110 157 171 183 202 219 229 225 224 234 245 253 256 258 268 265 286 290 299 318 328 346 360 385 419 442 497 554 654 758 1213 746 158 171 188 207 219 227 228 229 236 234 250 259 260 268 272 282 287 304 316 331 346 372 389
+wbuffix 32k 4k r1 | 6.067 | 261 260 259 261 260 235 101 89 85 85 81 80 82 70 70 65 62 57 57 56 53 54 52 51 47 48 47 44 44 42 44 40 41 40 39 38 38 38 36 38 36 35 35 36 34 32 33 33 31 33 32 30 33 32 31 31 30 30 29 30
+wbuffix 32k 8k r1 | 6.070 | 521 520 519 521 522 472 181 182 178 154 166 162 155 132 121 126 119 108 111 108 106 101 94 93 87 96 83 83 82 78 80 75 78 75 77 67 69 66 66 66 63 65 63 67 65 64 60 62 66 58 61 58 60 61 56 59 54 56 53 54
+wbuffix 32k 16k r1 | 6.069 | 1039 1042 1040 1042 1044 952 364 314 303 272 245 229 218 211 185 180 168 155 155 147 136 138 132 120 128 125 117 116 116 115 106 109 107 104 100 93 95 92 93 81 83 81 82 81 84 81 80 81 81 80 78 79 83 85 79 85 83 79 83 81
+wbuffix 32k 32k r1 | 6.099 | 2084 2079 2068 2079 2082 1804 138 143 149 157 160 175 179 178 186 179 174 184 190 189 188 191 196 190 195 203 213 212 210 203 232 229 249 231 231 237 262 255 258 269 281 298 305 337 374 406 468 599 1278 407 142 148 154 158 173 179 183 184 190 176
+wbuffix 32k 64k r1 | 5.978 | 2130 2125 2115 2120 2120 1613 147 150 168 181 190 176 207 200 186 195 200 220 210 219 221 216 234 263 187 249 232 260 241 270 270 278 274 264 281 294 319 346 342 484 548 613 889 1241 142 149 166 165 194 208 192 205 176 196 203 222 200 215 210 237
+wbuffix 32k 128k r1 | 5.698 | 2234 2233 2233 2232 2233 1112 157 171 183 202 219 229 225 224 234 245 253 256 259 269 267 286 290 303 315 332 346 362 389 401 446 492 568 646 827 1364 753 159 173 184 208 217 226 227 227 233 240 250 254 258 264 271 280 287 309 316 330 345 356 400
+wbuffix 64k 4k r1 | 3.675 | 220 222 222 149 85 81 74 66 62 56 53 51 49 47 45 44 41 40 42 39 39 37 37 36 36 34 33 34 34 32 30 30 29 30 29 29 29 29 27 27 28 27 27 26 26 26 25 26 25 25 25 24 24 24 24 23 23 23 23 23
+wbuffix 64k 8k r1 | 3.671 | 440 444 444 298 171 158 147 137 119 109 107 105 94 93 87 86 82 81 81 77 77 76 71 73 69 69 64 67 65 64 62 58 60 58 59 57 57 56 55 55 53 52 53 50 50 50 49 48 49 49 47 47 47 47 45 46 45 46 45 45
+wbuffix 64k 16k r1 | 3.675 | 881 888 889 591 331 312 281 264 233 212 202 199 190 176 170 166 160 151 144 147 139 137 129 127 127 126 121 120 114 112 110 107 108 103 102 101 98 96 95 94 94 91 89 90 89 87 86 84 81 81 81 79 81 78 79 80 79 76 77 75
+wbuffix 64k 32k r1 | 3.684 | 1764 1768 1772 1166 585 509 440 391 361 324 308 299 260 246 235 214 200 189 179 166 159 144 144 140 140 148 146 145 144 145 143 146 143 146 143 144 145 144 142 142 146 144 141 142 144 145 143 143 142 144 143 145 142 140 144 147 145 143 143 143
+wbuffix 64k 64k r1 | 3.874 | 3353 3350 3346 2216 244 274 293 313 320 329 339 353 356 377 384 418 418 447 482 485 509 588 613 700 843 1273 1216 255 272 303 324 324 329 346 354 369 376 396 415 431 449 491 496 548 577 668 740 878 1970 265 262 294 300 322 326 330 343 355 370 394
+wbuffix 64k 128k r1 | 3.881 | 3349 3346 3348 2228 266 272 308 331 331 337 348 370 384 399 421 441 457 490 523 568 634 695 741 1024 2043 272 270 297 318 339 342 346 368 381 392 405 436 454 489 516 562 586 670 748 890 1272 1288 260 284 308 331 342 338 357 371 374 392 409 440 457
+wbuffix 128k 4k r1 | 2.476 | 170 171 99 66 58 51 45 40 38 35 33 31 29 27 27 25 25 24 23 22 22 20 20 21 20 19 19 19 18 18 17 17 17 17 16 16 16 16 16 16 15 15 15 15 15 15 15 14 15 14 15 14 14 14 14 14 14 14 13 14
+wbuffix 128k 8k r1 | 2.474 | 340 341 196 133 118 100 89 80 74 70 64 62 59 55 54 52 48 48 46 45 43 42 40 41 40 39 37 37 35 36 35 35 34 34 33 32 32 32 32 31 31 30 31 31 30 29 29 29 30 29 29 28 28 28 28 28 28 28 27 27
+wbuffix 128k 16k r1 | 2.477 | 680 681 391 265 235 200 175 162 149 137 130 121 113 107 106 100 94 95 89 88 83 82 78 79 76 75 72 71 71 69 69 67 66 67 66 64 63 62 62 62 58 60 59 59 59 58 59 57 57 58 55 55 55 55 54 54 54 55 55 53
+wbuffix 128k 32k r1 | 2.477 | 1359 1359 767 508 443 384 333 305 277 252 236 223 208 198 190 180 166 167 164 158 153 145 140 138 133 130 129 128 125 122 121 116 116 113 112 111 109 107 106 105 102 101 104 100 96 100 94 97 98 98 101 104 94 95 98 95 95 98 97 97
+wbuffix 128k 64k r1 | 2.474 | 2708 2724 1496 818 663 551 474 408 358 313 294 254 236 223 201 197 191 199 198 188 190 193 196 197 196 196 192 194 196 200 195 199 195 197 189 195 189 196 196 196 188 197 195 195 188 197 194 191 184 195 190 194 194 190 195 192 193 191 192 196
+wbuffix 128k 128k r1 | 3.867 | 3358 3357 3357 2245 360 393 421 418 445 476 504 533 555 598 645 721 811 968 1350 2227 371 387 424 425 454 479 520 535 572 610 649 733 842 998 1358 2121 371 394 423 429 466 490 490 533 572 605 657 719 829 983 1332 2190 368 385 419 432 458 475 494 535
+```
+
+### 11.2.8 실험 전후 환경 차이 (env_before vs env_after_*; 날짜·부하·여유 메모리 줄 제외)
+- env_after_stop:
+  - 03_cpu.txt:
+    `-CPU(s) scaling MHz:                      58%`
+    `+CPU(s) scaling MHz:                      33%`
+  - 08_nvmevirt_git.txt:
+    `-5769378d46821c45595585c932522e4f76538fc6`
+    `+2a462a3a518915e37fa313716bc9721801501e28`
+    `+2a462a3 exp: keep going when a run fails; plot tool; report generators`
+    `-f84fec2 admin: Support queues in device memory`
+    `+ M EXPERIMENT_LOG_FOR_CLAUDE.md`
+    `+ M exp/report/make_report.py`
+    `+?? exp/report/audit_result.json`
+    `+?? exp/report/audit_summary_ko.txt`
+  - 09_block.txt:
+    `-/dev/nvme0n1          /dev/ng0n1            S5GYNF0RA00765J      Samsung SSD 980 PRO 500GB                0x1        101.15  GB / 500.11  GB    512   B +  0 B   3B2QGXA7`
+    `+/dev/nvme0n1          /dev/ng0n1            S5GYNF0RA00765J      Samsung SSD 980 PRO 500GB                0x1        121.44  GB / 500.11  GB    512   B +  0 B   3B2QGXA7`
+
+### 11.2.9 run_all 로그 끝 40 줄 (원본 로그, 시각은 KST 로 변환)
+```
+[2026-10-08 15:29:06 KST] === [35/108] variant=wbuffix map=128k bs=64k rep=1 ===
+    -> 340.7 MiB/s, 5450 IOPS, clat mean 5868.2 us
+[2026-10-08 15:30:16 KST] === [36/108] variant=wbuffix map=128k bs=128k rep=1 ===
+    -> 837.8 MiB/s, 6702 IOPS, clat mean 4770.3 us
+[2026-10-08 15:31:26 KST] === [37/108] variant=wbuffix map=4k bs=4k rep=2 ===
+    -> 417.6 MiB/s, 106915 IOPS, clat mean 298.3 us
+[2026-10-08 15:32:37 KST] === [38/108] variant=wbuffix map=4k bs=8k rep=2 ===
+    -> 438.0 MiB/s, 56064 IOPS, clat mean 569.5 us
+[2026-10-08 15:33:47 KST] === [39/108] variant=wbuffix map=4k bs=16k rep=2 ===
+    -> 480.9 MiB/s, 30778 IOPS, clat mean 1038.2 us
+[2026-10-08 15:34:57 KST] === [40/108] variant=wbuffix map=4k bs=32k rep=2 ===
+    -> 482.3 MiB/s, 15433 IOPS, clat mean 2071.6 us
+[2026-10-08 15:36:08 KST] === [41/108] variant=wbuffix map=4k bs=64k rep=2 ===
+    -> 486.3 MiB/s, 7780 IOPS, clat mean 4110.1 us
+[2026-10-08 15:37:18 KST] === [42/108] variant=wbuffix map=4k bs=128k rep=2 ===
+    -> 496.8 MiB/s, 3975 IOPS, clat mean 8046.2 us
+[2026-10-08 15:38:29 KST] === [43/108] variant=wbuffix map=8k bs=4k rep=2 ===
+    -> 216.6 MiB/s, 55453 IOPS, clat mean 576.0 us
+[2026-10-08 15:39:39 KST] === [44/108] variant=wbuffix map=8k bs=8k rep=2 ===
+    -> 416.9 MiB/s, 53361 IOPS, clat mean 598.5 us
+[2026-10-08 15:40:49 KST] === [45/108] variant=wbuffix map=8k bs=16k rep=2 ===
+    -> 439.1 MiB/s, 28099 IOPS, clat mean 1137.3 us
+[2026-10-08 15:42:00 KST] === [46/108] variant=wbuffix map=8k bs=32k rep=2 ===
+    -> 482.3 MiB/s, 15432 IOPS, clat mean 2071.7 us
+[2026-10-08 15:43:10 KST] === [47/108] variant=wbuffix map=8k bs=64k rep=2 ===
+    -> 486.4 MiB/s, 7782 IOPS, clat mean 4109.1 us
+[2026-10-08 15:44:21 KST] === [48/108] variant=wbuffix map=8k bs=128k rep=2 ===
+    -> 496.7 MiB/s, 3974 IOPS, clat mean 8047.7 us
+[2026-10-08 15:45:31 KST] === [49/108] variant=wbuffix map=16k bs=4k rep=2 ===
+    -> 129.7 MiB/s, 33200 IOPS, clat mean 962.8 us
+[2026-10-08 15:46:41 KST] === [50/108] variant=wbuffix map=16k bs=8k rep=2 ===
+    -> 218.0 MiB/s, 27904 IOPS, clat mean 1145.5 us
+[2026-10-08 15:47:52 KST] === [51/108] variant=wbuffix map=16k bs=16k rep=2 ===
+    -> 420.3 MiB/s, 26900 IOPS, clat mean 1188.1 us
+[2026-10-08 15:49:02 KST] === [52/108] variant=wbuffix map=16k bs=32k rep=2 ===
+    -> 444.9 MiB/s, 14236 IOPS, clat mean 2245.8 us
+[2026-10-08 15:50:12 KST] === [53/108] variant=wbuffix map=16k bs=64k rep=2 ===
+    -> 486.2 MiB/s, 7780 IOPS, clat mean 4110.3 us
+[2026-10-08 15:51:23 KST] === [54/108] variant=wbuffix map=16k bs=128k rep=2 ===
+[2026-10-08 15:51:36 KST] STOPPED by Claude at a run boundary (user changed the experiment design: maps/bs 4k,16k,32k + drop_caches comparison)
+```
+
 <!-- AUTO-RESULTS-END -->
 
 ---------------------------------------------------------------------------------------------------
 
 ## 12. 그래프 도구 (exp/plot.py) 사용법
 
-- 실행: `cd /home/dccearth/jsw/KSC2026/nvmevirt/exp && ./.venv/bin/python plot.py <cmd> [옵션]`. 결과 폴더를 직접 읽으므로 실험 도중의 부분 데이터에도 쓸 수 있다. analyze.py 의 collect/aggregate 를 그대로 쓴다.
+- 실행: 묶음에서는 `cd repo/exp`, 실험 서버에서는 `cd <repo>/exp` 한 뒤 `./.venv/bin/python plot.py <cmd> [옵션]`(venv 만드는 법은 H 절).
+  - 결과 폴더를 직접 읽으므로 부분 데이터에도 쓸 수 있다. analyze.py 의 collect/aggregate 를 그대로 쓴다.
+  - --exp 를 주지 않으면 results/main_* 중 이름순 마지막(= main_20261008)을 쓴다. 주 데이터셋은 `--exp results/main3x3_20261008` 로 지정한다.
+  - --variant 기본값은 「있는 것 전부」다. main3x3 에서는 wbuffix_nodrop·wbuffix_drop 이 변형처럼 다뤄진다. compare 는 drop 과 nodrop 을 겹쳐 그린다.
+  - 크기 목록은 결과에 있는 것만 쓴다(main3x3 이면 4K·16K·32K).
 - 명령:
   - list — 완료된 회차 수와 지표 목록
   - bs — 지표를 bs 에 따라, 매핑 단위별 선 하나씩(변형마다 패널, 평균±표준편차)
@@ -480,7 +3493,8 @@ dccearth ALL=(root) NOPASSWD: /usr/sbin/insmod, /usr/sbin/rmmod, /usr/bin/fio, /
 ## 13. 다음 Claude 를 위한 주의 사항
 
 - 응답·보고는 한국어로만 한다.
-- sudo 비밀번호는 사용자가 한 번 알려 줬지만 기록하지 않았다. 필요하면 사용자에게 묻는다. sudoers 규칙이 남아 있으면 `sudo -n` 으로 insmod/rmmod/fio/dmesg/nvme/tee /dev/kmsg/cat /proc/iomem/chown(exp 아래) 을 쓸 수 있다.
+- (아래 sudo·push·tmux 관련 항목은 실험 서버에서 작업하는 Claude 에게만 해당한다. 묶음을 받은 Claude 는 서버에 접근할 수 없다.)
+- sudo 비밀번호는 사용자가 한 번 알려 줬지만 기록하지 않았다. 필요하면 사용자에게 묻는다. sudoers 규칙은 실험 후 제거했다(10.3 절). 서버에서 다시 실험하려면 6.4 절 규칙을 chown 경로를 `/home/dccearth/jsw/nvmevirt/exp/*` 로 고쳐 다시 설치해야 한다(비밀번호 필요 — 사용자에게 요청).
 - GitHub push 는 사용자의 forwarded ssh-agent 소켓이 필요하다(`ls /tmp/ssh-*/agent.*`). 사용자가 접속해 있지 않으면 push 할 수 없다.
 - 실험 중(tmux ksc2026)에는:
   - run_experiment.sh·run_all.sh 를 같은 파일로 덮어쓰지 않는다(bash 가 실행 중 읽음).
@@ -500,6 +3514,19 @@ dccearth ALL=(root) NOPASSWD: /usr/sbin/insmod, /usr/sbin/rmmod, /usr/bin/fio, /
 ---------------------------------------------------------------------------------------------------
 
 ## 갱신 이력
-- 2026-10-08 05:40경 최초 작성(본 실험 base 진행 중, 약 13/108).
-- 2026-10-08 05:50 10 절에 첫 중단(base map32k_bs16k_r1 장치 실패)과 재개(wbuffix 먼저) 기록.
-- 2026-10-08 06:25 감사 워크플로 완료 반영(9 절), GC 이전 처리량 정정과 IRQ 15/cpu5 사실(8.3 절) 추가. 저장소에 credential 이 없는지 검사(grep 으로 sudo 비밀번호·서버 IP 문자열 검사 → 없음.
+(시각은 모두 2026-10-08 KST)
+- 2026-10-08 14:40경 최초 작성(본 실험 base 진행 중, 약 17/108).
+- 2026-10-08 14:50 10 절에 첫 중단(base map32k_bs16k_r1 장치 실패)과 재개(wbuffix 먼저) 기록.
+- 2026-10-08 15:25 감사 워크플로 완료 반영(9 절), GC 이전 처리량 정정과 IRQ 15/cpu5 사실(8.3 절) 추가. 저장소에 credential(sudo 비밀번호·서버 IP 문자열)이 없는지 grep 으로 검사 → 없음.
+- 16:05 설계 변경(1.7)·인계 방식(1.8)·H 절·0 절 재작성. 주 데이터셋 = main3x3_20261008.
+- 16:04 **커밋 재작성** (a93ef76 committer 시각 16:04:44 KST): 첫 중간 묶음(16:03)을 확인하다가, 커밋 1d6cd03 에 들어간 이 파일의 한 줄(15:25 에 「검사 명령」을 적으며 sudo 비밀번호·서버 IP 문자열을 그대로 씀)을 발견했다.
+  - 그 묶음(ksc2026_handoff_20261008_0703_mid.tgz — 이름의 0703 은 당시 UTC 표기 = 16:03 KST)은 지웠고 전달 전이었다.
+  - 1d6cd03 은 push 전이었으므로(origin/main = 5769378) 그 줄만 고쳐 amend → **a93ef76** 이 되었다. 코드·스크립트는 같고 이 파일 한 줄만 다르다.
+  - reflog expire + gc --prune=now 로 옛 커밋 1d6cd03 을 지웠다. 단 git stash pop 충돌로 인덱스 resolve-undo 기록이 옛 파일 blob 0abc072(비밀번호 줄 포함)를 붙잡고 있어 그 blob 은 .git 안에 남아 있었다(어느 ref 에서도 닿지 않아 push·repo.gitbundle 에는 들어가지 않음). 18:27 KST 에 `rm .git/index && git reset -q` 후 reflog expire·gc --prune=now 로 지우고, 모든 git 객체를 검사해 credential 이 없음을 확인했다.
+  - main3x3_20261008 의 처음 4 회차(map4k_bs4k_r1·map4k_bs16k_r1 의 nodrop·drop) meta.txt 와 wbuffix_*/git_head.txt·env_before/08_nvmevirt_git.txt 에 적힌 1d6cd03 은 a93ef76 과 같은 코드다.
+  - make_handoff.sh 가 git 이력 전체(`git log -p --all`)도 검사하도록 고쳤다.
+- 16:10 사용자 지시(1.9)에 따라 서술 시각을 UTC → KST 로 일괄 변환했다(이 이력의 앞 항목들도 KST 로 바뀌었다).
+- 16:10 사용자 지시(1.10)에 따라 인계 묶음 안의 시각도 KST 로 쓰도록 고치고, 묶음을 KST 이름으로 다시 만들었다(ksc2026_handoff_20261008_1610_mid.tgz, 16:10:58 KST).
+- 17:10 실험 완료·결과 요약(0 절)·이동·삭제(10.3 절) 반영.
+- 17:24 진행 상태(0 절)·정리 기록(10.3 절) 갱신, 인계 묶음 postexp(ksc2026_handoff_20261008_1724_postexp.tgz) 생성.
+- 18:3x 검증 워크플로 지적 반영, 보안 조치(묶음 삭제·검사 패턴·옛 blob·이메일 제거를 위한 커밋 재작성 2a462a3→949ae38, a93ef76→e598e75), sudoers 제거(18:33), 최종 문서 생성, 커밋·태그·push(10.3 절).

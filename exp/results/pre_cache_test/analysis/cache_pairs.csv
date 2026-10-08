@@ -1,0 +1,5 @@
+variant,map,bs,rep,nodrop_bw_MiBps,drop_bw_MiBps,diff_pct
+wbuffix,4k,4k,1,1553.24,1550.64,-0.167115
+wbuffix,4k,4k,2,1553.19,1552.18,-0.065201
+wbuffix,16k,4k,1,431.385,431.317,-0.0156201
+wbuffix,16k,4k,2,430.757,430.779,0.0052143

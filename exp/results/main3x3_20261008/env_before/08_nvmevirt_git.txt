@@ -1,0 +1,30 @@
+$ git -C /home/dccearth/jsw/KSC2026/nvmevirt rev-parse HEAD
+1d6cd036893f06bfe8aa8f6bb4327239bc4b720f
+
+$ git -C /home/dccearth/jsw/KSC2026/nvmevirt log --oneline -15
+1d6cd03 exp: final 3x3 design with OS page-cache comparison
+2a462a3 exp: keep going when a run fails; plot tool; report generators
+5769378 exp: scripts for the KSC2026 mapping-unit experiment
+c02b9fd nvmevirt: KSC2026 mapping-unit configuration
+d508610 Move NVMeVirt sources into nvmevirt/ subdirectory
+61c90f7 Merge pull request #72 from duckhanson/fix/zns-append-return-slba
+b48962a Merge pull request #71 from enkerewpo/fix
+e808a49 zns: return allocated SLBA in CQE for Zone Append commands
+d9b62a2 fix: add E820_TYPE_RESERVED_KERN check and fixed access out-of-bound bug
+a6a4252 misc: fixed miscellaneous bugs
+c8ef01d dma: support async DMA processing
+00a9ee1 Merge pull request #62 from WithoutStress/main
+c93e88c io: Support I/Os from peripheral devices
+e26d4ef pci: fix queue phase initlization
+519e19f io: fix lock in __fill_cq_result()
+
+$ git -C /home/dccearth/jsw/KSC2026/nvmevirt status --porcelain
+?? exp/modules/
+?? exp/results/
+
+$ git -C /home/dccearth/jsw/KSC2026/nvmevirt remote -v
+origin	git@github.com:Sangwon8799/nvmevirt.git (fetch)
+origin	git@github.com:Sangwon8799/nvmevirt.git (push)
+upstream	https://github.com/snu-csl/nvmevirt.git (fetch)
+upstream	https://github.com/snu-csl/nvmevirt.git (push)
+

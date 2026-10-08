@@ -1,0 +1,12 @@
+date:            2026-10-08T05:15:36+00:00
+variant:         plain (extra make args: '')
+kernel:          6.8.0-142-generic
+compiler:        gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+kernel built by: x86_64-linux-gnu-gcc-13 (Ubuntu 13.3.0-6ubuntu2~24.04.1)
+make:            GNU Make 4.3
+git HEAD:        d5086101c43d0414aa073579dbae4c7516f832a1
+git status (nvmevirt/): 5 modified file(s)
+
+## nvmev_map4k.ko  (make MAPPING_UNIT=4096 )
+srcversion:     A63C8F3C3B758015AE3BD03
+vermagic:       6.8.0-142-generic SMP preempt mod_unload modversions 

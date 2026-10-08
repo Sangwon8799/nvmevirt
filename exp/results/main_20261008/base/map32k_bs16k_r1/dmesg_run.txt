@@ -1,0 +1,88 @@
+[62505.553614] KSC2026-MARK map32k_bs16k_r1 fio-start 1791438267942872474
+[62511.194665] NVMeVirt: KSC2026: first GC part=1 victim line=12 vpc=86 ipc=170 free_lines=2 host_pgs=97280
+[62511.212750] NVMeVirt: KSC2026: first GC part=2 victim line=0 vpc=84 ipc=172 free_lines=2 host_pgs=97280
+[62511.216805] NVMeVirt: KSC2026: first GC part=0 victim line=8 vpc=84 ipc=172 free_lines=2 host_pgs=97280
+[62511.217559] NVMeVirt: KSC2026: first GC part=3 victim line=47 vpc=83 ipc=173 free_lines=2 host_pgs=97280
+[62516.766263] systemd-journald[350]: /dev/kmsg buffer overrun, some messages lost. (Dropped 4998 similar message(s))
+[62516.766820] systemd-journald[350]: /dev/kmsg buffer overrun, some messages lost.
+[62517.736285] systemd-journald[350]: /dev/kmsg buffer overrun, some messages lost.
+[62530.521782] ------------[ cut here ]------------
+[62530.521783] WARNING: CPU: 3 PID: 30089 at /home/dccearth/jsw/KSC2026/nvmevirt/nvmevirt/io.c:302 __allocate_work_queue_entry+0x8a/0xb0 [nvmev]
+[62530.521789] Modules linked in: nvmev(OE) tls qrtr snd_sof_pci_intel_tgl snd_sof_intel_hda_common soundwire_intel snd_sof_intel_hda_mlink soundwire_cadence snd_sof_intel_hda snd_hda_codec_hdmi snd_sof_pci snd_sof_xtensa_dsp xe snd_sof snd_sof_utils snd_soc_hdac_hda snd_hda_ext_core intel_rapl_msr snd_hda_codec_realtek snd_soc_acpi_intel_match drm_gpuvm drm_exec snd_hda_codec_generic snd_soc_acpi gpu_sched intel_rapl_common soundwire_generic_allocation drm_suballoc_helper intel_uncore_frequency intel_uncore_frequency_common drm_ttm_helper intel_tcc_cooling x86_pkg_temp_thermal intel_powerclamp coretemp soundwire_bus snd_soc_core snd_compress ac97_bus kvm_intel snd_pcm_dmaengine cmdlinepart spi_nor snd_hda_intel mtd mei_pxp kvm mei_hdcp snd_intel_dspcfg i915 snd_intel_sdw_acpi snd_hda_codec snd_hda_core irqbypass rapl cfg80211 snd_hwdep snd_pcm drm_buddy intel_cstate ttm drm_display_helper wmi_bmof cec snd_timer snd mxm_wmi rc_core i2c_i801 i2c_algo_bit spi_intel_pci binfmt_misc soundcore spi_intel i2c_smbus
+[62530.521816]  nls_iso8859_1 serial_multi_instantiate joydev intel_pmc_core intel_vsec pmt_telemetry pmt_class acpi_pad acpi_tad mei_me mei mac_hid sch_fq_codel dm_multipath msr nvme_fabrics nvme_keyring efi_pstore nfnetlink dmi_sysfs ip_tables x_tables autofs4 btrfs blake2b_generic raid10 raid456 async_raid6_recov async_memcpy async_pq async_xor async_tx xor raid6_pq libcrc32c raid1 raid0 hid_generic usbhid hid r8169 crct10dif_pclmul crc32_pclmul polyval_clmulni polyval_generic ghash_clmulni_intel nvme sha256_ssse3 sha1_ssse3 xhci_pci xhci_pci_renesas ahci realtek nvme_core libahci nvme_auth video wmi pinctrl_alderlake aesni_intel crypto_simd cryptd [last unloaded: nvmev(OE)]
+[62530.521838] CPU: 3 PID: 30089 Comm: nvmev_dispatche Tainted: G           OE      6.8.0-142-generic #142-Ubuntu
+[62530.521840] Hardware name: Micro-Star International Co., Ltd. MS-7E01/MAG B760M MORTAR (MS-7E01), BIOS M.30 05/16/2023
+[62530.521841] RIP: 0010:__allocate_work_queue_entry+0x8a/0xb0 [nvmev]
+[62530.521843] Code: 00 00 8b 51 68 89 50 08 81 fa ff 3f 00 00 77 35 45 89 11 5d 31 d2 31 c9 31 f6 31 ff 45 31 c0 45 31 c9 45 31 d2 c3 cc cc cc cc <0f> 0b 31 c0 5d 31 d2 31 c9 31 f6 31 ff 45 31 c0 45 31 c9 45 31 d2
+[62530.521844] RSP: 0018:ffffd475c106bdd8 EFLAGS: 00010286
+[62530.521845] RAX: ffff8bfb01d00b40 RBX: 00000000000005c0 RCX: ffff8bfbc5578160
+[62530.521846] RDX: 0000000000000000 RSI: ffff8bfb04062800 RDI: 00000000000035ba
+[62530.521846] RBP: ffffd475c106bdd8 R08: 0000000000000002 R09: ffffd475c106be34
+[62530.521847] R10: 0000000000000000 R11: 0000000000000000 R12: 0000000000000008
+[62530.521847] R13: 0000000000000001 R14: ffff8bfb011c78c0 R15: 0000000000000217
+[62530.521848] FS:  0000000000000000(0000) GS:ffff8c0073580000(0000) knlGS:0000000000000000
+[62530.521849] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[62530.521850] CR2: 0000785c67bb2338 CR3: 000000000363c005 CR4: 0000000000f70ef0
+[62530.521851] PKRU: 55555554
+[62530.521851] Call Trace:
+[62530.521852]  <TASK>
+[62530.521854]  nvmev_proc_io_sq+0x20c/0x4a0 [nvmev]
+[62530.521857]  nvmev_dispatcher+0x15a/0x2c0 [nvmev]
+[62530.521859]  ? __pfx_nvmev_dispatcher+0x10/0x10 [nvmev]
+[62530.521860]  kthread+0xef/0x120
+[62530.521862]  ? __pfx_kthread+0x10/0x10
+[62530.521863]  ret_from_fork+0x44/0x70
+[62530.521865]  ? __pfx_kthread+0x10/0x10
+[62530.521866]  ret_from_fork_asm+0x1b/0x30
+[62530.521868]  </TASK>
+[62530.521868] ---[ end trace 0000000000000000 ]---
+[62560.640166] nvme nvme1: I/O tag 192 (80c0) opcode 0x1 (I/O Cmd) QID 1 timeout, aborting req_op:WRITE(1) size:16384
+[62560.640194] nvme nvme1: I/O tag 193 (00c1) opcode 0x1 (I/O Cmd) QID 1 timeout, aborting req_op:WRITE(1) size:16384
+[62560.640214] nvme nvme1: I/O tag 194 (10c2) opcode 0x1 (I/O Cmd) QID 1 timeout, aborting req_op:WRITE(1) size:16384
+[62560.640230] nvme nvme1: I/O tag 195 (b0c3) opcode 0x1 (I/O Cmd) QID 1 timeout, aborting req_op:WRITE(1) size:16384
+[62590.847614] nvme nvme1: I/O tag 192 (80c0) opcode 0x1 (I/O Cmd) QID 1 timeout, reset controller
+[62590.874594] nvme nvme1: Abort status: 0x371
+[62590.874595] nvme nvme1: Abort status: 0x371
+[62590.874596] nvme nvme1: Abort status: 0x371
+[62590.874596] nvme nvme1: Abort status: 0x371
+[62652.289426] nvme nvme1: I/O tag 28 (301c) QID 0 timeout, disable controller
+[62652.306424] nvme nvme1: Identify Controller failed (-4)
+[62652.306429] nvme nvme1: Disabling device after reset failure: -5
+[62652.313386] I/O error, dev nvme1n1, sector 6011360 op 0x1:(WRITE) flags 0x8800 phys_seg 1 prio class 2
+[62652.313393] I/O error, dev nvme1n1, sector 7813216 op 0x1:(WRITE) flags 0x8800 phys_seg 1 prio class 2
+[62652.313395] I/O error, dev nvme1n1, sector 19035168 op 0x1:(WRITE) flags 0x8800 phys_seg 2 prio class 2
+[62652.313397] I/O error, dev nvme1n1, sector 6266432 op 0x1:(WRITE) flags 0x8800 phys_seg 2 prio class 2
+[62652.313399] I/O error, dev nvme1n1, sector 12945216 op 0x1:(WRITE) flags 0x8800 phys_seg 1 prio class 2
+[62652.313401] I/O error, dev nvme1n1, sector 8846528 op 0x1:(WRITE) flags 0x8800 phys_seg 1 prio class 2
+[62652.313403] I/O error, dev nvme1n1, sector 22534272 op 0x1:(WRITE) flags 0x8800 phys_seg 1 prio class 2
+[62652.313404] I/O error, dev nvme1n1, sector 2160192 op 0x1:(WRITE) flags 0x8800 phys_seg 1 prio class 2
+[62652.313406] I/O error, dev nvme1n1, sector 6537120 op 0x1:(WRITE) flags 0x8800 phys_seg 1 prio class 2
+[62652.313408] I/O error, dev nvme1n1, sector 6379232 op 0x1:(WRITE) flags 0x8800 phys_seg 1 prio class 2
+[62652.319393] Buffer I/O error on dev nvme1n1, logical block 0, async page read
+[62652.319396] systemd-udevd: attempt to access beyond end of device
+               nvme1n1: rw=0, sector=1, nr_sectors = 1 limit=0
+[62652.319397] Buffer I/O error on dev nvme1n1, logical block 1, async page read
+[62652.319398] systemd-udevd: attempt to access beyond end of device
+               nvme1n1: rw=0, sector=2, nr_sectors = 1 limit=0
+[62652.319399] Buffer I/O error on dev nvme1n1, logical block 2, async page read
+[62652.319400] systemd-udevd: attempt to access beyond end of device
+               nvme1n1: rw=0, sector=3, nr_sectors = 1 limit=0
+[62652.319400] Buffer I/O error on dev nvme1n1, logical block 3, async page read
+[62652.319402] systemd-udevd: attempt to access beyond end of device
+               nvme1n1: rw=0, sector=4, nr_sectors = 1 limit=0
+[62652.319402] Buffer I/O error on dev nvme1n1, logical block 4, async page read
+[62652.319403] systemd-udevd: attempt to access beyond end of device
+               nvme1n1: rw=0, sector=5, nr_sectors = 1 limit=0
+[62652.319404] Buffer I/O error on dev nvme1n1, logical block 5, async page read
+[62652.319405] systemd-udevd: attempt to access beyond end of device
+               nvme1n1: rw=0, sector=6, nr_sectors = 1 limit=0
+[62652.319405] Buffer I/O error on dev nvme1n1, logical block 6, async page read
+[62652.319406] systemd-udevd: attempt to access beyond end of device
+               nvme1n1: rw=0, sector=7, nr_sectors = 1 limit=0
+[62652.319407] Buffer I/O error on dev nvme1n1, logical block 7, async page read
+[62652.319409] ldm_validate_partition_table(): Disk read failed.
+[62652.319410] Dev nvme1n1: unable to read RDB block 0
+[62652.319412]  nvme1n1: unable to read partition table
+[62652.319415] nvme1n1: partition table beyond EOD, truncated
+[62652.332557] nvme nvme1: Identify namespace failed (-5)
+[62652.350619] KSC2026-MARK map32k_bs16k_r1 fio-end

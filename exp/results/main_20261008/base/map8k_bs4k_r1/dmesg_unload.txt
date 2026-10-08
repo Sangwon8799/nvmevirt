@@ -1,0 +1,11 @@
+[61585.122962] KSC2026-MARK map8k_bs4k_r1 rmmod 1791437347498478256
+[61585.557539] ldm_validate_partition_table(): Disk read failed.
+[61585.557542] Dev nvme1n1: unable to read RDB block 0
+[61585.557546]  nvme1n1: unable to read partition table
+[61585.557549] nvme1n1: partition table beyond EOD, truncated
+[61585.609360] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+[61585.609407] NVMeVirt: KSC2026: stats part=0 host_pgs=1022622 gc_pgs=3063323 gc_cnt=3609 free_lines=2
+[61585.609409] NVMeVirt: KSC2026: stats part=1 host_pgs=1023088 gc_pgs=3065941 gc_cnt=3612 free_lines=1
+[61585.609410] NVMeVirt: KSC2026: stats part=2 host_pgs=1023126 gc_pgs=3065884 gc_cnt=3612 free_lines=1
+[61585.609410] NVMeVirt: KSC2026: stats part=3 host_pgs=1023106 gc_pgs=3064893 gc_cnt=3611 free_lines=1
+[61585.650061] NVMeVirt: Virtual NVMe device closed

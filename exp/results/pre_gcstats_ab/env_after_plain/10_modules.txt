@@ -1,0 +1,6 @@
+$ bash -c lsmod | grep -E '^(Module|nvmev)'
+Module                  Size  Used by
+
+$ cat /proc/loadavg
+2.72 1.88 1.04 1/228 18526
+

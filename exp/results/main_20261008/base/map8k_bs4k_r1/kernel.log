@@ -1,0 +1,79 @@
+[61518.707961] KSC2026-MARK map8k_bs4k_r1 insmod 1791437281068379121
+[61518.726620] NVMeVirt: Version 1.10 for >> Samsung 970 Pro SSD <<
+[61518.726638] NVMeVirt: Storage: 0x300100000-0x600000000 (12287 MiB)
+[61518.740158] NVMeVirt: Total Capacity(GiB,MiB)=3,3072 chs=2 luns=4 lines=384 blk-size(MiB,KiB)=2,2048 line-size(MiB,KiB)=8,8192
+[61518.740164] NVMeVirt: KSC2026: mapping unit=8192 B, flash page=32768 B, oneshot page=32768 B, pgs_per_blk=256, blks_per_pl=384, write buffer=1048576 B
+[61518.746641] NVMeVirt: [chmodel_init] bandwidth 800 max_credits 26 tx_time 152
+[61518.750914] NVMeVirt: [chmodel_init] bandwidth 800 max_credits 26 tx_time 152
+[61518.750925] NVMeVirt: [chmodel_init] bandwidth 3360 max_credits 110 tx_time 36
+[61518.751602] NVMeVirt: pqueue: Copyright (c) 2014, Volkan Yazıcı <volkan.yazici@gmail.com>. All rights reserved.
+[61518.751603] NVMeVirt: Init FTL instance with 2 channels (393216 pages)
+[61518.755864] NVMeVirt: [chmodel_init] bandwidth 800 max_credits 26 tx_time 152
+[61518.760126] NVMeVirt: [chmodel_init] bandwidth 800 max_credits 26 tx_time 152
+[61518.760137] NVMeVirt: [chmodel_init] bandwidth 3360 max_credits 110 tx_time 36
+[61518.760828] NVMeVirt: Init FTL instance with 2 channels (393216 pages)
+[61518.765116] NVMeVirt: [chmodel_init] bandwidth 800 max_credits 26 tx_time 152
+[61518.769385] NVMeVirt: [chmodel_init] bandwidth 800 max_credits 26 tx_time 152
+[61518.769397] NVMeVirt: [chmodel_init] bandwidth 3360 max_credits 110 tx_time 36
+[61518.770085] NVMeVirt: Init FTL instance with 2 channels (393216 pages)
+[61518.774369] NVMeVirt: [chmodel_init] bandwidth 800 max_credits 26 tx_time 152
+[61518.778663] NVMeVirt: [chmodel_init] bandwidth 800 max_credits 26 tx_time 152
+[61518.778673] NVMeVirt: [chmodel_init] bandwidth 3360 max_credits 110 tx_time 36
+[61518.779348] NVMeVirt: Init FTL instance with 2 channels (393216 pages)
+[61518.779352] NVMeVirt: FTL physical space: 12883853312, logical space: 12040984403 (physical/logical * 100 = 107)
+[61518.779353] NVMeVirt: KSC2026: WBUF_FIX=0 GC_STATS=1
+[61518.779354] NVMeVirt: ns 0/1: size 11483 MiB
+[61518.779385] PCI host bridge to bus 0001:10
+[61518.779386] pci_bus 0001:10: root bus resource [io  0x0000-0xffff]
+[61518.779388] pci_bus 0001:10: root bus resource [mem 0x00000000-0x3fffffffffff]
+[61518.779389] pci_bus 0001:10: root bus resource [bus 00-ff]
+[61518.779395] pci 0001:10:00.0: [0c51:0110] type 00 class 0x010802 PCIe Endpoint
+[61518.779397] pci 0001:10:00.0: BAR 0 [mem 0x300000000-0x300003fff 64bit]
+[61518.779399] pci 0001:10:00.0: enabling Extended Tags
+[61518.779498] NVMeVirt: Virtual PCI bus created (node 0)
+[61518.779928] NVMeVirt: nvmev_io_worker_0 started on cpu 4 (node 0)
+[61518.780097] NVMeVirt: nvmev_io_worker_1 started on cpu 5 (node 0)
+[61518.780119] NVMeVirt: nvmev_dispatcher started on cpu 3 (node 0)
+[61518.780196] nvme nvme1: pci function 0001:10:00.0
+[61518.783682] nvme nvme1: 1/0/0 default/read/poll queues
+[61518.785623] NVMeVirt: Virtual NVMe device created
+[61524.812805] KSC2026-MARK map8k_bs4k_r1 fio-start 1791437287186833016
+[61530.498251] NVMeVirt: KSC2026: first GC part=3 victim line=8 vpc=375 ipc=649 free_lines=2 host_pgs=389120
+[61530.500614] NVMeVirt: KSC2026: first GC part=0 victim line=2 vpc=355 ipc=669 free_lines=2 host_pgs=389120
+[61530.503460] NVMeVirt: KSC2026: first GC part=2 victim line=0 vpc=364 ipc=660 free_lines=2 host_pgs=389120
+[61530.503587] NVMeVirt: KSC2026: first GC part=1 victim line=11 vpc=376 ipc=648 free_lines=2 host_pgs=389120
+[61541.604619] NVMeVirt: [chmodel_request] Need to increase array size 0x37f8dceb6aca 0x37f8c57b7556 0x18000
+[61541.604625] NVMeVirt: [chmodel_request] No free entry 0x37f8dceb6aca 0x37f8c57b8d17 0x17ffe
+[61541.604627] NVMeVirt: [chmodel_request] Need to increase array size 0x37f8dceea1e8 0x37f8c57b9491 0x18032
+[61541.604629] NVMeVirt: [chmodel_request] Need to increase array size 0x37f8dceea1e8 0x37f8c57b9a52 0x18031
+[61541.604630] NVMeVirt: [chmodel_request] Need to increase array size 0x37f8dcebb6ca 0x37f8c57ba0db 0x18002
+[61541.604632] NVMeVirt: [chmodel_request] Need to increase array size 0x37f8dcef2d8f 0x37f8c57ba838 0x18039
+[61541.604633] NVMeVirt: [chmodel_request] Need to increase array size 0x37f8dcef2d8f 0x37f8c57bad28 0x18039
+[61541.604635] NVMeVirt: [chmodel_request] Need to increase array size 0x37f8dceea1e8 0x37f8c57bb259 0x18030
+[61541.604636] NVMeVirt: [chmodel_request] Need to increase array size 0x37f8dcf218ad 0x37f8c57bb7f6 0x18068
+[61541.604637] NVMeVirt: [chmodel_request] Need to increase array size 0x37f8dcf218ad 0x37f8c57bbcfa 0x18068
+[61541.621979] NVMeVirt: [chmodel_request] Need to increase array size 0x37f8ddf633dc 0x37f8c68457f7 0x1801f
+[61541.621982] NVMeVirt: [chmodel_request] Need to increase array size 0x37f8ddf6d7f9 0x37f8c684635f 0x18028
+[61541.621983] NVMeVirt: [chmodel_request] Need to increase array size 0x37f8ddf6d7f9 0x37f8c6846908 0x18028
+[61541.621984] NVMeVirt: [chmodel_request] Need to increase array size 0x37f8ddf77a8f 0x37f8c6846e4e 0x18032
+[61541.621986] NVMeVirt: [chmodel_request] Need to increase array size 0x37f8ddf77a8f 0x37f8c684733d 0x18032
+[61541.621987] NVMeVirt: [chmodel_request] Need to increase array size 0x37f8ddf77a8f 0x37f8c6847954 0x18032
+[61541.621989] NVMeVirt: [chmodel_request] Need to increase array size 0x37f8ddfa1fde 0x37f8c6847f37 0x1805c
+[61541.621990] NVMeVirt: [chmodel_request] Need to increase array size 0x37f8ddfa1fde 0x37f8c68483ff 0x1805c
+[61541.621991] NVMeVirt: [chmodel_request] Need to increase array size 0x37f8ddfa1fde 0x37f8c6848929 0x1805c
+[61541.621992] NVMeVirt: [chmodel_request] Need to increase array size 0x37f8ddfac274 0x37f8c6848e02 0x18065
+[61543.507167] systemd-journald[350]: /dev/kmsg buffer overrun, some messages lost. (Dropped 93650 similar message(s))
+[61545.301839] systemd-journald[350]: /dev/kmsg buffer overrun, some messages lost.
+[61545.302903] systemd-journald[350]: /dev/kmsg buffer overrun, some messages lost.
+[61585.119063] KSC2026-MARK map8k_bs4k_r1 fio-end
+[61585.122962] KSC2026-MARK map8k_bs4k_r1 rmmod 1791437347498478256
+[61585.557539] ldm_validate_partition_table(): Disk read failed.
+[61585.557542] Dev nvme1n1: unable to read RDB block 0
+[61585.557546]  nvme1n1: unable to read partition table
+[61585.557549] nvme1n1: partition table beyond EOD, truncated
+[61585.609360] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+[61585.609407] NVMeVirt: KSC2026: stats part=0 host_pgs=1022622 gc_pgs=3063323 gc_cnt=3609 free_lines=2
+[61585.609409] NVMeVirt: KSC2026: stats part=1 host_pgs=1023088 gc_pgs=3065941 gc_cnt=3612 free_lines=1
+[61585.609410] NVMeVirt: KSC2026: stats part=2 host_pgs=1023126 gc_pgs=3065884 gc_cnt=3612 free_lines=1
+[61585.609410] NVMeVirt: KSC2026: stats part=3 host_pgs=1023106 gc_pgs=3064893 gc_cnt=3611 free_lines=1
+[61585.650061] NVMeVirt: Virtual NVMe device closed

@@ -1,0 +1,13 @@
+variant:      plain
+map_unit:     4k (4096 B)
+bs:           4k (4096 B)
+rep:          3
+device:       /dev/nvme1n1  size=12040984064 B  model=CSL_Virt_MN_01
+module:       3ad06805b9ccd4229934c00cbae79c88668476c0885e9671f7e159a3ac0cf43d  nvmev_map4k.ko
+insmod:       insmod nvmev_map4k.ko memmap_start=12G memmap_size=12G cpus=3,4,5
+fio:          fio --output-format=json --output=fio.json job.fio
+loadavg:      2.82 1.80 0.98 4/237 18393
+start:        2026-10-08T05:16:47+00:00
+end:          2026-10-08T05:17:13+00:00
+fio_exit:     0
+chmodel_msgs: 0   (NVMeVirt '[chmodel_request]' errors seen by dmesg -W: NAND backlog beyond the channel-model window)

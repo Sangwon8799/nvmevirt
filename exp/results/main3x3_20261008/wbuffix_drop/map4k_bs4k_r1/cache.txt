@@ -1,0 +1,5 @@
+cache_mode: drop
+before: MemFree:10824012 kB Buffers:13136 kB Cached:343492 kB Dirty:852 kB Writeback:0 kB 
+dropped: sync; echo 3 > /proc/sys/vm/drop_caches at 2026-10-08T07:01:47+00:00
+after:  MemFree:10933864 kB Buffers:2008 kB Cached:246664 kB Dirty:152 kB Writeback:0 kB 
+pre_fio: MemFree:10929444 kB Buffers:3600 kB Cached:252556 kB Dirty:208 kB Writeback:0 kB 

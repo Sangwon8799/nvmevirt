@@ -1,0 +1,9 @@
+[61942.951776] KSC2026-MARK map16k_bs4k_r1 fio-start 1791437705333233713
+[61948.620062] NVMeVirt: KSC2026: first GC part=2 victim line=6 vpc=171 ipc=341 free_lines=2 host_pgs=194560
+[61948.624739] NVMeVirt: KSC2026: first GC part=1 victim line=8 vpc=164 ipc=348 free_lines=2 host_pgs=194560
+[61948.635508] NVMeVirt: KSC2026: first GC part=3 victim line=10 vpc=168 ipc=344 free_lines=2 host_pgs=194560
+[61948.636182] NVMeVirt: KSC2026: first GC part=0 victim line=4 vpc=169 ipc=343 free_lines=2 host_pgs=194560
+[61965.081395] systemd-journald[350]: /dev/kmsg buffer overrun, some messages lost. (Dropped 6330 similar message(s))
+[61966.808829] systemd-journald[350]: /dev/kmsg buffer overrun, some messages lost.
+[61968.132131] systemd-journald[350]: /dev/kmsg buffer overrun, some messages lost.
+[62004.226593] KSC2026-MARK map16k_bs4k_r1 fio-end

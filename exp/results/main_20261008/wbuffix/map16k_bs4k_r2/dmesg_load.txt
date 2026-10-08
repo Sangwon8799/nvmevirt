@@ -1,0 +1,39 @@
+[66169.545671] KSC2026-MARK map16k_bs4k_r2 insmod 1791441931955504607
+[66169.566135] NVMeVirt: Version 1.10 for >> Samsung 970 Pro SSD <<
+[66169.566156] NVMeVirt: Storage: 0x300100000-0x600000000 (12287 MiB)
+[66169.579301] NVMeVirt: Total Capacity(GiB,MiB)=3,3072 chs=2 luns=4 lines=384 blk-size(MiB,KiB)=2,2048 line-size(MiB,KiB)=8,8192
+[66169.579306] NVMeVirt: KSC2026: mapping unit=16384 B, flash page=32768 B, oneshot page=32768 B, pgs_per_blk=128, blks_per_pl=384, write buffer=1048576 B
+[66169.584151] NVMeVirt: [chmodel_init] bandwidth 800 max_credits 26 tx_time 152
+[66169.587333] NVMeVirt: [chmodel_init] bandwidth 800 max_credits 26 tx_time 152
+[66169.587345] NVMeVirt: [chmodel_init] bandwidth 3360 max_credits 110 tx_time 36
+[66169.587719] NVMeVirt: pqueue: Copyright (c) 2014, Volkan Yazıcı <volkan.yazici@gmail.com>. All rights reserved.
+[66169.587721] NVMeVirt: Init FTL instance with 2 channels (196608 pages)
+[66169.590841] NVMeVirt: [chmodel_init] bandwidth 800 max_credits 26 tx_time 152
+[66169.593961] NVMeVirt: [chmodel_init] bandwidth 800 max_credits 26 tx_time 152
+[66169.593971] NVMeVirt: [chmodel_init] bandwidth 3360 max_credits 110 tx_time 36
+[66169.594301] NVMeVirt: Init FTL instance with 2 channels (196608 pages)
+[66169.597427] NVMeVirt: [chmodel_init] bandwidth 800 max_credits 26 tx_time 152
+[66169.600498] NVMeVirt: [chmodel_init] bandwidth 800 max_credits 26 tx_time 152
+[66169.600510] NVMeVirt: [chmodel_init] bandwidth 3360 max_credits 110 tx_time 36
+[66169.600847] NVMeVirt: Init FTL instance with 2 channels (196608 pages)
+[66169.603932] NVMeVirt: [chmodel_init] bandwidth 800 max_credits 26 tx_time 152
+[66169.606998] NVMeVirt: [chmodel_init] bandwidth 800 max_credits 26 tx_time 152
+[66169.607009] NVMeVirt: [chmodel_init] bandwidth 3360 max_credits 110 tx_time 36
+[66169.607337] NVMeVirt: Init FTL instance with 2 channels (196608 pages)
+[66169.607340] NVMeVirt: FTL physical space: 12883853312, logical space: 12040984403 (physical/logical * 100 = 107)
+[66169.607341] NVMeVirt: KSC2026: WBUF_FIX=1 GC_STATS=1
+[66169.607341] NVMeVirt: ns 0/1: size 11483 MiB
+[66169.607372] PCI host bridge to bus 0001:10
+[66169.607373] pci_bus 0001:10: root bus resource [io  0x0000-0xffff]
+[66169.607375] pci_bus 0001:10: root bus resource [mem 0x00000000-0x3fffffffffff]
+[66169.607376] pci_bus 0001:10: root bus resource [bus 00-ff]
+[66169.607381] pci 0001:10:00.0: [0c51:0110] type 00 class 0x010802 PCIe Endpoint
+[66169.607383] pci 0001:10:00.0: BAR 0 [mem 0x300000000-0x300003fff 64bit]
+[66169.607385] pci 0001:10:00.0: enabling Extended Tags
+[66169.607489] NVMeVirt: Virtual PCI bus created (node 0)
+[66169.607705] NVMeVirt: nvmev_io_worker_0 started on cpu 4 (node 0)
+[66169.607873] NVMeVirt: nvmev_io_worker_1 started on cpu 5 (node 0)
+[66169.607881] NVMeVirt: nvmev_dispatcher started on cpu 3 (node 0)
+[66169.607974] nvme nvme1: pci function 0001:10:00.0
+[66169.611734] nvme nvme1: 1/0/0 default/read/poll queues
+[66169.613632] NVMeVirt: Virtual NVMe device created

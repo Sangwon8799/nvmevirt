@@ -1,0 +1,22 @@
+[2026-10-08 06:57:34] experiment=pre_cache_test variant=wbuffix maps=[4k 16k] bss=[4k] reps=2 cache_modes=[nodrop drop] only_bs_lt_map=0
+[2026-10-08 06:57:34] fio: libaio randwrite iodepth=32 runtime=8s ramp_time=0s log=500ms; insmod memmap_start=12G memmap_size=12G cpus=3,4,5
+[2026-10-08 06:57:34] 8 runs, about 2 min
+environment snapshot -> /home/dccearth/jsw/KSC2026/nvmevirt/exp/results/pre_cache_test/env_before
+[2026-10-08 06:57:34] === [1/8] variant=wbuffix cache=nodrop map=4k bs=4k rep=1 ===
+    -> 1553.2 MiB/s, 397629 IOPS, clat mean 79.5 us
+[2026-10-08 06:57:49] === [2/8] variant=wbuffix cache=drop map=4k bs=4k rep=1 ===
+    -> 1550.6 MiB/s, 396965 IOPS, clat mean 79.6 us
+[2026-10-08 06:58:05] === [3/8] variant=wbuffix cache=nodrop map=16k bs=4k rep=1 ===
+    -> 431.4 MiB/s, 110435 IOPS, clat mean 288.7 us
+[2026-10-08 06:58:20] === [4/8] variant=wbuffix cache=drop map=16k bs=4k rep=1 ===
+    -> 431.3 MiB/s, 110417 IOPS, clat mean 288.7 us
+[2026-10-08 06:58:35] === [5/8] variant=wbuffix cache=drop map=4k bs=4k rep=2 ===
+    -> 1552.2 MiB/s, 397358 IOPS, clat mean 79.5 us
+[2026-10-08 06:58:51] === [6/8] variant=wbuffix cache=nodrop map=4k bs=4k rep=2 ===
+    -> 1553.2 MiB/s, 397617 IOPS, clat mean 79.5 us
+[2026-10-08 06:59:06] === [7/8] variant=wbuffix cache=drop map=16k bs=4k rep=2 ===
+    -> 430.8 MiB/s, 110280 IOPS, clat mean 289.1 us
+[2026-10-08 06:59:22] === [8/8] variant=wbuffix cache=nodrop map=16k bs=4k rep=2 ===
+    -> 430.8 MiB/s, 110274 IOPS, clat mean 289.1 us
+environment snapshot -> /home/dccearth/jsw/KSC2026/nvmevirt/exp/results/pre_cache_test/env_after_wbuffix
+[2026-10-08 06:59:37] finished: /home/dccearth/jsw/KSC2026/nvmevirt/exp/results/pre_cache_test/wbuffix_nodrop /home/dccearth/jsw/KSC2026/nvmevirt/exp/results/pre_cache_test/wbuffix_drop

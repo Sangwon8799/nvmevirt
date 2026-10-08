@@ -1,0 +1,27 @@
+$ sudo dmidecode -t memory   (filtered; recorded 2026-10-08 during the experiment)
+----
+Size: No Module Installed
+Locator: Controller0-DIMMA1
+Type: Unknown
+----
+Size: 8 GB
+Locator: Controller0-DIMMA2
+Type: DDR5
+Speed: 5600 MT/s
+Manufacturer: Samsung
+Part Number: M323R1GB4DB0-CWMOL  
+Configured Memory Speed: 5600 MT/s
+----
+Size: No Module Installed
+Locator: Controller1-DIMMB1
+Type: Unknown
+----
+Size: 16 GB
+Locator: Controller1-DIMMB2
+Type: DDR5
+Speed: 5600 MT/s
+Manufacturer: Samsung
+Part Number: M323R2GA3DB0-CWMOL  
+Configured Memory Speed: 5600 MT/s
+	Maximum Capacity: 128 GB
+	Number Of Devices: 4

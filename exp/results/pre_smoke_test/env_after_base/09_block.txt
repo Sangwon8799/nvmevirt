@@ -1,0 +1,18 @@
+$ lsblk -o NAME,SIZE,MODEL,TYPE,MOUNTPOINT
+NAME          SIZE MODEL                     TYPE MOUNTPOINT
+nvme0n1     465.8G Samsung SSD 980 PRO 500GB disk 
+├─nvme0n1p1     1G                           part /boot/efi
+└─nvme0n1p2 464.7G                           part /
+
+$ bash -c ls -l /dev/nvme*
+crw------- 1 root root 241,   0 Oct  7 12:22 /dev/nvme0
+brw-rw---- 1 root disk 259,   0 Oct  7 12:22 /dev/nvme0n1
+brw-rw---- 1 root disk 259,   1 Oct  7 12:22 /dev/nvme0n1p1
+brw-rw---- 1 root disk 259,   2 Oct  7 12:22 /dev/nvme0n1p2
+crw------- 1 root root  10, 261 Oct  7 12:22 /dev/nvme-fabrics
+
+$ sudo -n nvme list
+Node                  Generic               SN                   Model                                    Namespace  Usage                      Format           FW Rev  
+--------------------- --------------------- -------------------- ---------------------------------------- ---------- -------------------------- ---------------- --------
+/dev/nvme0n1          /dev/ng0n1            S5GYNF0RA00765J      Samsung SSD 980 PRO 500GB                0x1        100.67  GB / 500.11  GB    512   B +  0 B   3B2QGXA7
+

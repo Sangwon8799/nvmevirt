@@ -1,0 +1,11 @@
+[2026-10-08 05:17:13] experiment=gcstats_ab variant=base maps=[4k] bss=[4k] reps=3 only_bs_lt_map=0
+[2026-10-08 05:17:13] fio: libaio randwrite iodepth=32 runtime=20s ramp_time=0s log=500ms; insmod memmap_start=12G memmap_size=12G cpus=3,4,5
+[2026-10-08 05:17:13] 3 runs, about 1 min
+[2026-10-08 05:17:13] === [1/3] variant=base map=4k bs=4k rep=1 ===
+    -> 724.3 MiB/s, 185428 IOPS, clat mean 171.5 us
+[2026-10-08 05:17:41] === [2/3] variant=base map=4k bs=4k rep=2 ===
+    -> 726.0 MiB/s, 185864 IOPS, clat mean 171.1 us
+[2026-10-08 05:18:09] === [3/3] variant=base map=4k bs=4k rep=3 ===
+    -> 724.4 MiB/s, 185444 IOPS, clat mean 171.5 us
+environment snapshot -> /home/dccearth/jsw/KSC2026/nvmevirt/exp/results/gcstats_ab/env_after_base
+[2026-10-08 05:18:36] finished: /home/dccearth/jsw/KSC2026/nvmevirt/exp/results/gcstats_ab/base

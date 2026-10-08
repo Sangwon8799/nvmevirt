@@ -1,0 +1,53 @@
+[67707.206092] KSC2026-MARK map16k_bs16k_r1 insmod 1791443469657205135
+[67707.223837] NVMeVirt: Version 1.10 for >> Samsung 970 Pro SSD <<
+[67707.223850] NVMeVirt: Storage: 0x300100000-0x600000000 (12287 MiB)
+[67707.235363] NVMeVirt: Total Capacity(GiB,MiB)=3,3072 chs=2 luns=4 lines=384 blk-size(MiB,KiB)=2,2048 line-size(MiB,KiB)=8,8192
+[67707.235371] NVMeVirt: KSC2026: mapping unit=16384 B, flash page=32768 B, oneshot page=32768 B, pgs_per_blk=128, blks_per_pl=384, write buffer=1048576 B
+[67707.240706] NVMeVirt: [chmodel_init] bandwidth 800 max_credits 26 tx_time 152
+[67707.244018] NVMeVirt: [chmodel_init] bandwidth 800 max_credits 26 tx_time 152
+[67707.244029] NVMeVirt: [chmodel_init] bandwidth 3360 max_credits 110 tx_time 36
+[67707.244403] NVMeVirt: pqueue: Copyright (c) 2014, Volkan Yazıcı <volkan.yazici@gmail.com>. All rights reserved.
+[67707.244404] NVMeVirt: Init FTL instance with 2 channels (196608 pages)
+[67707.247531] NVMeVirt: [chmodel_init] bandwidth 800 max_credits 26 tx_time 152
+[67707.250630] NVMeVirt: [chmodel_init] bandwidth 800 max_credits 26 tx_time 152
+[67707.250641] NVMeVirt: [chmodel_init] bandwidth 3360 max_credits 110 tx_time 36
+[67707.250972] NVMeVirt: Init FTL instance with 2 channels (196608 pages)
+[67707.254076] NVMeVirt: [chmodel_init] bandwidth 800 max_credits 26 tx_time 152
+[67707.257134] NVMeVirt: [chmodel_init] bandwidth 800 max_credits 26 tx_time 152
+[67707.257144] NVMeVirt: [chmodel_init] bandwidth 3360 max_credits 110 tx_time 36
+[67707.257500] NVMeVirt: Init FTL instance with 2 channels (196608 pages)
+[67707.260566] NVMeVirt: [chmodel_init] bandwidth 800 max_credits 26 tx_time 152
+[67707.263622] NVMeVirt: [chmodel_init] bandwidth 800 max_credits 26 tx_time 152
+[67707.263633] NVMeVirt: [chmodel_init] bandwidth 3360 max_credits 110 tx_time 36
+[67707.263963] NVMeVirt: Init FTL instance with 2 channels (196608 pages)
+[67707.263966] NVMeVirt: FTL physical space: 12883853312, logical space: 12040984403 (physical/logical * 100 = 107)
+[67707.263967] NVMeVirt: KSC2026: WBUF_FIX=1 GC_STATS=1
+[67707.263967] NVMeVirt: ns 0/1: size 11483 MiB
+[67707.263997] PCI host bridge to bus 0001:10
+[67707.263999] pci_bus 0001:10: root bus resource [io  0x0000-0xffff]
+[67707.264000] pci_bus 0001:10: root bus resource [mem 0x00000000-0x3fffffffffff]
+[67707.264001] pci_bus 0001:10: root bus resource [bus 00-ff]
+[67707.264007] pci 0001:10:00.0: [0c51:0110] type 00 class 0x010802 PCIe Endpoint
+[67707.264009] pci 0001:10:00.0: BAR 0 [mem 0x300000000-0x300003fff 64bit]
+[67707.264011] pci 0001:10:00.0: enabling Extended Tags
+[67707.264113] NVMeVirt: Virtual PCI bus created (node 0)
+[67707.264331] NVMeVirt: nvmev_io_worker_0 started on cpu 4 (node 0)
+[67707.265684] NVMeVirt: nvmev_io_worker_1 started on cpu 5 (node 0)
+[67707.265694] NVMeVirt: nvmev_dispatcher started on cpu 3 (node 0)
+[67707.265762] nvme nvme1: pci function 0001:10:00.0
+[67707.269391] nvme nvme1: 1/0/0 default/read/poll queues
+[67707.270412] NVMeVirt: Virtual NVMe device created
+[67708.338003] tee (64714): drop_caches: 3
+[67713.372651] KSC2026-MARK map16k_bs16k_r1 fio-start 1791443475831900712
+[67719.327578] NVMeVirt: KSC2026: first GC part=0 victim line=135 vpc=468 ipc=44 free_lines=2 host_pgs=194560
+[67719.328870] NVMeVirt: KSC2026: first GC part=1 victim line=144 vpc=465 ipc=47 free_lines=2 host_pgs=194560
+[67719.349052] NVMeVirt: KSC2026: first GC part=2 victim line=218 vpc=466 ipc=46 free_lines=2 host_pgs=194560
+[67719.349265] NVMeVirt: KSC2026: first GC part=3 victim line=182 vpc=466 ipc=46 free_lines=2 host_pgs=194560
+[67774.410733] KSC2026-MARK map16k_bs16k_r1 fio-end
+[67774.414734] KSC2026-MARK map16k_bs16k_r1 rmmod 1791443536880642709
+[67774.479930] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+[67774.480010] NVMeVirt: KSC2026: stats part=0 host_pgs=403651 gc_pgs=859917 gc_cnt=2087 free_lines=2
+[67774.480012] NVMeVirt: KSC2026: stats part=1 host_pgs=403760 gc_pgs=859310 gc_cnt=2086 free_lines=2
+[67774.480013] NVMeVirt: KSC2026: stats part=2 host_pgs=403724 gc_pgs=855816 gc_cnt=2079 free_lines=2
+[67774.480013] NVMeVirt: KSC2026: stats part=3 host_pgs=403297 gc_pgs=852654 gc_cnt=2072 free_lines=2
+[67774.507678] NVMeVirt: Virtual NVMe device closed
