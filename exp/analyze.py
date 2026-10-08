@@ -87,9 +87,19 @@ def gc_info(rdir):
     return out
 
 
+def kernel_warnings(rdir):
+    """Kernel log lines that look like problems, other than NVMeVirt's own channel-model messages."""
+    log = rdir / "kernel.log"
+    if not log.exists():
+        return 0
+    pat = re.compile(r"WARNING|almost full|timeout|reset|Oops|BUG|Disk read failed|I/O error", re.I)
+    return sum(1 for ln in log.read_text(errors="replace").splitlines()
+               if "[chmodel_request]" not in ln and "KSC2026" not in ln and pat.search(ln))
+
+
 def collect(exp_dir):
     rows, series = [], {}
-    for vdir in sorted(p for p in exp_dir.iterdir() if p.is_dir() and p.name not in ("analysis",) and not p.name.startswith("env_")):
+    for vdir in sorted(p for p in exp_dir.iterdir() if p.is_dir() and p.name not in ("analysis", "plots") and not p.name.startswith("env_")):
         for rdir in sorted(vdir.iterdir()):
             m = RUN_RE.match(rdir.name)
             if not m or not (rdir / "DONE").exists():
@@ -119,7 +129,7 @@ def collect(exp_dir):
                 "bw_last20s_MiBps": float(bw[t > dur - LATE_S].mean()) if len(t) else float("nan"),
                 "dev_bytes": dev_size,
                 "chmodel_msgs": int(meta_value(meta, "chmodel_msgs").split()[0]) if meta_value(meta, "chmodel_msgs") else 0,
-                "kernel_warn": int(meta_value(meta, "kernel_warn").split()[0]) if meta_value(meta, "kernel_warn") else 0,
+                "kernel_warn": kernel_warnings(rdir),
             }
             g = gc_info(rdir)
             if "gc_onset_s" in g:
@@ -138,6 +148,48 @@ def collect(exp_dir):
             rows.append(row)
             series[(vdir.name, m["map"], m["bs"], int(m["rep"]))] = (t, bw, row.get("gc_onset_s"))
     return rows, series
+
+
+def collect_failed(exp_dir):
+    """Runs with a FAILED marker (fio I/O errors / watchdog): kept out of the aggregates, reported separately."""
+    out = []
+    for vdir in sorted(p for p in exp_dir.iterdir() if p.is_dir() and p.name not in ("analysis", "plots") and not p.name.startswith("env_")):
+        for rdir in sorted(vdir.iterdir()):
+            m = RUN_RE.match(rdir.name)
+            if not m or not (rdir / "FAILED").exists() or (rdir / "DONE").exists():
+                continue
+            row = {"variant": vdir.name, "map": m["map"], "bs": m["bs"], "rep": int(m["rep"])}
+            first = (rdir / "FAILED").read_text(errors="replace").splitlines()[0]
+            for k in ("fio_exit", "fio_json_error"):
+                mm = re.search(rf"{k}=(\S+)", first)
+                row[k] = mm.group(1) if mm else ""
+            try:
+                w = json.loads((rdir / "fio.json").read_text())["jobs"][0]["write"]
+                row.update({"runtime_s": w["runtime"] / 1e3, "bw_MiBps": w["bw"] / 1024.0, "iops": w["iops"],
+                            "written_GiB": w["io_bytes"] / 2**30})
+            except (OSError, ValueError, KeyError, IndexError):
+                pass
+            meta = (rdir / "meta.txt").read_text() if (rdir / "meta.txt").exists() else ""
+            cm = meta_value(meta, "chmodel_msgs")
+            row["chmodel_msgs"] = int(cm.split()[0]) if cm and cm.split()[0].isdigit() else ""
+            t0, marks = None, {}
+            log = (rdir / "kernel.log").read_text(errors="replace") if (rdir / "kernel.log").exists() else ""
+            for line in log.splitlines():
+                mt = DMESG_TS.match(line)
+                if not mt:
+                    continue
+                ts = float(mt.group(1))
+                if "fio-start" in line and t0 is None:
+                    t0 = ts
+                for key, pat in (("t_gc_s", "KSC2026: first GC"), ("t_queue_full_warn_s", "__allocate_work_queue_entry"),
+                                 ("t_nvme_timeout_s", "timeout, aborting"), ("t_reset_s", "reset controller"),
+                                 ("t_disable_s", "disable controller"), ("t_first_io_error_s", "I/O error, dev")):
+                    if pat in line and key not in marks:
+                        marks[key] = ts
+            for key, ts in marks.items():
+                row[key] = round(ts - t0, 3) if t0 is not None else ""
+            out.append(row)
+    return out
 
 
 def aggregate(rows):
@@ -311,6 +363,9 @@ def main():
     agg = aggregate(rows)
     write_csv(out / "summary_runs.csv", rows)
     write_csv(out / "summary_agg.csv", agg)
+    failed = collect_failed(exp_dir)
+    if failed:
+        write_csv(out / "failed_runs.csv", failed)
     for v in sorted({r["variant"] for r in rows}):
         line_vs_bs(agg, v, "bw_MiBps", "write bandwidth (MiB/s)",
                    f"Random-write bandwidth, 60 s from a fresh device ({v}; mean ± std, n=3)",
@@ -326,7 +381,7 @@ def main():
                 f"Total write amplification ({v})", out / f"fig_waf_heatmap_{v}.png")
         timeseries_grid(series, v, out / f"fig_timeseries_{v}.png")
     variant_compare(agg, out / "fig_variant_compare.png")
-    print(f"{len(rows)} runs -> {out}")
+    print(f"{len(rows)} runs, {len(failed)} failed -> {out}")
 
 
 if __name__ == "__main__":

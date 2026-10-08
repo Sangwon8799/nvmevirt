@@ -9,7 +9,8 @@
 #   - runs as the normal user; privileged steps use 'sudo -n' (/etc/sudoers.d/nvmevirt-exp)
 #   - modules must be built first:  bash build_modules.sh [VARIANT]
 #   - results: exp/results/<EXP_NAME>/<VARIANT>/map<MAP>_bs<BS>_r<REP>/
-#   - re-running the same command resumes: runs with a DONE marker are skipped
+#   - re-running the same command resumes: runs with a DONE or FAILED marker are skipped
+#   - a run whose fio fails (I/O errors, watchdog) gets a FAILED marker and the experiment continues
 #   - ONLY_BS_LT_MAP=1 runs only the (MAP, BS) pairs with BS < MAP
 set -euo pipefail
 source "$(dirname "$0")/common.sh"
@@ -21,6 +22,7 @@ OUT="$EXP_DIR/results/$EXP"
 VOUT="$OUT/$VARIANT"
 MOD_DIR="$EXP_DIR/modules/$VARIANT"
 UPSTREAM_COMMIT=61c90f7758cbd9545b4a4727e89377bf88eab060
+FIO_GRACE="${FIO_GRACE:-180}"   # seconds allowed beyond RUNTIME before fio is stopped (nvme timeout 30 s + abort + reset)
 read -r -a MAP_LIST <<< "$MAPS"
 read -r -a BS_LIST <<< "$BSS"
 ME="$(id -un)"
@@ -86,9 +88,10 @@ load_nvmev() {   # $1 = mapping unit (4k ...), $2 = run dir  -> sets DEV
 }
 
 run_one() {   # $1 = mapping unit, $2 = bs, $3 = repetition
-	local map="$1" bs="$2" r="$3" rdir size rc=0 tag_fio tag_un n_chm n_warn
+	local map="$1" bs="$2" r="$3" rdir size rc=0 tag_fio tag_un n_chm n_warn fio_pid waited=0 jerr
 	rdir="$VOUT/map${map}_bs${bs}_r${r}"
 	if [[ -f "$rdir/DONE" ]]; then log "skip (already done): $(basename "$rdir")"; return 0; fi
+	if [[ -f "$rdir/FAILED" ]]; then log "skip (failed earlier, see FAILED): $(basename "$rdir")"; return 0; fi
 	rm -rf "$rdir"
 	mkdir -p "$rdir"
 	log "=== [$((++RUN_IDX))/$N_RUNS] variant=$VARIANT map=$map bs=$bs rep=$r ==="
@@ -120,13 +123,27 @@ run_one() {   # $1 = mapping unit, $2 = bs, $3 = repetition
 		echo "insmod:       insmod nvmev_map$map.ko memmap_start=$MEMMAP_START memmap_size=$MEMMAP_SIZE cpus=$CPUS"
 		echo "fio:          fio --output-format=json --output=fio.json job.fio"
 		echo "loadavg:      $(cat /proc/loadavg)"
+		echo "git_head:     $(git -C "$REPO_DIR" rev-parse HEAD)"
 		echo "start:        $(date -Is)"
 	} > "$rdir/meta.txt"
 
 	sleep "$SETTLE_SEC"
 	tag_fio="$(basename "$rdir") fio-start $(date +%s%N)"
 	kmark "$tag_fio"                 # GC onset is measured from this kernel-log timestamp
-	sudo -n fio --output-format=json --output="$rdir/fio.json" "$rdir/job.fio" > "$rdir/fio_stdout.txt" 2>&1 || rc=$?
+	sudo -n fio --output-format=json --output="$rdir/fio.json" "$rdir/job.fio" > "$rdir/fio_stdout.txt" 2>&1 &
+	fio_pid=$!
+	while kill -0 "$fio_pid" 2> /dev/null; do   # watchdog: fio must end within RUNTIME + FIO_GRACE
+		sleep 1
+		waited=$((waited + 1))
+		if (( waited == RUNTIME + FIO_GRACE )); then
+			echo "watchdog: SIGTERM to fio after ${waited} s" >> "$rdir/fio_stdout.txt"
+			kill -TERM "$fio_pid" 2> /dev/null || true
+		elif (( waited == RUNTIME + FIO_GRACE + 60 )); then
+			echo "watchdog: SIGKILL to fio after ${waited} s" >> "$rdir/fio_stdout.txt"
+			kill -KILL "$fio_pid" 2> /dev/null || true
+		fi
+	done
+	wait "$fio_pid" || rc=$?
 	kmark "$(basename "$rdir") fio-end"
 
 	tag_un="$(basename "$rdir") rmmod $(date +%s%N)"
@@ -147,17 +164,24 @@ run_one() {   # $1 = mapping unit, $2 = bs, $3 = repetition
 		s == 2 { print > un }' "$rdir/kernel.log"
 	touch "$rdir/dmesg_run.txt" "$rdir/dmesg_unload.txt"
 	n_chm=$(cat "$rdir/chmodel_msgs.txt" 2> /dev/null || echo NA)
-	n_warn=$(grep -v KSC2026 "$rdir/kernel.log" | grep -ciE 'WARNING|almost full|No free entry|timeout|reset|Oops|BUG' || true)
+	n_warn=$(grep -v -e KSC2026 -e '\[chmodel_request\]' "$rdir/kernel.log" \
+		| grep -ciE 'WARNING|almost full|timeout|reset|Oops|BUG|I/O error|Disk read failed' || true)
 	{
 		echo "end:          $(date -Is)"
 		echo "fio_exit:     $rc"
 		echo "chmodel_msgs: $n_chm   (NVMeVirt '[chmodel_request]' errors seen by dmesg -W: NAND backlog beyond the channel-model window)"
-		echo "kernel_warn:  $n_warn   (lines matching WARNING|almost full|No free entry|timeout|reset|Oops|BUG in kernel.log)"
+		echo "kernel_warn:  $n_warn   (kernel.log lines matching WARNING|almost full|timeout|reset|Oops|BUG|I/O error|Disk read failed, excluding chmodel/KSC2026 lines)"
 	} >> "$rdir/meta.txt"
 
-	[[ $rc -eq 0 ]] || die "fio failed (exit $rc) — see $rdir"
-	python3 -c 'import json,sys; j=json.load(open(sys.argv[1])); assert j["jobs"][0]["error"] == 0' "$rdir/fio.json" \
-		|| die "fio.json is invalid or reports an error — see $rdir"
+	jerr=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["jobs"][0]["error"])' "$rdir/fio.json" 2> /dev/null || echo NA)
+	if [[ $rc -ne 0 || "$jerr" != 0 ]]; then
+		{
+			echo "fio_exit=$rc fio_json_error=$jerr kernel_warn=$n_warn chmodel_msgs=$n_chm"
+			grep -v -e '\[chmodel_request\]' "$rdir/kernel.log" | grep -iE 'almost full|timeout|reset|disable|I/O error' | head -20
+		} > "$rdir/FAILED"
+		log "FAILED (fio exit $rc, json error $jerr) — kept as $rdir/FAILED, continuing"
+		return 0
+	fi
 	if grep -v KSC2026 "$rdir/dmesg_run.txt" | grep -qiE 'error|bug|oops|warn'; then
 		log "WARNING: kernel messages during the run — see $rdir/dmesg_run.txt"
 	fi
@@ -206,8 +230,9 @@ log "$N_RUNS runs, about $(( N_RUNS * (RUNTIME + SETTLE_SEC + 8) / 60 )) min"
 cp "$MOD_DIR/SHA256SUMS" "$VOUT/modules_SHA256SUMS"
 cp "$MOD_DIR/build_info.txt" "$VOUT/modules_build_info.txt"
 cp "$EXP_DIR/jobs/randwrite.fio.in" "$VOUT/randwrite.fio.in"
-git -C "$REPO_DIR" rev-parse HEAD > "$VOUT/git_head.txt"
-git -C "$REPO_DIR" diff -M "$UPSTREAM_COMMIT" HEAD -- nvmevirt > "$VOUT/nvmevirt_vs_upstream.diff"
+echo "$(date -Is) $(git -C "$REPO_DIR" rev-parse HEAD)" >> "$VOUT/git_head.txt"   # one line per invocation
+MOVE_COMMIT=$(git -C "$REPO_DIR" log --format=%H --grep='^Move NVMeVirt sources into nvmevirt/' -1)
+git -C "$REPO_DIR" diff "$MOVE_COMMIT" HEAD -- nvmevirt > "$VOUT/nvmevirt_vs_upstream.diff"   # upstream + pure rename -> HEAD
 git -C "$REPO_DIR" diff -- nvmevirt > "$VOUT/nvmevirt_uncommitted.diff"
 
 for r in $(seq "$REPS"); do
