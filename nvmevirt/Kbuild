@@ -1,6 +1,6 @@
 # Select one of the targets to build
-CONFIG_NVMEVIRT_NVM := y
-#CONFIG_NVMEVIRT_SSD := y
+#CONFIG_NVMEVIRT_NVM := y
+CONFIG_NVMEVIRT_SSD := y
 #CONFIG_NVMEVIRT_ZNS := y
 #CONFIG_NVMEVIRT_KV := y
 
@@ -12,6 +12,15 @@ ccflags-$(CONFIG_NVMEVIRT_NVM) += -DBASE_SSD=INTEL_OPTANE
 nvmev-$(CONFIG_NVMEVIRT_NVM) += simple_ftl.o
 
 ccflags-$(CONFIG_NVMEVIRT_SSD) += -DBASE_SSD=SAMSUNG_970PRO
+# FTL mapping unit in bytes (KSC2026): make MAPPING_UNIT=16384  (default 4096 = upstream behaviour)
+MAPPING_UNIT ?= 4096
+ccflags-$(CONFIG_NVMEVIRT_SSD) += -DMAPPING_UNIT=$(MAPPING_UNIT)
+# KSC2026 optional switches (default 0 = upstream behaviour):
+#   WBUF_FIX=1  a write occupies whole mapping units in the write buffer (what is released after programming)
+#   GC_STATS=1  log the first GC and per-partition host/GC page counters (printed at rmmod)
+WBUF_FIX ?= 0
+GC_STATS ?= 0
+ccflags-$(CONFIG_NVMEVIRT_SSD) += -DKSC_WBUF_FIX=$(WBUF_FIX) -DKSC_GC_STATS=$(GC_STATS)
 nvmev-$(CONFIG_NVMEVIRT_SSD) += ssd.o conv_ftl.o pqueue/pqueue.o channel_model.o
 
 ccflags-$(CONFIG_NVMEVIRT_ZNS) += -DBASE_SSD=WD_ZN540

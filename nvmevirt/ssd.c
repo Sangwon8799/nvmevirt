@@ -70,7 +70,7 @@ void ssd_init_params(struct ssdparams *spp, uint64_t capacity, uint32_t nparts)
 	uint64_t blk_size, total_size;
 
 	spp->secsz = LBA_SIZE;
-	spp->secs_per_pg = 4096 / LBA_SIZE; // pg == 4KB
+	spp->secs_per_pg = MAPPING_UNIT / LBA_SIZE; // pg == mapping unit (KSC2026, upstream: 4KB)
 	spp->pgsz = spp->secsz * spp->secs_per_pg;
 
 	spp->nchs = NAND_CHANNELS;
@@ -169,6 +169,9 @@ void ssd_init_params(struct ssdparams *spp, uint64_t capacity, uint32_t nparts)
 		spp->tt_lines, BYTE_TO_MB(spp->pgs_per_blk * spp->pgsz),
 		BYTE_TO_KB(spp->pgs_per_blk * spp->pgsz), BYTE_TO_MB(spp->pgs_per_line * spp->pgsz),
 		BYTE_TO_KB(spp->pgs_per_line * spp->pgsz));
+	NVMEV_INFO("KSC2026: mapping unit=%u B, flash page=%u B, oneshot page=%u B, pgs_per_blk=%u, blks_per_pl=%u, write buffer=%u B\n",
+		   spp->pgsz, FLASH_PAGE_SIZE, ONESHOT_PAGE_SIZE, spp->pgs_per_blk, spp->blks_per_pl,
+		   GLOBAL_WB_SIZE);
 }
 
 static void ssd_init_nand_page(struct nand_page *pg, struct ssdparams *spp)

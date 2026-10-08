@@ -65,6 +65,14 @@ struct conv_ftl {
 	struct write_pointer gc_wp;
 	struct line_mgmt lm;
 	struct write_flow_control wfc;
+#if KSC_GC_STATS
+	/* KSC2026 statistics (only touched by the dispatcher thread) */
+	uint32_t ksc_part;
+	bool ksc_gc_seen;
+	uint64_t ksc_host_pgs; /* mapping-unit pages written by host commands */
+	uint64_t ksc_gc_pgs; /* mapping-unit pages copied by GC */
+	uint64_t ksc_gc_cnt; /* victim lines cleaned */
+#endif
 };
 
 void conv_init_namespace(struct nvmev_ns *ns, uint32_t id, uint64_t size, void *mapped_addr,

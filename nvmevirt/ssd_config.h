@@ -74,9 +74,20 @@ enum {
 #define NAND_CHANNELS (8)
 #define LUNS_PER_NAND_CH (2)
 #define PLNS_PER_LUN (1)
+/* KSC2026: FTL mapping unit (bytes), set at build time with make MAPPING_UNIT=<bytes> */
+#ifndef MAPPING_UNIT
+#define MAPPING_UNIT (4096)
+#endif
+/* KSC2026: flash page stays 32 KiB (default); for mapping units larger than 32 KiB
+ * the flash page is set equal to the mapping unit so that FLASH_PAGE_SIZE % pgsz == 0 */
+#if (MAPPING_UNIT > 32768)
+#define FLASH_PAGE_SIZE (MAPPING_UNIT)
+#else
 #define FLASH_PAGE_SIZE KB(32)
+#endif
 #define ONESHOT_PAGE_SIZE (FLASH_PAGE_SIZE * 1)
-#define BLKS_PER_PLN (8192)
+/* KSC2026: 12 GiB storage / 4 partitions / (2 ch x 2 LUN x 1 plane) / 384 = 2 MiB block (default 8192) */
+#define BLKS_PER_PLN (384)
 #define BLK_SIZE (0) /*BLKS_PER_PLN should not be 0 */
 static_assert((ONESHOT_PAGE_SIZE % FLASH_PAGE_SIZE) == 0);
 

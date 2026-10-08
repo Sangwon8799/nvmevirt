@@ -392,6 +392,13 @@ void conv_init_namespace(struct nvmev_ns *ns, uint32_t id, uint64_t size, void *
 		ssd = kmalloc(sizeof(struct ssd), GFP_KERNEL);
 		ssd_init(ssd, &spp, cpu_nr_dispatcher);
 		conv_init_ftl(&conv_ftls[i], &cpp, ssd);
+#if KSC_GC_STATS
+		conv_ftls[i].ksc_part = i;
+		conv_ftls[i].ksc_gc_seen = false;
+		conv_ftls[i].ksc_host_pgs = 0;
+		conv_ftls[i].ksc_gc_pgs = 0;
+		conv_ftls[i].ksc_gc_cnt = 0;
+#endif
 	}
 
 	/* PCIe, Write buffer are shared by all instances*/
@@ -415,6 +422,7 @@ void conv_init_namespace(struct nvmev_ns *ns, uint32_t id, uint64_t size, void *
 
 	NVMEV_INFO("FTL physical space: %lld, logical space: %lld (physical/logical * 100 = %d)\n",
 		   size, ns->size, cpp.pba_pcent);
+	NVMEV_INFO("KSC2026: WBUF_FIX=%d GC_STATS=%d\n", KSC_WBUF_FIX, KSC_GC_STATS);
 
 	return;
 }
@@ -434,6 +442,14 @@ void conv_remove_namespace(struct nvmev_ns *ns)
 		conv_ftls[i].ssd->pcie = NULL;
 		conv_ftls[i].ssd->write_buffer = NULL;
 	}
+
+#if KSC_GC_STATS
+	for (i = 0; i < nr_parts; i++) {
+		NVMEV_INFO("KSC2026: stats part=%u host_pgs=%llu gc_pgs=%llu gc_cnt=%llu free_lines=%u\n", i,
+			   conv_ftls[i].ksc_host_pgs, conv_ftls[i].ksc_gc_pgs, conv_ftls[i].ksc_gc_cnt,
+			   conv_ftls[i].lm.free_line_cnt);
+	}
+#endif
 
 	for (i = 0; i < nr_parts; i++) {
 		conv_remove_ftl(&conv_ftls[i]);
@@ -603,6 +619,9 @@ static uint64_t gc_write_page(struct conv_ftl *conv_ftl, struct ppa *old_ppa)
 	uint64_t lpn = get_rmap_ent(conv_ftl, old_ppa);
 
 	NVMEV_ASSERT(valid_lpn(conv_ftl, lpn));
+#if KSC_GC_STATS
+	conv_ftl->ksc_gc_pgs++;
+#endif
 	new_ppa = get_new_page(conv_ftl, GC_IO);
 	/* update maptbl */
 	set_maptbl_ent(conv_ftl, lpn, &new_ppa);
@@ -768,6 +787,15 @@ static int do_gc(struct conv_ftl *conv_ftl, bool force)
 		    conv_ftl->lm.full_line_cnt, conv_ftl->lm.free_line_cnt);
 
 	conv_ftl->wfc.credits_to_refill = victim_line->ipc;
+#if KSC_GC_STATS
+	conv_ftl->ksc_gc_cnt++;
+	if (!conv_ftl->ksc_gc_seen) {
+		conv_ftl->ksc_gc_seen = true;
+		NVMEV_INFO("KSC2026: first GC part=%u victim line=%d vpc=%d ipc=%d free_lines=%u host_pgs=%llu\n",
+			   conv_ftl->ksc_part, victim_line->id, victim_line->vpc, victim_line->ipc,
+			   conv_ftl->lm.free_line_cnt, conv_ftl->ksc_host_pgs);
+	}
+#endif
 
 	/* copy back valid data */
 	for (flashpg = 0; flashpg < spp->flashpgs_per_blk; flashpg++) {
@@ -943,6 +971,7 @@ static bool conv_write(struct nvmev_ns *ns, struct nvmev_request *req, struct nv
 	uint64_t nsecs_latest;
 	uint64_t nsecs_xfer_completed;
 	uint32_t allocated_buf_size;
+	uint64_t wbuf_bytes;
 
 	struct nand_cmd swr = {
 		.type = USER_IO,
@@ -958,8 +987,15 @@ static bool conv_write(struct nvmev_ns *ns, struct nvmev_request *req, struct nv
 		return false;
 	}
 
-	allocated_buf_size = buffer_allocate(wbuf, LBA_TO_BYTE(nr_lba));
-	if (allocated_buf_size < LBA_TO_BYTE(nr_lba))
+#if KSC_WBUF_FIX
+	/* KSC2026: a write occupies whole mapping units in the write buffer; this is also what
+	 * schedule_internal_operation() releases once the flash page is programmed */
+	wbuf_bytes = (end_lpn - start_lpn + 1) * spp->pgsz;
+#else
+	wbuf_bytes = LBA_TO_BYTE(nr_lba);
+#endif
+	allocated_buf_size = buffer_allocate(wbuf, wbuf_bytes);
+	if (allocated_buf_size < wbuf_bytes)
 		return false;
 
 	nsecs_latest =
@@ -993,6 +1029,9 @@ static bool conv_write(struct nvmev_ns *ns, struct nvmev_request *req, struct nv
 		set_rmap_ent(conv_ftl, local_lpn, &ppa);
 
 		mark_page_valid(conv_ftl, &ppa);
+#if KSC_GC_STATS
+		conv_ftl->ksc_host_pgs++;
+#endif
 
 		/* need to advance the write pointer here */
 		advance_write_pointer(conv_ftl, USER_IO);
