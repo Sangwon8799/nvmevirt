@@ -1053,7 +1053,10 @@ dccearth ALL=(root) NOPASSWD: /usr/sbin/insmod, /usr/sbin/rmmod, /usr/bin/fio, /
   - 예: `git show ksc2026-v2:exp/results/main_20261008/base/run.log`, `git checkout ksc2026-v2 -- exp/results/main_20261008/base`.
   - 묶음을 받은 Claude 는 이 이력의 base 결과를 논문 자료로 쓰지 않는다. 사용자가 보려던 실험이 아니다.
 - 그 뒤의 문서 재생성·검증·커밋·태그·push·묶음은 이 절 끝에 적는다.
-@@BASE_TAIL@@
+- 23:5x–익일(10-09) 00:2x KST 검증 워크플로(9.4 절)와 그 지적 26 건 반영.
+- 10-09 00:25 KST 최종 docx 생성(89 쪽; `KSC_PUSH_TAG=ksc2026-v3 … KSC_BASE_REMOVED=23:38`). 렌더링한 PDF 본문에서 base 실측 숫자·「장치 멈춤」·「5.7 절」이 0 건임을 확인했다. 같은 파일을 /home/dccearth/jsw/KSC2026/산출물/ 에 덮어썼다(00:25:51, cmp 로 동일 확인).
+- 10-09 00:26 KST 커밋 5c0a241(「exp: remove the results of the unfixed model (base) at the user's request」; 삭제 378 개 파일, 수정 40 개)과 주석 태그 ksc2026-v3(→ 5c0a241). 커밋 뒤 `git ls-files` 에 main_20261008/base/, pre_smoke_test/, audit_result.json, base 그림, failed_runs.csv 가 0 개임을 확인했다.
+- 이 시점에 forwarded ssh-agent 소켓이 없어 push 하지 못했다. **GitHub 에는 아직 975d408(= base 결과가 든 상태)이 main 이다.** push 결과는 이 항목 아래 줄에 적는다(줄이 없으면 아직 push 전이다). docx 의 「태그 ksc2026-v3 로 push」 문구는 push 뒤에 사실이 된다.
 
 ---------------------------------------------------------------------------------------------------
 
@@ -6059,3 +6062,4 @@ wbuffix 32k 64k r3 | 5.973 | 2130 2125 2115 2124 2120 1609 147 150 167 182 190 1
 - 23:08 sudoers 제거(사용자), ssh -A 재접속. 23:1x 랜덤 bs 8K·64K 기록 검증 워크플로의 지적 30 건 반영(9.3; make_handoff.sh 이력 검사 fail-open 수정 포함). 23:2x 최종 docx(92 쪽), 커밋, 태그 ksc2026-v2, push, 최종 인계 묶음(10.5 절 끝).
 - 23:22 push 1 차 시도 실패(agent 없음) → 23:24 사용자 재접속 뒤 push 성공(main, 태그 ksc2026-v2 = c9dfb23). 최종 인계 묶음 v2_final.
 - 23:33 사용자 요청으로 원본 모델(base) 결과를 문서와 저장소 최신 상태에서 뺐다(1.24, 10.6): 원자료 2 곳, 감사 원본 JSON, 문서의 base 수치·표·그림. 기본 빌드 변형을 wbuffix 로 바꿨다.
+- 10-09 00:2x base 삭제 검증(9.4)과 반영, 최종 docx(89 쪽), 커밋 5c0a241, 태그 ksc2026-v3(로컬; push 는 agent 가 없어 대기).
