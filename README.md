@@ -6,7 +6,7 @@ This is a fork of [snu-csl/nvmevirt](https://github.com/snu-csl/nvmevirt) (upstr
 |---|---|
 | [`nvmevirt/`](nvmevirt/) | NVMeVirt kernel module sources (upstream tree moved one level down, plus the changes listed below) |
 | [`exp/`](exp/) | Experiment scripts, fio job template, analysis and plotting scripts |
-| [`exp/results/`](exp/results/) | Raw results and analysis. `main3x3_20261008/` is the final random-write data set and `seq3x3_20261008/` the sequential-write experiment (models wbuffix and merge). `main_20261008/` is the partial first design, and `pre_*/` holds the pre-checks |
+| [`exp/results/`](exp/results/) | Raw results and analysis. `main3x3_20261008/` is the final random-write data set and `seq3x3_20261008/` the sequential-write experiment (models wbuffix and merge). `randbs_20261008/` adds random-write bs 8k/64k, and `rand3x5_20261008/` is a symlink view (3 mapping units × 5 bs) of those runs plus the primary nodrop runs. `main_20261008/` is the partial first design, and `pre_*/` holds the pre-checks |
 | [`exp/report/`](exp/report/) | Experiment record (`KSC2026_NVMeVirt_매핑단위_실험기록.docx`, Korean), its generator, and the code-audit summary |
 | [`EXPERIMENT_LOG_FOR_CLAUDE.md`](EXPERIMENT_LOG_FOR_CLAUDE.md) | Detailed hand-over log (Korean) |
 
@@ -30,6 +30,7 @@ bash build_modules.sh wbuffix          # make MAPPING_UNIT=<bytes> GC_STATS=1 WB
 tmux new -s ksc2026 'bash run_all.sh main3x3_<date>'   # map 4k/16k/32k × bs 4k/16k/32k × 3 reps × page cache nodrop/drop
 MAPS="4k 16k 32k" bash build_modules.sh merge   # + WBUF_MERGE=1
 tmux new -s ksc2026seq 'bash run_all_seq.sh seq3x3_<date>'   # sequential write, same matrix × {wbuffix, merge}, nomerges=2
+tmux new -s ksc2026rbs 'bash run_all_rand_bs.sh randbs_<date> main3x3_<date>'   # random write bs 8k/64k + combined view rand3x5_<date>
 python3 make_gallery.py results/main3x3_<date>   # every graph of an experiment in one HTML page
 ```
 

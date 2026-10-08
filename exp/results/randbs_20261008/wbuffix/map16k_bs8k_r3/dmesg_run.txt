@@ -1,0 +1,6 @@
+[90338.031625] KSC2026-MARK map16k_bs8k_r3 fio-start 1791466100799833131
+[90343.936464] NVMeVirt: KSC2026: first GC part=2 victim line=2 vpc=183 ipc=329 free_lines=2 host_pgs=194560
+[90343.953977] NVMeVirt: KSC2026: first GC part=1 victim line=8 vpc=171 ipc=341 free_lines=2 host_pgs=194560
+[90343.954121] NVMeVirt: KSC2026: first GC part=3 victim line=10 vpc=179 ipc=333 free_lines=2 host_pgs=194560
+[90344.004238] NVMeVirt: KSC2026: first GC part=0 victim line=4 vpc=177 ipc=335 free_lines=2 host_pgs=194560
+[90399.067092] KSC2026-MARK map16k_bs8k_r3 fio-end

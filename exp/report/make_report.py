@@ -81,6 +81,8 @@ _ap = argparse.ArgumentParser()
 _ap.add_argument("primary")
 _ap.add_argument("--supp")
 _ap.add_argument("--seq")
+_ap.add_argument("--rbs", help="random-write bs 8k/64k runs (results/randbs_*)")
+_ap.add_argument("--rview", help="combined view of the primary nodrop runs + --rbs runs (results/rand3x5_*, link_runs.py)")
 _ap.add_argument("--out")
 _args = _ap.parse_args()
 EXP_DIR = Path(_args.primary).resolve()
@@ -102,12 +104,18 @@ def load_ds(path):
     sizes = sorted({r["map"] for r in runs} | {r["bs"] for r in runs}, key=kib) or list(SIZES)
     return {"dir": d, "name": d.name, "an": an, "agg": load_csv(an / "summary_agg.csv"), "runs": runs,
             "failed": load_csv(an / "failed_runs.csv"), "cache": load_csv(an / "cache_compare.csv"),
-            "variants": sorted({r["variant"] for r in runs}), "sizes": sizes}
+            "variants": sorted({r["variant"] for r in runs}), "sizes": sizes,
+            "maps": sorted({r["map"] for r in runs}, key=kib) or sizes, "bss": sorted({r["bs"] for r in runs}, key=kib) or sizes}
 
 
 PRI = load_ds(EXP_DIR)
 SUP = load_ds(_args.supp)
 SEQ = load_ds(_args.seq)
+RBS = load_ds(_args.rbs)
+RV = load_ds(_args.rview)
+FINDINGS_RBS = [ln.strip() for ln in read(EXPD / "report" / "findings_randbs_ko.txt").splitlines() if ln.strip() and not ln.startswith("#")]
+RBS_N = str(8 + bool(SEQ))            # chapter of the random-write bs 8k/64k experiment
+POST_N = str(8 + bool(SEQ) + bool(RBS))   # chapter "실험 후 상태와 정리"
 AGG, RUNS, AN = PRI["agg"], PRI["runs"], PRI["an"]
 
 
@@ -121,9 +129,9 @@ def agg(variant, mp, bs, ds=None):
 def matrix_rows(variant, metric, nd=1, with_std=True, mask_fn=None, ds=None):
     ds = ds or PRI
     rows = []
-    for mp in ds["sizes"]:
+    for mp in ds["maps"]:
         row = [f"{mp.upper()}"]
-        for bs in ds["sizes"]:
+        for bs in ds["bss"]:
             a = agg(variant, mp, bs, ds)
             if a is None or f"{metric}_mean" not in a or a[f"{metric}_mean"] in ("", None):
                 row.append("–")
@@ -215,12 +223,15 @@ REWRITTEN = {"1d6cd036893f06bfe8aa8f6bb4327239bc4b720f": "e598e75", "a93ef76bbf9
              "2a462a3a518915e37fa313716bc9721801501e28": "949ae38"}
 HEAD_REC = recorded_head(PRI)
 HEAD = git("rev-parse", REWRITTEN.get(HEAD_REC, HEAD_REC)) or HEAD_REC
-HEAD_NOTE = (f" (원자료에 적힌 커밋 1d6cd03·a93ef76 은 같은 코드로 다시 만든 {HEAD[:7]} 이다 — 9 절)" if HEAD_REC in REWRITTEN else "")
+HEAD_NOTE = (f" (원자료에 적힌 커밋 1d6cd03·a93ef76 은 같은 코드로 다시 만든 {HEAD[:7]} 이다 — " + POST_N + " 절)" if HEAD_REC in REWRITTEN else "")
 PUSH_TAG = os.environ.get("KSC_PUSH_TAG", "")            # set once main and the tag are pushed
 SUDOERS_REMOVED = os.environ.get("KSC_SUDOERS_REMOVED", "")   # "HH:MM" KST when /etc/sudoers.d/nvmevirt-exp was removed
 SUP_HEAD = recorded_head(SUP) if SUP else ""
 SEQ_HEAD = git("rev-parse", recorded_head(SEQ)) if SEQ else ""
 SUDOERS_REMOVED2 = os.environ.get("KSC_SUDOERS_REMOVED2", "")  # "HH:MM" KST, removal after the sequential-write experiment
+SUDOERS_REMOVED3 = os.environ.get("KSC_SUDOERS_REMOVED3", "")  # "HH:MM" KST, removal after the random-write bs 8k/64k experiment
+RBS_HEAD = git("rev-parse", recorded_head(RBS)) if RBS else ""
+n_rbs = sum(1 for r in RBS["runs"]) if RBS else 0
 n_pri = {v: sum(1 for r in RUNS if r["variant"] == v) for v in PRI["variants"]}
 n_sup = {v: sum(1 for r in SUP["runs"] if r["variant"] == v) for v in SUP["variants"]} if SUP else {}
 if SEQ:   # original model first, then the merge model
@@ -228,7 +239,7 @@ if SEQ:   # original model first, then the merge model
 n_seq = {v: sum(1 for r in SEQ["runs"] if r["variant"] == v) for v in SEQ["variants"]} if SEQ else {}
 
 R.title("NVMeVirt FTL 매핑 단위 실험 기록서", "KSC 2026 · FTL 매핑 단위 × fio 쓰기 크기 · 랜덤 쓰기(OS 페이지 캐시 drop 비교)"
-        + (" · 순차 쓰기(쓰기 버퍼 병합 모델)" if SEQ else ""))
+        + (" · 순차 쓰기(쓰기 버퍼 병합 모델)" if SEQ else "") + (" · 랜덤 쓰기 bs 8K·64K 추가" if RBS else ""))
 R.table(["항목", "내용"], [
     ["주 데이터셋", f"{EXP} — 매핑 4K·16K·32K × bs 4K·16K·32K × 3 회 × 페이지 캐시 drop/no-drop, wbuffix 모델 "
      f"({' + '.join(f'{v} {n}회' for v, n in n_pri.items())})"],
@@ -236,16 +247,20 @@ R.table(["항목", "내용"], [
                     f"({' + '.join(f'{v} {n}회' for v, n in n_sup.items())}, FAILED {len(SUP['failed'])}회)") if SUP else "–"],
     *([["추가 실험 (순차 쓰기)", f"{SEQ['name']} — 매핑 4K·16K·32K × bs 4K·16K·32K × 3 회, fio 순차 쓰기, 모델 wbuffix·merge, 페이지 캐시 그대로 "
          f"({' + '.join(f'{v} {n}회' for v, n in n_seq.items())}) — 8 절"]] if SEQ else []),
+    *([["추가 실험 (랜덤 쓰기 bs 8K·64K)", f"{RBS['name']} — 매핑 4K·16K·32K × bs 8K·64K × 3 회, wbuffix, 페이지 캐시 그대로 ({n_rbs}회). "
+         f"주 데이터셋 nodrop 의 bs 4K·16K·32K 와 합친 매핑 3 × bs 5 보기: {RV['name'] if RV else '–'} — {RBS_N} 절"]] if RBS else []),
     ["작성일 · 시각 기준", "2026-10-08 · 이 문서의 시각은 모두 KST (서버 시계와 원자료 로그는 UTC = KST − 9 시간)"],
     ["실험 수행", "Sangwon8799 (실험 서버 dccearth), 스크립트 작성·실행·기록: Claude Code (Claude Opus 5.5)"],
     ["저장소", "github.com/Sangwon8799/nvmevirt (main)\n서버: 실험 중 /home/dccearth/jsw/KSC2026/nvmevirt → 실험 후 /home/dccearth/jsw/nvmevirt 로 이동"],
     ["주 데이터셋 소스 커밋", HEAD + HEAD_NOTE],
     *([["순차 쓰기 소스 커밋", SEQ_HEAD + " (주 데이터셋 커밋 + 쓰기 버퍼 병합 모델·순차 쓰기 스크립트)"]] if SEQ else []),
+    *([["랜덤 bs 8K·64K 소스 커밋", RBS_HEAD + " (wbuffix 모듈은 주 데이터셋과 같은 파일)"]] if RBS else []),
     ["NVMeVirt 원본", f"github.com/snu-csl/nvmevirt @ {UPSTREAM[:7]} (2026-05-21)"],
 ], widths=[3.6, 13.4], size=9)
 R.p("이 문서는 실험 시작부터 결과를 얻기까지의 전 과정을 기록한다. 다른 사람이 같은 서버 구성에서 문서만 보고 같은 실험을 다시 할 수 있도록 "
     "환경·버전·바꾼 설정값·사용한 스크립트 전문·실행 순서·결과를 모두 적었다. 진행 중 실험 설계가 한 번 바뀌었으며(1.3 절), 바뀐 최종 설계의 결과가 주 데이터셋이다."
-    + (" 그 뒤 같은 3 × 3 설계로 순차 쓰기를 추가로 측정했다(8 절)." if SEQ else ""), size=9.5)
+    + (" 그 뒤 같은 3 × 3 설계로 순차 쓰기를 추가로 측정했다(8 절)." if SEQ else "")
+    + (f" 이어서 랜덤 쓰기에 bs 8K·64K 를 추가로 측정해 bs 를 5 단계로 넓혔다({RBS_N} 절)." if RBS else ""), size=9.5)
 R.toc()
 R.page_break()
 
@@ -283,9 +298,11 @@ R.table(["시각 (KST)", "내용"], [
     ["16:00:35–", "최종 설계(주 데이터셋) 실행 (17:03:57 완료)"],
     *([["19:53", "사용자 요청: 순차 쓰기도 같은 3 × 3 으로 측정. NVMeVirt 가 매핑 단위보다 작은 쓰기를 쓰기 버퍼에서 합치지 않는 한계(5.5 절)를 설명했고, "
         "사용자가 '원래 모델(wbuffix)과 병합 모델(merge) 둘 다 측정', '페이지 캐시 nodrop 만'을 골랐다"],
-       ["20:01–20:13", "쓰기 버퍼 병합 모델(WBUF_MERGE) 작성 → 에이전트 5 개의 독립 코드 검토(결함 없음, 8.2 절) → 커밋 66446ea, merge 모듈 빌드"],
+       ["19:58–20:13", "쓰기 버퍼 병합 모델(WBUF_MERGE) 작성(19:58–19:59) → 에이전트 5 개의 독립 코드 검토(20:01–20:13, 결함 없음, 8.2 절) → 커밋 66446ea, merge 모듈 빌드"],
        ["20:18–20:23", "사전 점검: 커널 기본 설정에서 블록 계층이 순차 4K 요청을 평균 약 120 KiB 로 합치는 것을 발견 → 순차 쓰기는 nomerges=2 로 측정 (8.3 절)"],
-       ["20:23:24–", "순차 쓰기 실험 실행 (8 절)"]] if SEQ else []),
+       ["20:23:24–21:26:45", "순차 쓰기 실험 실행 (8 절)"]] if SEQ else []),
+    *([["22:08", "사용자 요청: 랜덤 쓰기에 8K·64K 도 측정. 사용자가 'bs 만 추가(매핑은 4K·16K·32K 그대로)', '새 조합만 측정하고 기존 bs 4K·16K·32K 값은 주 데이터셋 nodrop 값을 재사용'을 골랐다"],
+       ["22:11:48–", f"랜덤 쓰기 bs 8K·64K 실험 실행 ({RBS_N} 절)"]] if RBS else []),
 ], widths=[2.8, 14.2], size=8.5, caption="설계 변경 경위")
 if FINDINGS:
     R.h("1.4 결과 요약", 2)
@@ -293,6 +310,9 @@ if FINDINGS:
 if SEQ and FINDINGS_SEQ:
     R.h("1.5 순차 쓰기 추가 실험 결과 요약", 2)
     R.bullets(FINDINGS_SEQ[:6])
+if RBS and FINDINGS_RBS:
+    R.h("1.6 랜덤 쓰기 bs 8K·64K 추가 실험 결과 요약", 2)
+    R.bullets(FINDINGS_RBS[:5])
 
 # ============================================================================ 2
 R.h("2. 실험 환경")
@@ -328,7 +348,7 @@ R.table(["항목", "값"], [
     ["CPU 주파수", f"intel_pstate {env_line('04_cpufreq.txt', r'^(active|passive)')}, governor powersave, EPP balance_performance, "
      f"터보 켜짐(no_turbo={env_line('04_cpufreq.txt', r'^(?:active|passive)\n(\d)')}), 800–5100 MHz (모두 기본값, 바꾸지 않음)"],
     ["THP", env_line("05_memory.txt", r"^(always.*|.*\[madvise\].*)$")],
-    ["콘솔 로그 레벨", "kernel.printk = 4 4 1 7 (기본값) — KERN_ERR 메시지는 tty0 콘솔에도 출력됨 (5.5 절 참고)"],
+    ["콘솔 로그 레벨", "kernel.printk = 4 4 1 7 (기본값) — KERN_ERR 메시지는 tty0 콘솔에도 출력됨 (5.4 절 참고)"],
     ["dmesg 제한", "kernel.dmesg_restrict = 1 → dmesg 는 sudo 로 읽음"],
 ], widths=[3.5, 13.5], size=9, caption="운영체제·커널·부팅 설정")
 R.h("2.3 소프트웨어 버전", 2)
@@ -408,16 +428,21 @@ R.table(["경로", "내용"], [
     ["exp/run_all_6x6.sh", "첫 설계: 빌드 → base 6×6×3 → wbuffix 6×6×3 → 분석 (보조 데이터셋에 사용)"],
     ["exp/run_all_seq.sh", "순차 쓰기: 3×3×3 × {wbuffix, merge}, nomerges=2 → 분석"],
     ["exp/make_gallery.py", "한 실험의 모든 그림을 HTML 한 파일로 모음"],
-    ["exp/report/", "이 문서·인계 기록 생성기 (make_report.py, docx_helpers.py, make_md_results.py, findings_ko.txt, make_handoff.sh), 감사 결과, sudoers 사본, 이 문서(.docx)"],
+    ["exp/run_all_rand_bs.sh", "랜덤 쓰기 bs 8K·64K: 매핑 3 × bs 2 × 3 회 → 분석 → link_runs.py 로 합친 보기 → 분석"],
+    ["exp/link_runs.py", "여러 데이터셋의 회차 폴더를 상대 심볼릭 링크로 모은 보기(view) 데이터셋을 만듦"],
+    ["exp/report/", "이 문서·인계 기록 생성기 (make_report.py, docx_helpers.py, make_md_results.py, findings_ko.txt, findings_seq_ko.txt, make_handoff.sh), 감사 결과, sudoers 사본, 이 문서(.docx)"],
     [f"exp/results/{EXP}/", "주 데이터셋 (wbuffix_nodrop/, wbuffix_drop/, env_before·env_after, analysis/)"],
     [f"exp/results/{SUP['name'] if SUP else 'main_*'}/", "보조 데이터셋 (base/, wbuffix/, env_before·env_after_stop, analysis/)"],
     *([[f"exp/results/{SEQ['name']}/", "순차 쓰기 실험 (wbuffix/, merge/, env_before·env_after, analysis/)"]] if SEQ else []),
+    *([[f"exp/results/{RBS['name']}/", "랜덤 쓰기 bs 8K·64K (wbuffix/, env_before·env_after, analysis/)"]] if RBS else []),
+    *([[f"exp/results/{RV['name']}/", "합친 보기: wbuffix/ 아래 회차는 주 데이터셋 wbuffix_nodrop/ 과 " + (RBS['name'] if RBS else '') + "/wbuffix/ 로 가는 링크 (SOURCES.txt), analysis/·plots/"]] if RV else []),
     ["exp/results/pre_*/", "사전 점검 (스모크 테스트, GC_STATS 영향, 페이지 캐시 drop 시험, 순차 쓰기 점검 pre_seq_*·pre_rand_merge_check)"],
     ["EXPERIMENT_LOG_FOR_CLAUDE.md", "다른 Claude 에게 넘기는 상세 기록(모든 지시·결정·수치)"],
 ], widths=[5.4, 11.6], size=8, caption="저장소 구성")
 R.h("3.3 실행 권한 (sudoers)", 2)
 R.p("insmod·rmmod·블록 장치에 대한 fio·dmesg 는 root 권한이 필요하다. 실험을 무인으로 돌리기 위해 필요한 명령만 비밀번호 없이 쓰도록 규칙을 추가했다"
-    "(14:06 KST 설치, 14:08 /dev/kmsg 추가, 15:55 drop_caches 추가, 18:33 제거" + (", 20:17 순차 쓰기 실험을 위해 다시 설치" if SEQ else "") + "). /dev/kmsg 쓰기는 회차의 시작·끝 표지를 커널 로그에 남겨 NVMeVirt 메시지와 같은 시계로 시간을 재기 위해, "
+    "(14:06 KST 설치, 14:08 /dev/kmsg 추가, 15:55 drop_caches 추가, 18:33 제거" + (", 20:17 순차 쓰기 실험을 위해 다시 설치" if SEQ else "") + (f", {SUDOERS_REMOVED2} 제거" if SEQ and SUDOERS_REMOVED2 else "")
+    + (", 22:11 랜덤 쓰기 bs 8K·64K 실험을 위해 다시 설치" if RBS else "") + (f", {SUDOERS_REMOVED3} 제거" if RBS and SUDOERS_REMOVED3 else "") + "). /dev/kmsg 쓰기는 회차의 시작·끝 표지를 커널 로그에 남겨 NVMeVirt 메시지와 같은 시계로 시간을 재기 위해, "
     "/proc/sys/vm/drop_caches 쓰기는 페이지 캐시 drop 조건에, /sys/block/nvme1n1/queue/nomerges 쓰기는 순차 쓰기 실험에서 블록 계층 요청 병합을 끄는 데(8.1 절) 쓴다.")
 R.code(read(EXPD / "report" / "nvmevirt-exp.sudoers") or "(sudoers 파일 사본 없음)")
 R.code("""# 설치 (저장소 최상위 디렉터리에서; 문법 검사 후 설치)
@@ -555,12 +580,16 @@ if SEQ:
     for v in SEQ["variants"]:
         a, b = run_window(v, SEQ)
         rows42.append([f"순차 · {v}", str(n_seq.get(v, 0)), "반복 r 마다 wbuffix 한 바퀴 → merge 한 바퀴 (바퀴 안: 매핑 4K→32K, bs 4K→32K)", a, b])
+if RBS:
+    for v in RBS["variants"]:
+        a, b = run_window(v, RBS)
+        rows42.append([f"랜덤 bs 8K·64K · {v}", str(n_rbs), "반복 1→3, 매핑 4K→32K, bs 8K→64K", a, b])
 R.table(["데이터셋 · 변형", "완료 회차", "순서", "run.log 첫 시각", "마지막 시각"], rows42,
         widths=[2.8, 1.6, 6.6, 3.0, 3.0], size=8, caption="실행 순서와 시각 (KST)")
 R.p("반복을 바깥 루프에 둬서 시간에 따른 서버 상태 변화가 특정 조합에 몰리지 않게 했다. 회차 하나는 적재·대기·측정·내림을 합쳐 약 70 초 걸린다.")
 R.p("보조 데이터셋 경과: 당시의 exp/run_all.sh(커밋 5769378; 지금의 run_all_6x6.sh 와 주석 한 줄만 다른 같은 내용, 빌드 → base → wbuffix)로 14:20:28 에 시작했으나 "
     "base 21 번째 회차(매핑 32K·bs 16K)에서 가상 장치가 멈춰(5.6 절) 당시 스크립트가 실험을 중단했다(14:46:57). 실패 회차를 FAILED 로 남기고 계속하도록 고친 뒤"
-    "(커밋 2a462a3 → push 전 949ae38 로 다시 만듦, 9 절) `bash run_experiment.sh main_20261008 wbuffix` 로 wbuffix 를 먼저 재개했고(run.log 첫 줄 14:49:14), "
+    "(커밋 2a462a3 → push 전 949ae38 로 다시 만듦, " + POST_N + " 절) `bash run_experiment.sh main_20261008 wbuffix` 로 wbuffix 를 먼저 재개했고(run.log 첫 줄 14:49:14), "
     "15:51:23 에 설계 변경으로 회차 경계에서 멈췄다. 모듈은 14:20 에 한 번 빌드한 것을 끝까지(주 데이터셋 포함) 그대로 썼다(SHA-256 확인).", size=9.5)
 _sums = dict((ln.split()[1], ln.split()[0]) for ln in read(EXP_DIR / (PRI["variants"][0] if PRI["variants"] else "") / "modules_SHA256SUMS").splitlines() if len(ln.split()) == 2)
 if _sums:
@@ -574,6 +603,7 @@ R.code(f"""git clone https://github.com/Sangwon8799/nvmevirt.git nvmevirt && cd 
 git checkout {PUSH_TAG or HEAD[:7]}   # 태그 = 실험 스크립트 {HEAD[:7]}""" + (f" + 순차 쓰기 스크립트·병합 모델 {SEQ_HEAD[:7]}" if SEQ else "") + f""" + 이 문서·생성기·결과
 cd exp
 python3 -m venv .venv && ./.venv/bin/pip install -r requirements.txt
+bash build_modules.sh wbuffix   # make MAPPING_UNIT=<바이트> GC_STATS=1 WBUF_FIX=1 (매핑 단위 6 개; run_all.sh 도 없으면 빌드한다)
 # 3.1 절 GRUB 설정·패키지가 있어야 한다. 3.3 절 sudoers 는 이 clone 의 경로와 내 사용자 이름으로 바꿔 설치한다:
 sed -e "s|/home/dccearth/jsw/nvmevirt/exp/\\*|$(cd .. && pwd)/exp/*|" -e "s|dccearth|$(id -un)|g" report/nvmevirt-exp.sudoers > /tmp/nvmevirt-exp.sudoers   # 장치 이름이 nvme1n1 이 아니면 nomerges 경로도 바꾼다
 sudo visudo -cf /tmp/nvmevirt-exp.sudoers && sudo install -m 0440 -o root -g root /tmp/nvmevirt-exp.sudoers /etc/sudoers.d/nvmevirt-exp
@@ -587,7 +617,7 @@ MAPS="4k 16k" BSS=4k REPS=2 RUNTIME=8 SETTLE_SEC=2 CACHE_MODES="nodrop drop" bas
 ./.venv/bin/python plot.py all --exp results/{EXP}    # 그래프
 """ + (f"""# 순차 쓰기 실험 (8 절): wbuffix 모듈(위에서 빌드) + merge 모듈, 3×3×3×2 = 54 회 (약 64 분)
 MAPS="4k 16k 32k" bash build_modules.sh merge
-tmux new -s ksc2026seq 'bash run_all_seq.sh {SEQ['name']} 2>&1 | tee -a results/{SEQ['name']}.console.log'
+tmux new -s ksc2026seq 'bash run_all_seq.sh {SEQ['name']} 2>&1 | tee -a results/run_all_{SEQ['name']}.log'
 # 순차 쓰기 사전 점검 (8.3 절; 15 s 회차)
 export REPS=1 RUNTIME=15 CACHE_MODES=nodrop
 WORKLOAD=seqwrite NOMERGES= MAPS=16k BSS=4k bash run_experiment.sh pre_seq_blkmerge_default wbuffix
@@ -595,7 +625,10 @@ for v in wbuffix merge; do WORKLOAD=seqwrite NOMERGES=2 MAPS="16k 32k" BSS="4k 1
 for v in wbuffix merge; do WORKLOAD=randwrite NOMERGES= MAPS=16k BSS=4k bash run_experiment.sh pre_rand_merge_check $v; done
 unset REPS RUNTIME CACHE_MODES
 ./.venv/bin/python plot.py all --exp results/{SEQ['name']}
-""" if SEQ else "") + f"""./.venv/bin/python report/make_report.py results/{EXP} --supp results/{_supname}""" + (f" --seq results/{SEQ['name']}" if SEQ else "") + """   # 이 문서 (선택 단계를 건너뛰었으면 해당 인자 생략)""")
+""" if SEQ else "") + (f"""# 랜덤 쓰기 bs 8K·64K ({RBS_N} 절): wbuffix 모듈(위에서 빌드), 매핑 3 × bs 2 × 3 = 18 회 (약 21 분) → 주 데이터셋과 합친 보기
+tmux new -s ksc2026rbs 'bash run_all_rand_bs.sh {RBS['name']} {EXP} {RV['name'] if RV else ''} 2>&1 | tee -a results/run_all_{RBS['name']}.log'
+./.venv/bin/python plot.py all --exp results/{RV['name'] if RV else ''}
+""" if RBS else "") + f"""./.venv/bin/python report/make_report.py results/{EXP} --supp results/{_supname}""" + (f" --seq results/{SEQ['name']}" if SEQ else "") + (f" --rbs results/{RBS['name']} --rview results/{RV['name']}" if RBS and RV else "") + """   # 이 문서 (선택 단계를 건너뛰었으면 해당 인자 생략)""")
 R.p("위 sed 는 3.3 절 규칙의 chown 경로와 사용자 이름을 바꾼다. 5.2 절 스모크 테스트는 당시 매핑 4K·128K × bs 4K·128K 로도 돌렸지만 남은 결과는 128K/4K 1 회뿐이다(5.2 절).", size=9)
 R.h("4.4 결과 파일", 2)
 R.table(["파일 (회차 폴더 exp/results/<EXP>/<변형>_<nodrop|drop>/map<단위>_bs<크기>_r<회>/ — CACHE_MODES=nodrop 단독이면 <변형>/map…/)", "내용"], [
@@ -612,7 +645,7 @@ R.table(["파일 (회차 폴더 exp/results/<EXP>/<변형>_<nodrop|drop>/map<단
     ["dmesg_unload.txt", "rmmod 시 커널 로그 (파티션별 GC 통계; merge 변형은 파티션별 병합 통계도)"],
     ["kernel.log / chmodel_msgs.txt", "회차 전체 커널 로그 (채널 모델 오류는 처음 20 줄만) / 그 오류 줄 수"],
 ], widths=[7.0, 10.0], size=8, caption="회차 폴더의 파일")
-R.p("변형 폴더(<변형>_<nodrop|drop>/ 또는 <변형>/)에는 run.log, git_head.txt, modules_SHA256SUMS, modules_build_info.txt, randwrite.fio.in, "
+R.p("변형 폴더(<변형>_<nodrop|drop>/ 또는 <변형>/)에는 run.log, git_head.txt, modules_SHA256SUMS, modules_build_info.txt, job 틀 <WORKLOAD>.fio.in(랜덤 쓰기 randwrite.fio.in, 순차 쓰기 seqwrite.fio.in), "
     "nvmevirt_vs_upstream.diff, nvmevirt_uncommitted.diff 가 있다. 실험 폴더(exp/results/<EXP>/)에는 env_before/, env_after_<변형>/ (보조 데이터셋은 중단 후 만든 env_after_stop/), "
     "analysis/(analyze.py), plots/(plot.py) 가 있다. 원자료의 시각은 서버 시계 UTC 다.", size=9)
 R.h("4.5 지표 정의", 2)
@@ -695,7 +728,7 @@ R.bullets([
     "코드 감사 에이전트 세 개(쓰기 경로·버퍼, 초기화·기하, GC·타이밍 렌즈)가 모두 독립적으로 같은 결론을 냈고(부록 E), 반박을 시도한 검증 6 회가 모두 핵심을 확인했다(세 건은 세부 수치·범위만 정정).",
 ])
 R.p("수정(WBUF_FIX=1, wbuffix 변형): 할당량을 실제로 프로그램될 매핑 단위 페이지 수에 맞춘다. PCIe·펌웨어 전송 시간 계산에는 원래대로 요청 크기를 쓴다. "
-    "bs ≥ 매핑 단위인 조합에서는 할당량이 원본과 같아서 결과가 바뀌지 않는다(실측으로도 확인 — 6.3 절).")
+    "bs ≥ 매핑 단위인 조합에서는 할당량이 원본과 같아서 결과가 바뀌지 않는다(실측으로도 확인 — 7 절).")
 R.code("""#if KSC_WBUF_FIX
 \t/* KSC2026: a write occupies whole mapping units in the write buffer; this is also what
 \t * schedule_internal_operation() releases once the flash page is programmed */
@@ -721,12 +754,12 @@ R.table(["특성", "내용", "영향"], [
      "GC 전 구간은 NAND 모델을, GC 후 구간은 GC 모델을 반영한다 — 6 절의 GC 전/후 표로 나눠 본다."],
     ["fio randommap 주기 현상", "fio 기본값(norandommap=0)은 한 바퀴(11.21 GiB) 동안 같은 블록을 다시 쓰지 않는다. 첫 바퀴에는 무효 페이지가 없어 GC 가 시작되는 순간(둘째 바퀴 약 0.66 GiB 지점) 희생 line 에 유효 페이지가 거의 가득해 대역폭이 급락하고, "
      "둘째 바퀴가 진행될수록 회복하다가 끝 무렵 첫 바퀴의 line 이 모두 무효가 되며 치솟은 뒤 셋째 바퀴에서 다시 떨어진다.",
-     "60 s 평균에 이 주기가 섞인다. 시계열(6.4 절)을 함께 봐야 한다. GC 구간은 정상 상태가 아니다."],
+     "60 s 평균에 이 주기가 섞인다. 시계열(6.3 절)을 함께 봐야 한다. GC 구간은 정상 상태가 아니다."],
     ["GC 시작 시각 차이", "포맷 직후 60 s 라 조합마다 GC 이전 구간 비율이 다르다.", "60 s 평균과 함께 GC 전/후 BW, 시계열을 같이 본다."],
     ["randrepeat=1", "모든 회차가 같은 난수 순서를 쓴다.", "3 회 반복은 에뮬레이터 타이밍 편차만 담는다."],
     ["작은 쓰기 병합 없음", "매핑 단위보다 작은 쓰기는 명령마다 매핑 단위 페이지 하나를 새로 쓴다. 같은 단위로 이어서 오는 쓰기도 쓰기 버퍼에서 합치지 않는다(원본 동작, base·wbuffix 모두).",
      "랜덤 쓰기에서는 실제 SSD 도 단위를 새로 써야 하므로 영향이 작다(RMW 읽기만 빠짐). 순차 쓰기에서는 결과를 좌우한다 — 8 절에서 병합 모델(merge)과 함께 본다."],
-    ["블록 계층 병합", "커널 기본(mq-deadline, nomerges=0)에서는 인접한 요청을 합친다.", "랜덤 쓰기는 합칠 요청이 거의 없다(15 s 동안 1,144,510 개 중 1 개, 8.3 절). 순차 쓰기는 nomerges=2 로 끄고 측정했다."],
+    ["블록 계층 병합", "커널 기본(mq-deadline, nomerges=0)에서는 인접한 요청을 합친다.", "랜덤 쓰기는 합칠 요청이 거의 없다(15 s 동안 fio 쓰기 1,144,511 개 중 1 개, 8.3 절" + (f"; bs 8K·64K 회차는 요청의 0.054 % 이하, {RBS_N}.1 절" if RBS else "") + "). 순차 쓰기는 nomerges=2 로 끄고 측정했다."],
 ], widths=[3.2, 7.6, 6.2], size=8, caption="해석 시 주의할 모델 특성")
 
 R.h("5.6 발견 2 — base 에서 가상 장치가 멈추는 조합", 2)
@@ -915,7 +948,7 @@ if SEQ:
         "WBUF_MERGE=0 빌드(base·wbuffix)는 이 변경 전과 같은 기계어다(디스어셈블리 비교로 확인).",
     ])
     R.p("코드 검토: 실행 전에 에이전트 4 개가 관점 하나씩(쓰기 버퍼 장부, FTL 상태, 실험에 맞는 모델 동작, 커널 안전성) 독립적으로 읽고, 지적마다 반박 검증 1 개를 두었다(20:01–20:13 KST). "
-        "고칠 결함은 없었다. 장부 로직은 Python 으로 옮겨 무작위 명령 수십만 개로 퍼징했다(위반 없음). 지적 1 건(FUA/FLUSH 가 열린 단위를 내보내지 않음)은 원본과 같은 단순화로 판정되어 주석만 보강했다. "
+        "고칠 결함은 없었다. 장부 로직은 Python 으로 옮겨 무작위 명령 약 180 만 개(매핑 단위 3 종 × 시드 30 × 명령 2 만)로 퍼징했다(위반 없음). 지적 1 건(FUA/FLUSH 가 열린 단위를 내보내지 않음)은 원본과 같은 단순화로 판정되어 주석만 보강했다. "
         "rmmod 때 파티션마다 병합 통계(open·merge·full·evict·direct·still_open)를 찍는다.", size=9.5)
     R.code(_merge_fn_src())
 
@@ -1003,10 +1036,66 @@ if SEQ:
     else:
         R.note("순차 쓰기 분석 결과(analysis/summary_agg.csv)가 아직 없다.")
 
+# ============================================================================ random write, bs 8k/64k
+if RBS:
+    R.h(RBS_N + ". 추가 실험 — 랜덤 쓰기 bs 8K·64K (" + RBS["name"] + ")")
+    R.h(RBS_N + ".1 목적과 설계", 2)
+    R.p("주 데이터셋의 랜덤 쓰기(bs 4K·16K·32K)에 bs 8K 와 64K 를 더해, 매핑 단위 4K·16K·32K 에서 bs 를 5 단계로 본다(사용자 요청, 22:08 KST). "
+        "사용자 선택에 따라 매핑 단위는 그대로 두고 bs 만 늘렸다. 새 조합(매핑 3 × bs 2)만 측정했고, bs 4K·16K·32K 는 주 데이터셋 nodrop 회차를 그대로 쓴다. "
+        "두 데이터셋은 같은 wbuffix 모듈 파일(SHA-256 같음)·같은 fio 설정·같은 절차이며, 블록 계층 설정도 같다(커널 기본값).", size=9.5)
+    R.table(["구분", "값"], [
+        ["새로 잰 조합", f"매핑 단위 4K·16K·32K × fio bs 8K·64K × 3 회 = 18 회 ({RBS['name']}/wbuffix/)"],
+        ["재사용한 조합", f"매핑 4K·16K·32K × bs 4K·16K·32K × 3 회 = 27 회 ({EXP}/wbuffix_nodrop/, 6 절)"],
+        ["합친 보기", (f"{RV['name']}/wbuffix/ — 두 폴더의 회차를 상대 심볼릭 링크로 모은 것(exp/link_runs.py, SOURCES.txt). analyze.py·plot.py 가 보통 데이터셋처럼 읽는다" if RV else "–")],
+        ["fio", "rw=randwrite, libaio, direct=1, iodepth 32, numjobs 1, 60 s, ramp_time 0, randrepeat=1 (주 데이터셋과 같음)"],
+        ["모델·캐시·블록 계층", "wbuffix, 페이지 캐시 그대로(nodrop), nomerges 커널 기본값 (주 데이터셋과 같음)"],
+        ["순서", "반복 1→3, 매핑 4K→32K, bs 8K→64K (run_all_rand_bs.sh)"],
+    ], widths=[3.4, 13.6], size=8.5, caption="랜덤 쓰기 bs 8K·64K 실험 설계")
+    blk = [r for r in RBS["runs"] if r.get("blk_wr_ios") not in ("", None)]
+    if blk:
+        R.p(f"블록 계층 확인: 새 {len(blk)} 회차에서 fio 동안 블록 계층이 합친 요청은 최대 {max(r['blk_wr_merges'] for r in blk):,.0f} 건이고, "
+            f"장치가 받은 평균 요청 크기와 bs 의 차이는 최대 {max(abs(r['blk_avg_req_KiB'] - kib(r['bs'])) for r in blk):.3f} KiB 다.", size=9.5)
+    D = RV or RBS
+    if D and D["agg"]:
+        lt = lambda mp, bs: kib(bs) < kib(mp)  # noqa: E731
+        hdrR = ["매핑 \\ bs"] + [x.upper() + (" †" if x in ("8k", "64k") else "") for x in D["bss"]]
+        WR = [2.4] + [round(14.6 / len(D["bss"]), 2)] * len(D["bss"])
+        R.h(RBS_N + ".2 결과 표 (매핑 3 × bs 5)", 2)
+        R.p("모든 값은 3 회 평균(± 는 표본 표준편차)이다. † 열(bs 8K·64K)이 이번에 잰 값이고, 나머지 열은 주 데이터셋 nodrop 회차(6.1 절 표와 같은 값)다. * 는 bs < 매핑 단위다.", size=9)
+        v0 = D["variants"][0]
+        for metric, nd, std, cap in (("bw_MiBps", 1, True, "쓰기 대역폭 MiB/s, 60 s 평균"), ("iops", 0, False, "IOPS, 60 s 평균"),
+                                     ("clat_mean_us", 1, False, "평균 완료 지연 µs"), ("clat_p99_us", 0, False, "p99 완료 지연 µs"),
+                                     ("waf_total", 2, False, "전체 쓰기 증폭 WAF_total"), ("gc_onset_s", 2, False, "첫 GC 시각 s"),
+                                     ("bw_pre_gc_MiBps", 1, False, "GC 이전 구간 평균 대역폭 MiB/s"), ("bw_post_gc_MiBps", 1, False, "GC 이후 구간 평균 대역폭 MiB/s"),
+                                     ("bw_last20s_MiBps", 1, False, "마지막 20 s 평균 대역폭 MiB/s")):
+            R.table(hdrR, matrix_rows(v0, metric, nd, std, lt, D), widths=WR, size=8.5, caption=f"{cap} — 랜덤 · 매핑 3 × bs 5", align_right_from=1, bold_first_col=True)
+        R.h(RBS_N + ".3 그림", 2)
+        for path, cap in ((D["an"] / f"fig_bw_vs_bs_{v0}.png", "bs 에 따른 랜덤 쓰기 대역폭 (매핑 단위별, 평균 ± 표준편차)"),
+                          (D["an"] / f"fig_bw_heatmap_{v0}.png", "매핑 단위 × bs 평균 대역폭"),
+                          (D["an"] / f"fig_waf_heatmap_{v0}.png", "전체 쓰기 증폭 WAF_total"),
+                          (D["an"] / f"fig_clat_mean_vs_bs_{v0}.png", "평균 완료 지연 (로그 축)"),
+                          (D["an"] / f"fig_timeseries_{v0}.png", "0.5 s 평균 랜덤 쓰기 대역폭 시계열 (3 회 겹침, 점선 = 첫 GC)")):
+            if path.exists():
+                R.figure(path, cap, 16.0 if "timeseries" in path.name else 14.5)
+        R.h(RBS_N + ".4 반복 간 편차", 2)
+        cvr = []
+        for label, ds in (("새로 잰 bs 8K·64K", RBS), ("합친 보기 전체", D)):
+            aa = [a for a in ds["agg"] if a["bw_MiBps_mean"]]
+            if aa:
+                worst = max(aa, key=lambda a: a["bw_MiBps_std"] / a["bw_MiBps_mean"])
+                cvr.append([label, f"{sum(a['bw_MiBps_std'] / a['bw_MiBps_mean'] for a in aa) / len(aa) * 100:.2f} %",
+                            f"{worst['bw_MiBps_std'] / worst['bw_MiBps_mean'] * 100:.2f} %", f"{worst['map'].upper()} / {worst['bs'].upper()}"])
+        R.table(["범위", "평균 변동계수(CV)", "최대 CV", "최대 CV 조합 (매핑/bs)"], cvr, widths=[3.6, 4.0, 3.0, 6.4], size=8.5, caption="대역폭의 반복 간 변동계수")
+        if FINDINGS_RBS:
+            R.h(RBS_N + ".5 관찰", 2)
+            R.bullets(FINDINGS_RBS)
+    else:
+        R.note("랜덤 쓰기 bs 8K·64K 분석 결과가 아직 없다.")
+
 # ============================================================================ 8
-R.h("9. 실험 후 상태와 정리")
+R.h(POST_N + ". 실험 후 상태와 정리")
 diff_rows = []
-for ds in [d for d in (PRI, SUP, SEQ) if d]:
+for ds in [d for d in (PRI, SUP, SEQ, RBS) if d]:
     envb = ds["dir"] / "env_before"
     for ad in sorted(p for p in ds["dir"].iterdir() if p.name.startswith("env_after")):
         for f in sorted(envb.glob("*.txt")):
@@ -1027,15 +1116,16 @@ R.table(["항목", "실험 전", "실험 중", "실험 후"], [
     ["GRUB / 커널 명령줄", "memmap=12G$12G isolcpus=3-5", "변경 없음", "변경 없음"],
     ["nvmev 모듈", "적재 안 됨", "회차마다 적재·내림", "적재 안 됨 (마지막 rmmod)"],
     ["/dev/nvme1n1", "없음", "회차마다 생겼다 사라짐", "없음"],
-    ["/etc/sudoers.d/nvmevirt-exp", "없음", "설치 (3.3 절)" + (" · 18:33 제거 후 순차 쓰기 실험용으로 20:17 다시 설치" if SEQ else ""),
+    ["/etc/sudoers.d/nvmevirt-exp", "없음", "설치 (3.3 절)" + (" · 18:33 제거 후 순차 쓰기 실험용으로 20:17 다시 설치" if SEQ else "") + (" · 랜덤 bs 8K·64K 실험용으로 22:11 다시 설치" if RBS else ""),
      (f"제거함 ({SUDOERS_REMOVED} KST, sudo rm)" if SUDOERS_REMOVED else "아직 설치되어 있음 — 정리 단계에서 제거 예정")
-     + ((f" · 순차 쓰기 실험 후 {SUDOERS_REMOVED2} KST 다시 제거" if SUDOERS_REMOVED2 else " · 순차 쓰기 실험 후 제거 예정") if SEQ else "")],
+     + ((f" · 순차 쓰기 실험 후 {SUDOERS_REMOVED2} KST 다시 제거" if SUDOERS_REMOVED2 else " · 순차 쓰기 실험 후 제거 예정") if SEQ else "")
+     + ((f" · 22:11 다시 설치, 랜덤 bs 8K·64K 실험 후 {SUDOERS_REMOVED3} KST 제거" if SUDOERS_REMOVED3 else " · 22:11 다시 설치, 랜덤 bs 8K·64K 실험 후 제거 예정") if RBS else "")],
     *([["블록 장치 nomerges", "0 (커널 기본)", "순차 쓰기 회차마다 insmod 직후 2", "장치가 rmmod 로 사라져 설정도 없어짐"]] if SEQ else []),
     ["CPU governor / 터보", "powersave / 켬", "변경 없음", "변경 없음"],
     ["NVMeVirt 저장소 위치", "–", "/home/dccearth/jsw/KSC2026/nvmevirt", "/home/dccearth/jsw/nvmevirt 로 이동 (사용자 지시)"],
     ["이전 실험 폴더 /home/dccearth/jsw/exp", "있음 (이전 iodepth 시험 등)", "사용 안 함", "삭제 (사용자 지시; 수치는 인계 기록에 보존)"],
-    ["NVMeVirt 소스·결과·문서", f"원본 {UPSTREAM[:7]}", f"{HEAD[:7]} (3.4 절)" + (f", 순차 쓰기 {SEQ_HEAD[:7]}" if SEQ else ""),
-     (f"GitHub main 과 태그 {PUSH_TAG} 로 push (결과·문서·생성기 포함)" if PUSH_TAG else "push 예정 (작성 시점 origin/main = 5769378)")],
+    ["NVMeVirt 소스·결과·문서", f"원본 {UPSTREAM[:7]}", f"{HEAD[:7]} (3.4 절)" + (f", 순차 쓰기 {SEQ_HEAD[:7]}" if SEQ else "") + (f", 랜덤 bs 8K·64K {RBS_HEAD[:7]}" if RBS else ""),
+     (f"GitHub main 과 태그 {PUSH_TAG} 로 push (결과·문서·생성기 포함)" if PUSH_TAG else f"push 예정 (작성 시점 origin/main = {git('rev-parse', '--short', 'origin/main') or '–'})")],
     ["예약 메모리 내용", "–", "rmmod/insmod 는 FTL 상태만 초기화 (저장 데이터는 지우지 않음)", "이전 회차 데이터가 남아 있음 (쓰기 전용 실험이라 무관)"],
 ], widths=[4.0, 3.6, 5.0, 4.4], size=8, caption="실험 전·중·후 설정 상태")
 R.p("커밋 재작성(모두 첫 push 전, 코드·스크립트는 그대로이고 인계 기록 파일 한 줄만 다름): "
@@ -1045,21 +1135,25 @@ R.p("커밋 재작성(모두 첫 push 전, 코드·스크립트는 그대로이�
     "나머지 50 회차의 a93ef76 = e598e75 / 보조 데이터셋 wbuffix 53 회차의 2a462a3 = 949ae38 / base 21 회차의 5769378 은 그대로.", size=9)
 R.code("""# 실험 후 정리 (서버) — 실제로 실행한 명령
 lsmod | grep nvmev || echo "nvmev not loaded"
-sudo rm /etc/sudoers.d/nvmevirt-exp      # 9 절 표의 시각 (18:33)
-mv /home/dccearth/jsw/KSC2026/nvmevirt /home/dccearth/jsw/nvmevirt
+sudo rm /etc/sudoers.d/nvmevirt-exp      # """ + POST_N + """ 절 표의 시각 (18:33)
+""" + ("""# 순차 쓰기 실험(8 절): 20:17 사용자가 다시 설치(3.3 절 install 명령), 실험 후 사용자가 다시 제거
+sudo rm /etc/sudoers.d/nvmevirt-exp      # """ + (SUDOERS_REMOVED2 or "–") + """ KST
+""" if SEQ else "") + ("""# 랜덤 쓰기 bs 8K·64K 실험(""" + RBS_N + """ 절): 22:11 사용자가 다시 설치, 실험 후 사용자가 다시 제거
+sudo rm /etc/sudoers.d/nvmevirt-exp      # """ + (SUDOERS_REMOVED3 or "–") + """ KST
+""" if RBS else "") + """mv /home/dccearth/jsw/KSC2026/nvmevirt /home/dccearth/jsw/nvmevirt
 rm -rf /home/dccearth/jsw/exp""")
 
 # ============================================================================ appendices
 R.page_break()
 R.h("부록 A. 스크립트 전문")
 for rel in ("exp/common.sh", "exp/build_modules.sh", "exp/run_experiment.sh", "exp/collect_env.sh", "exp/jobs/randwrite.fio.in",
-            "exp/jobs/seqwrite.fio.in", "exp/run_all.sh", "exp/run_all_6x6.sh", "exp/run_all_seq.sh", "exp/analyze.py", "exp/plot.py",
-            "exp/make_gallery.py", "exp/requirements.txt", "exp/.gitignore"):
+            "exp/jobs/seqwrite.fio.in", "exp/run_all.sh", "exp/run_all_6x6.sh", "exp/run_all_seq.sh", "exp/run_all_rand_bs.sh",
+            "exp/link_runs.py", "exp/analyze.py", "exp/plot.py", "exp/make_gallery.py", "exp/requirements.txt", "exp/.gitignore"):
     R.h(f"A. {rel}", 2)
     R.code(read(REPO / rel))
 R.p("부록의 스크립트는 문서를 만든 시점의 작업 트리 내용이다. 랜덤 쓰기 실험 때의 run_experiment.sh·common.sh·analyze.py 는 커밋 " + HEAD[:7] + " 의 것이며, "
     "그 뒤 순차 쓰기용으로 WORKLOAD·NOMERGES·블록 계층 기록·merge 변형을 더했다(기본값은 이전 동작과 같다; git diff " + HEAD[:7] + " " + (SEQ_HEAD[:7] if SEQ else "HEAD") + " -- exp).", size=9)
-R.p("이 문서와 인계 기록을 만드는 exp/report/ 의 make_report.py · docx_helpers.py · make_md_results.py · findings_ko.txt · make_handoff.sh 는 "
+R.p("이 문서와 인계 기록을 만드는 exp/report/ 의 make_report.py · docx_helpers.py · make_md_results.py · findings_ko.txt · findings_seq_ko.txt · make_handoff.sh 는 "
     + (f"태그 {PUSH_TAG} 의 커밋에 있다" if PUSH_TAG else "작업 트리에 있다(커밋 예정)") + "(분량상 생략).", size=9)
 R.page_break()
 R.h("부록 B. NVMeVirt 변경 diff 전문 (원본 61c90f7 대비)")
@@ -1079,7 +1173,7 @@ for f in sorted(ENV_B.glob("*.txt")):
     R.code(read(f), max_lines=160)
 R.page_break()
 R.h("부록 D. 회차별 원자료")
-for ds in [d for d in (PRI, SUP, SEQ) if d]:
+for ds in [d for d in (PRI, SUP, SEQ, RBS) if d]:
     if not ds["runs"]:
         continue
     rows = []

@@ -1,0 +1,43 @@
+[2026-10-08 13:11:48] experiment=randbs_20261008 variant=wbuffix maps=[4k 16k 32k] bss=[8k 64k] reps=3 cache_modes=[nodrop] only_bs_lt_map=0
+[2026-10-08 13:11:48] fio: libaio randwrite iodepth=32 runtime=60s ramp_time=0s log=500ms; insmod memmap_start=12G memmap_size=12G cpus=3,4,5
+[2026-10-08 13:11:48] block layer: nomerges=kernel default
+[2026-10-08 13:11:48] 18 runs, about 21 min
+environment snapshot -> /home/dccearth/jsw/nvmevirt/exp/results/randbs_20261008/env_before
+[2026-10-08 13:11:48] === [1/18] variant=wbuffix cache=nodrop map=4k bs=8k rep=1 ===
+    -> 438.1 MiB/s, 56081 IOPS, clat mean 569.4 us
+[2026-10-08 13:12:59] === [2/18] variant=wbuffix cache=nodrop map=4k bs=64k rep=1 ===
+    -> 486.3 MiB/s, 7781 IOPS, clat mean 4109.8 us
+[2026-10-08 13:14:09] === [3/18] variant=wbuffix cache=nodrop map=16k bs=8k rep=1 ===
+    -> 217.3 MiB/s, 27809 IOPS, clat mean 1149.4 us
+[2026-10-08 13:15:20] === [4/18] variant=wbuffix cache=nodrop map=16k bs=64k rep=1 ===
+    -> 486.3 MiB/s, 7780 IOPS, clat mean 4109.9 us
+[2026-10-08 13:16:30] === [5/18] variant=wbuffix cache=nodrop map=32k bs=8k rep=1 ===
+    -> 131.9 MiB/s, 16882 IOPS, clat mean 1894.1 us
+[2026-10-08 13:17:40] === [6/18] variant=wbuffix cache=nodrop map=32k bs=64k rep=1 ===
+    -> 447.1 MiB/s, 7154 IOPS, clat mean 4470.1 us
+[2026-10-08 13:18:51] === [7/18] variant=wbuffix cache=nodrop map=4k bs=8k rep=2 ===
+    -> 437.2 MiB/s, 55963 IOPS, clat mean 570.6 us
+[2026-10-08 13:20:01] === [8/18] variant=wbuffix cache=nodrop map=4k bs=64k rep=2 ===
+    -> 486.3 MiB/s, 7782 IOPS, clat mean 4109.5 us
+[2026-10-08 13:21:11] === [9/18] variant=wbuffix cache=nodrop map=16k bs=8k rep=2 ===
+    -> 217.5 MiB/s, 27835 IOPS, clat mean 1148.3 us
+[2026-10-08 13:22:22] === [10/18] variant=wbuffix cache=nodrop map=16k bs=64k rep=2 ===
+    -> 486.5 MiB/s, 7784 IOPS, clat mean 4108.4 us
+[2026-10-08 13:23:32] === [11/18] variant=wbuffix cache=nodrop map=32k bs=8k rep=2 ===
+    -> 131.8 MiB/s, 16874 IOPS, clat mean 1895.1 us
+[2026-10-08 13:24:42] === [12/18] variant=wbuffix cache=nodrop map=32k bs=64k rep=2 ===
+    -> 447.1 MiB/s, 7154 IOPS, clat mean 4470.2 us
+[2026-10-08 13:25:53] === [13/18] variant=wbuffix cache=nodrop map=4k bs=8k rep=3 ===
+    -> 435.7 MiB/s, 55771 IOPS, clat mean 572.6 us
+[2026-10-08 13:27:03] === [14/18] variant=wbuffix cache=nodrop map=4k bs=64k rep=3 ===
+    -> 486.3 MiB/s, 7781 IOPS, clat mean 4109.7 us
+[2026-10-08 13:28:14] === [15/18] variant=wbuffix cache=nodrop map=16k bs=8k rep=3 ===
+    -> 217.2 MiB/s, 27800 IOPS, clat mean 1149.8 us
+[2026-10-08 13:29:24] === [16/18] variant=wbuffix cache=nodrop map=16k bs=64k rep=3 ===
+    -> 486.5 MiB/s, 7783 IOPS, clat mean 4108.6 us
+[2026-10-08 13:30:34] === [17/18] variant=wbuffix cache=nodrop map=32k bs=8k rep=3 ===
+    -> 132.1 MiB/s, 16913 IOPS, clat mean 1890.8 us
+[2026-10-08 13:31:45] === [18/18] variant=wbuffix cache=nodrop map=32k bs=64k rep=3 ===
+    -> 447.2 MiB/s, 7155 IOPS, clat mean 4469.8 us
+environment snapshot -> /home/dccearth/jsw/nvmevirt/exp/results/randbs_20261008/env_after_wbuffix
+[2026-10-08 13:32:55] finished: /home/dccearth/jsw/nvmevirt/exp/results/randbs_20261008/wbuffix

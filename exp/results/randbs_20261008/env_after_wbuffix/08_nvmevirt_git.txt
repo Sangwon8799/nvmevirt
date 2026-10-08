@@ -1,0 +1,36 @@
+$ git -C /home/dccearth/jsw/nvmevirt rev-parse HEAD
+a86fc8790f7b82121fed2a27d76bf93074a32f0a
+
+$ git -C /home/dccearth/jsw/nvmevirt log --oneline -15
+a86fc87 exp: sequential-write results; random-write bs 8k/64k scripts
+66446ea exp: sequential-write experiment and write-buffer merge model
+cd1fe2b log: record the push (main = tag ksc2026-final = c742c67) and the final hand-over bundle
+c742c67 exp: results, analysis and experiment record (KSC2026 final)
+e598e75 exp: final 3x3 design with OS page-cache comparison
+949ae38 exp: keep going when a run fails; plot tool; report generators
+5769378 exp: scripts for the KSC2026 mapping-unit experiment
+c02b9fd nvmevirt: KSC2026 mapping-unit configuration
+d508610 Move NVMeVirt sources into nvmevirt/ subdirectory
+61c90f7 Merge pull request #72 from duckhanson/fix/zns-append-return-slba
+b48962a Merge pull request #71 from enkerewpo/fix
+e808a49 zns: return allocated SLBA in CQE for Zone Append commands
+d9b62a2 fix: add E820_TYPE_RESERVED_KERN check and fixed access out-of-bound bug
+a6a4252 misc: fixed miscellaneous bugs
+c8ef01d dma: support async DMA processing
+
+$ git -C /home/dccearth/jsw/nvmevirt status --porcelain
+ M EXPERIMENT_LOG_FOR_CLAUDE.md
+ M exp/build_modules.sh
+ M exp/make_gallery.py
+ M exp/report/findings_seq_ko.txt
+ M exp/report/make_report.py
+ M exp/run_all_seq.sh
+?? exp/results/randbs_20261008/
+?? exp/results/run_all_randbs_20261008.log
+
+$ git -C /home/dccearth/jsw/nvmevirt remote -v
+origin	git@github.com:Sangwon8799/nvmevirt.git (fetch)
+origin	git@github.com:Sangwon8799/nvmevirt.git (push)
+upstream	https://github.com/snu-csl/nvmevirt.git (fetch)
+upstream	https://github.com/snu-csl/nvmevirt.git (push)
+

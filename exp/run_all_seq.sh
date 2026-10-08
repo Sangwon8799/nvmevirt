@@ -14,7 +14,9 @@ export NOMERGES="${NOMERGES:-2}"   # the device must see the fio bs: no block-la
 [[ -f modules/merge/SHA256SUMS ]] || bash build_modules.sh merge
 for r in 1 2 3; do
 	for v in wbuffix merge; do
-		REPS=$r bash run_experiment.sh "$EXP" "$v"   # runs with a DONE marker are skipped, so this adds repetition r
+		# runs with a DONE marker are skipped, so this adds repetition r (the "N runs" / "[i/N]" in the log count
+		# repetitions 1..r, so each call ends at about [9/N] — expected)
+		REPS=$r bash run_experiment.sh "$EXP" "$v"
 	done
 done
 ./.venv/bin/python analyze.py "results/$EXP"

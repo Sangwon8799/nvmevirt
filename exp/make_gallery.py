@@ -63,7 +63,9 @@ GROUPS = [
 
 TITLE = {"main3x3_20261008": "주 데이터셋 — 매핑 4K·16K·32K × bs 4K·16K·32K × 3 회 × 페이지 캐시 drop/no-drop (wbuffix)",
          "main_20261008": "보조 데이터셋 — 첫 설계 6×6 중 측정한 부분 (base 20 회 + 실패 1, wbuffix 53 회)",
-         "seq3x3_20261008": "순차 쓰기 추가 실험 — 매핑 4K·16K·32K × bs 4K·16K·32K × 3 회 × 모델 wbuffix / merge (쓰기 버퍼 병합)"}.get(EXP.name, EXP.name)
+         "seq3x3_20261008": "순차 쓰기 추가 실험 — 매핑 4K·16K·32K × bs 4K·16K·32K × 3 회 × 모델 wbuffix / merge (쓰기 버퍼 병합)",
+         "randbs_20261008": "랜덤 쓰기 bs 8K·64K 추가 실험 — 매핑 4K·16K·32K × bs 8K·64K × 3 회 (wbuffix, 페이지 캐시 그대로)",
+         "rand3x5_20261008": "랜덤 쓰기 매핑 3 × bs 5 — 주 데이터셋 nodrop(bs 4K·16K·32K) + randbs_20261008(bs 8K·64K) 를 합친 보기 (wbuffix)"}.get(EXP.name, EXP.name)
 
 
 def img(path):
