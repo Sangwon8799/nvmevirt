@@ -17,11 +17,13 @@
   - EXPERIMENT_LOG_FOR_CLAUDE.md — 이 파일(진입점)
   - README_FIRST.txt — 짧은 안내
   - MANIFEST.txt — 모든 파일의 sha256·크기
-  - repo/ — 실험 서버 저장소의 작업 트리(묶음 시점, 커밋 안 된 것 포함). .git·exp/.venv·*.ko 는 빠져 있다.
+  - repo/ — 실험 서버 저장소의 작업 트리(묶음 시점, 커밋 안 된 것 포함). .git·exp/.venv·*.ko·gallery_*.html 은 빠져 있다.
     - repo/nvmevirt/ (NVMeVirt 소스), repo/exp/ (스크립트), repo/exp/results/ (모든 원자료·분석 CSV·그림), repo/exp/report/ (보고서 생성기, 감사 결과)
     - repo/exp/results/ 의 데이터셋: main3x3_20261008(랜덤 쓰기 주 데이터셋), main_20261008(첫 설계, 부분), seq3x3_20261008(순차 쓰기, wbuffix·merge), randbs_20261008(랜덤 쓰기 bs 8K·64K), rand3x5_20261008(랜덤 쓰기 매핑 3 × bs 5 보기), pre_*(사전 점검).
-    - rand3x5_20261008/wbuffix/ 아래 회차 폴더 45 개는 상대 심볼릭 링크다(→ ../../main3x3_20261008/wbuffix_nodrop/… 와 ../../randbs_20261008/wbuffix/…; 목록은 SOURCES.txt). tar 를 그대로 풀면 링크가 유지된다. 링크를 지원하지 않는 곳에 풀었다면 `python3 link_runs.py results/rand3x5_20261008 results/main3x3_20261008/wbuffix_nodrop results/randbs_20261008/wbuffix` 로 다시 만든다(repo/exp 에서).
-    - results/<EXP>/gallery_<EXP>.html 은 그 실험의 모든 그림을 한 파일에 모은 것이다(사람이 보기 위한 것, git 에는 없음).
+    - rand3x5_20261008/wbuffix/ 아래 회차 폴더 45 개는 상대 심볼릭 링크다(→ ../../main3x3_20261008/wbuffix_nodrop/… 와 ../../randbs_20261008/wbuffix/…; 목록은 SOURCES.txt). tar 를 그대로 풀면 링크가 유지된다.
+      - 링크만 빠졌고 링크를 만들 수 있는 곳이라면 repo/exp 에서 `python3 link_runs.py results/rand3x5_20261008 results/main3x3_20261008/wbuffix_nodrop results/randbs_20261008/wbuffix` 로 다시 만든다.
+      - 링크를 만들 수 없는 곳이라면 복사한다: `rm -rf results/rand3x5_20261008/wbuffix && mkdir -p results/rand3x5_20261008/wbuffix && cp -r results/main3x3_20261008/wbuffix_nodrop/map*_bs*_r* results/randbs_20261008/wbuffix/map*_bs*_r* results/rand3x5_20261008/wbuffix/`. analyze.py·plot.py 는 실제 폴더도 똑같이 읽는다.
+    - 실험 서버의 results/<EXP>/gallery_<EXP>.html(그 실험의 모든 그림을 한 파일에 모은 것, 사람이 보기 위한 것)은 크기 때문에 git 과 묶음에 넣지 않았다. 같은 그림이 analysis/·plots/ 에 PNG 로 있고, `python3 make_gallery.py results/<EXP>` 로 다시 만들 수 있다.
   - repo.gitbundle — 전체 git 이력. `git clone repo.gitbundle repo_git` 으로 풀면 커밋·diff 를 볼 수 있다. git_log.txt 는 `git log --stat --all` 사본이다.
   - materials/ — 논문 PDF 4 개, 산출물/(NVMeVirt 설정조사 보고서 docx/pdf/pptx/csv), text/(모든 자료의 텍스트 추출본)
     - 연구 계획 흐름.docx 는 서버 로그인 정보가 들어 있어 넣지 않았다. 그 줄을 지운 텍스트본 materials/text/「연구 계획 흐름 (redacted).txt」만 있다.
@@ -59,7 +61,7 @@
 ## 0. 현재 상태 요약 (STATUS)
 
 - 묶음을 받았다면 먼저 server_state/state.txt 로 묶음 시점의 진행률을 확인한다. 이 절은 최종 갱신 시점의 요약이다.
-- **추가 실험 2 — 랜덤 쓰기 bs 8K·64K (randbs_20261008 + 합친 보기 rand3x5_20261008; 22:08 KST 사용자 요청, 22:11 KST 시작)**. 지시는 1.19–1.21 절, 설계는 6.7 절, 해석은 8.8 절, 진행은 10.5 절, 수치는 11.4·11.5 절에 있다.
+- **추가 실험 2 — 랜덤 쓰기 bs 8K·64K (randbs_20261008 + 합친 보기 rand3x5_20261008; 22:08 KST 사용자 요청, 22:11 KST 시작)**. 지시는 1.20–1.23 절, 설계는 6.7 절, 해석은 8.8 절, 진행은 10.5 절, 수치는 11.4·11.5 절에 있다.
   - 설계: 매핑 4K·16K·32K × fio bs 8K·64K × 3 회 = 18 회, wbuffix, randwrite, nodrop, 블록 계층 커널 기본값(주 데이터셋과 같은 설정·같은 모듈 파일).
   - bs 4K·16K·32K 는 다시 재지 않고 주 데이터셋 nodrop 회차를 쓴다(사용자 선택). exp/link_runs.py 가 두 데이터셋의 회차를 results/rand3x5_20261008/wbuffix/ 에 상대 심볼릭 링크로 모으고(SOURCES.txt), analyze.py·plot.py 는 이 보기를 매핑 3 × bs 5 데이터셋처럼 읽는다.
   - 진행 상태: 22:11:48–22:32:55 KST 에 18/18 회 DONE 으로 끝났다. FAILED 0, chmodel 0, kernel_warn 0 이다. 블록 계층 merges 는 요청의 0.054 % 이하다. analyze.py(randbs·rand3x5), link_runs.py(45 회 링크), plot.py all, make_gallery.py 까지 마쳤다. 상세는 10.5 절, 해석은 8.8 절, 수치는 11.4·11.5 절에 있다.
@@ -67,7 +69,8 @@
     - bs 8K 는 437.0 / 217.3 / 131.9 MiB/s(매핑 4K 대비 −50.3 / −69.8 %), bs 64K 는 486.3 / 486.4 / 447.1 MiB/s(+0.02 / −8.1 %)다.
     - 결과는 bs/매핑 비율로 거의 정해진다. 비율이 같으면 대역폭이 3 % 안에서 같고 WAF 도 같다(예: 16K/8K 217.3 vs 32K/16K 219.6 MiB/s, WAF 5.90 vs 5.96).
     - bs ≥ 매핑 10 조합은 416–486 MiB/s(매핑 4K 대비 −12.6 ~ +0.02 %), bs < 매핑 5 조합은 같은 매핑의 bs = 매핑 값의 0.16–0.52 배다.
-  - sudoers 는 22:11 에 사용자가 다시 설치했다. 제거는 22:3x 에 사용자에게 요청했다. 결과는 10.5 절 끝에 적는다.
+  - sudoers 는 22:11 에 사용자가 다시 설치했고, 23:08 KST 에 사용자가 제거했다(10.5 절). 지금 서버에 sudoers 규칙은 없다.
+  - 기록 검증(9.3 절)까지 마쳤다. 순차 쓰기와 이 실험의 결과·문서는 GitHub main 과 태그 **ksc2026-v2** 에 있다(push 확인은 10.5 절 끝). 랜덤 쓰기 주 데이터셋만 담은 앞선 태그는 ksc2026-final(c742c67)이다.
 - **추가 실험 — 순차 쓰기 (seq3x3_20261008; 19:53 KST 사용자 요청, 20:23 KST 시작)**. 지시·결정은 1.13–1.18 절, 코드는 5.6 절, 설계는 6.6 절, 사전 점검은 7.1 절, 발견은 8.5–8.7 절, 코드 검토는 9.1 절, 진행은 10.4 절, 전체 수치는 11.3 절(자동 생성)에 있다.
   - 설계: 매핑 4K·16K·32K × fio bs 4K·16K·32K × 3 회 × 모델 {wbuffix, merge}. fio rw=write(순차), 페이지 캐시 nodrop 만, 블록 계층 병합 끔(nomerges=2). 54 회. 결과 폴더 `results/seq3x3_20261008/{wbuffix,merge}/`.
   - wbuffix = 랜덤 쓰기 주 데이터셋과 같은 모듈 파일(SHA-256 같음). merge = wbuffix + 쓰기 버퍼 병합(WBUF_MERGE=1, 이 세션에서 새로 만든 코드, 커밋 66446ea). 매핑 단위보다 작은 쓰기를 파티션마다 열린 매핑 단위 하나에 모았다가, 가득 차면 flash 에 쓴다.
@@ -77,7 +80,7 @@
     - 원래 모델(wbuffix)의 bs < 매핑: 16K/4K 334.9, 32K/4K 209.5, 32K/16K 369.0 MiB/s 다. 같은 bs 의 매핑 4K 대비 −84.0 / −90.0 / −83.5 % 이고, WAF 는 5.40 / 9.15 / 3.40 이다. NVMeVirt 가 작은 쓰기를 합치지 않기 때문이다.
     - 병합 모델(merge)의 bs < 매핑: 2,094.4 / 2,094.6 / 2,232.2 MiB/s 로, 매핑 4K 대비 +0.37 / +0.38 / −0.02 % 다. WAF 는 1.000 이다. 쓰기 버퍼가 작은 쓰기를 합치면 순차 쓰기에서 매핑 단위를 키워도 손실이 없다.
     - 랜덤 쓰기 대비 순차(merge)는 bs ≥ 매핑에서 4.6–5.3 배, bs < 매핑에서 10.2–30.7 배 빠르다. 랜덤 쓰기의 bs < 매핑 손실은 병합으로 줄지 않는다(merge −0.7 %, 7.1 절 C).
-  - sudoers 규칙은 21:34 KST 에 사용자가 제거했다(10.4 절). 커밋·push·인계 묶음 결과는 10.4 절 끝에 적는다.
+  - sudoers 규칙은 21:34 KST 에 사용자가 제거했다(10.4 절). 순차 쓰기 결과의 커밋(a86fc87, 403a6ae)·push·인계 묶음은 랜덤 bs 8K·64K 실험과 함께 처리했다(10.5 절 끝).
 - **최종 상태(17:10 KST 이후)**:
   - 주 데이터셋 실험 완료: 16:00:35–17:03:57 KST, 54/54 회 DONE, FAILED 0. 분석·그래프 완료.
   - 실험 후 정리(사용자 지시 1.6):
@@ -350,7 +353,10 @@
 
 ### 1.22 스물여섯 번째 메시지 (22:36:14 KST) — 「켰어」
 - 사용자가 PC 를 다시 켰다. 이때 서버에는 forwarded ssh-agent 소켓이 없었다(`ls /tmp/ssh-*/agent.*` 결과 없음, `who` 결과 없음). 앞의 소켓(/tmp/ssh-CpMF3ibMgI/agent.97990)은 사용자 SSH 세션이 끝나며 사라졌다.
-- Claude 는 push 를 위해 `ssh -A` 접속과 sudoers 제거(`sudo rm /etc/sudoers.d/nvmevirt-exp`)를 요청했다. 결과는 10.5 절 끝에 적는다.
+- Claude 는 push 를 위해 `ssh -A` 접속과 sudoers 제거(`sudo rm /etc/sudoers.d/nvmevirt-exp`)를 요청했다(22:4x KST 보고).
+
+### 1.23 스물일곱 번째 메시지 (23:08 KST) — 「지웠어」
+- 사용자가 sudoers 규칙을 지웠고, 같은 때 `ssh -A` 로 접속했다(pts/0, 23:08 KST; agent 소켓 /tmp/ssh-WUnQXYwLiz/agent.172999). 확인 결과는 10.5 절에 있다.
 
 ---------------------------------------------------------------------------------------------------
 
@@ -430,7 +436,7 @@ iodepth,n,iops,iops_std,bw_MiBps,bw_MiBps_std,clat_mean_us,clat_mean_us_std,clat
   - 해시가 두 번 바뀐 이유(모두 첫 push 전, 코드는 같고 이 파일만 다름): 16:04 KST 1d6cd03 → a93ef76 (이 파일의 credential 문자열 줄), 18:3x KST 2a462a3 → 949ae38·a93ef76 → e598e75 (이 파일 머리말의 사용자 Claude 계정 이메일 제거). 「갱신 이력」 참고.
   - 그 뒤 결과·문서·생성기·analyze.py 수정 커밋과 태그 ksc2026-final 은 10.3 절 끝에 적는다.
 - 커밋 작성자: Sangwon8799 <ekfghfl@naver.com> (전역 git config), 메시지 끝에 "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>".
-- 저장소에 넣지 않는 것(exp/.gitignore): modules/*/*.ko (SHA256SUMS 는 넣음), .venv/, __pycache__/. nvmevirt/.gitignore 는 원본 그대로(`.*`, *.ko, *.o 등). .git/info/exclude 에 upstream_tmp/ 를 넣었다.
+- 저장소에 넣지 않는 것(exp/.gitignore): modules/*/*.ko (SHA256SUMS 는 넣음), .venv/, __pycache__/, results/*/gallery_*.html(make_gallery.py 결과; 커밋 a86fc87 부터). nvmevirt/.gitignore 는 원본 그대로(`.*`, *.ko, *.o 등). .git/info/exclude 에 upstream_tmp/ 를 넣었다.
 - /home/dccearth/jsw/KSC2026/nvmevirt/upstream_tmp/ — 감사 워크플로가 읽은 원본 사본(커밋 61c90f7, 수정 없음). 저장소에는 넣지 않았고(.git/info/exclude), 17:06 KST 에 삭제했다(10.3 절).
 - 서버에서 push 하려면 `SSH_AUTH_SOCK=$(ls /tmp/ssh-*/agent.* | head -1) git push origin main`. 사용자의 SSH 세션이 연결되어 있어야 한다.
 
@@ -614,6 +620,7 @@ dccearth ALL=(root) NOPASSWD: /usr/sbin/insmod, /usr/sbin/rmmod, /usr/bin/fio, /
 dccearth ALL=(root) NOPASSWD: /usr/sbin/insmod, /usr/sbin/rmmod, /usr/bin/fio, /usr/bin/dmesg, /usr/sbin/nvme, /usr/bin/cat /proc/iomem, /usr/bin/tee /dev/kmsg, /usr/bin/tee /proc/sys/vm/drop_caches, /usr/bin/tee /sys/block/nvme1n1/queue/nomerges, /usr/bin/chown -R dccearth\:dccearth /home/dccearth/jsw/nvmevirt/exp/*
 ```
   - nomerges 규칙은 장치 경로를 nvme1n1 으로 고정했다. sudoers 인자 와일드카드는 공백과 / 도 맞아서, `nvme*n1/queue/nomerges` 같은 패턴은 다른 파일 쓰기를 허용할 수 있다.
+- 그 뒤의 이력: 21:34:17 KST 사용자가 제거(순차 쓰기 실험 후, 10.4 절) → 22:11:08 KST 사용자가 다시 설치(랜덤 bs 8K·64K 실험용, 1.21 절; 파일 크기 538 B 로 exp/report/nvmevirt-exp.sudoers 와 같음) → 23:08:30 KST 사용자가 제거(10.5 절). 지금 서버에 규칙은 없다.
 
 ### 6.5 분석 (exp/analyze.py results/<EXP>)
 - 회차별 지표: bw_MiBps(= fio write.bw/1024), iops, written_GiB, fill_ratio(= io_bytes/장치 크기), clat_mean/p50/p99/p999_us, lat_mean_us, slat_mean_us, runtime_s, bw_first10s_MiBps(t ≤ 10 s), bw_last20s_MiBps(t > 마지막 시각 − 20 s), dev_bytes, chmodel_msgs, kernel_warn.
@@ -655,7 +662,9 @@ dccearth ALL=(root) NOPASSWD: /usr/sbin/insmod, /usr/sbin/rmmod, /usr/bin/fio, /
   - 순서는 `run_experiment.sh <EXP> wbuffix` → analyze.py → `link_runs.py results/<VIEW> results/<PRIMARY>/wbuffix_nodrop results/<EXP>/wbuffix` → analyze.py results/<VIEW> 다.
   - 실행: `tmux new -d -s ksc2026rbs "bash run_all_rand_bs.sh randbs_20261008 2>&1 | tee -a results/run_all_randbs_20261008.log; echo RBS-ALL-DONE >> results/run_all_randbs_20261008.log"`
 - link_runs.py: DONE 이 있는 map*_bs*_r* 폴더마다 results/<VIEW>/<변형 이름, 기본 wbuffix>/ 아래에 상대 심볼릭 링크를 만든다. 같은 회차 이름이 두 곳에서 오면 멈춘다. SOURCES.txt 에 출처를 적는다. 링크라 묶음(tar)·git 에도 그대로 들어가고, 묶음 안에서도 repo/exp/results/ 기준으로 풀린다.
-- 축 분리(커밋 a86fc87): analyze.py, plot.py, make_md_results.py, make_report.py 는 매핑 단위 목록(행)과 bs 목록(열)을 따로 쓴다. 그전에는 합집합 하나를 두 축에 썼는데, 3 × 5 보기에서는 빈 행이 생긴다. 정사각 데이터셋(main3x3, main, seq3x3)의 결과는 같다.
+  - 23:1x KST 에 고친 판(9.3 절): 링크를 만들기 전에 모든 원본을 훑어 중복과 「링크 자리에 실제 폴더가 있음」을 먼저 검사하고, 문제가 있으면 아무것도 만들지 않는다. SOURCES.txt 는 보기 아래 실제 링크 전체(모든 변형)에서 만든다. 지금 보기(45 개 링크, SOURCES.txt)는 고친 판으로 다시 실행해도 바이트 단위로 같다.
+  - run_all_rand_bs.sh 의 모듈 확인은 실험 때 `[[ -f modules/wbuffix/SHA256SUMS ]]` 였고, 23:1x 에 .ko 존재 검사로 바꿨다(이 서버에서는 두 조건 모두 「이미 있음」이라 동작이 같다).
+- 축 분리(analyze.py·plot.py·make_md_results.py 는 커밋 a86fc87, make_report.py 는 커밋 403a6ae): 네 파일은 매핑 단위 목록(행)과 bs 목록(열)을 따로 쓴다. 그전에는 합집합 하나를 두 축에 썼는데, 3 × 5 보기에서는 빈 행이 생긴다. 정사각 데이터셋(main3x3, main, seq3x3)의 CSV 와 그림 내용은 같다. 다만 fig_timeseries_* 는 그림 크기가 격자 수에 맞게 바뀐다(예전에는 항상 2400×1950 px). 그래서 23:1x KST 에 main3x3·main 의 analyze.py 를 다시 돌려 그 PNG 4 개를 새 크기로 바꿨다(CSV 는 바이트 단위로 같음).
 - analyze.py 그림 제목: meta.txt 에 `workload: seqwrite` 가 있으면 「Sequential-write」, 없으면 「Random-write」로 쓴다. 그전에는 seq3x3 의 fig_bw_vs_bs_* 제목이 「Random-write」로 잘못 나왔고, 실험 후 다시 만들었다(10.5 절).
 
 ---------------------------------------------------------------------------------------------------
@@ -803,16 +812,16 @@ dccearth ALL=(root) NOPASSWD: /usr/sbin/insmod, /usr/sbin/rmmod, /usr/bin/fio, /
 - 해석 시 주의할 점이 있다. 병합 모델은 이 연구에서 추가한 것이다. 파티션마다 열린 단위가 1 개이고, 덜 찬 단위의 RMW 읽기는 없으며, 하나의 순차 흐름을 가정한다. 따라서 이 결과는 병합이 잘 될 때의 상한에 가깝다. 여러 흐름이 섞이거나 쓰기 버퍼가 작으면 실제 SSD 의 이득은 이보다 작을 수 있다. 원래 NVMeVirt 모델(wbuffix)의 결과는 병합이 전혀 없는 SSD 의 하한으로 읽는다. 모든 순차 쓰기 결과는 블록 계층 병합을 끈 상태(nomerges=2)에서 쟀다. 커널 기본값이면 순차 요청이 블록 계층에서 합쳐져 bs 축이 의미를 잃는다(7.1 절 A, 8.5 절).
 
 ### 8.8 랜덤 쓰기 bs 8K·64K 결과 해석 (실험 후 작성)
-(exp/report/findings_randbs_ko.txt 와 같은 내용이며, docx 1.6 절과 랜덤 bs 8K·64K 장의 관찰 절에도 들어간다. 표기는 매핑/bs 다. 근거 수치는 results/rand3x5_20261008/analysis/summary_agg.csv 와 randbs_20261008/analysis/ 다.)
+(exp/report/findings_randbs_ko.txt 와 같은 내용이며, docx 1.6 절과 9.5 절에도 들어간다. 표기는 매핑/bs 다. 그 파일의 「5.5 절」은 docx 의 「결과 해석 시 주의할 모델 특성」 절이고, 여기서는 md 의 8.3 절로 바꿔 적었다. 근거 수치는 results/rand3x5_20261008/analysis/summary_agg.csv 와 randbs_20261008/analysis/ 다.)
 - bs 8K 에서 대역폭은 매핑 4K 437.0, 16K 217.3, 32K 131.9 MiB/s 다. 매핑 4K 대비 −50.3 %, −69.8 % 다. bs 64K 에서는 486.3, 486.4, 447.1 MiB/s 로, 매핑 16K 는 4K 와 같고(+0.02 %) 32K 는 −8.1 % 다.
 - 결과는 bs 의 절대 크기보다 bs/매핑 비율로 거의 정해진다. 비율이 같은 조합끼리는 대역폭이 3 % 안에서 같고 WAF_total 도 거의 같다(표기는 다른 곳과 같이 매핑/bs). 비율 1(4K/4K, 16K/16K, 32K/32K)은 416.0·420.4·424.6 MiB/s, WAF 3.12 다. 비율 2(4K/8K, 16K/32K, 32K/64K)는 437.0·441.6·447.1 MiB/s, WAF 3.31–3.32 다. 비율 4(4K/16K, 16K/64K)는 481.0·486.4 MiB/s 다. 비율 1/2(16K/8K, 32K/16K)은 217.3·219.6 MiB/s, WAF 5.90·5.96 이고, 비율 1/4(16K/4K, 32K/8K)은 129.7·131.9 MiB/s, WAF 8.82·8.97 이다. flash page 는 모든 조합에서 32 KiB 로 같다.
 - bs ≥ 매핑인 10 조합은 416.0–486.4 MiB/s, WAF_total 3.12–3.55 다. 같은 bs 에서 매핑 4K 대비 차이는 −12.6 %(bs 16K, 매핑 16K)에서 +0.02 %(bs 64K, 매핑 16K) 사이다. 매핑 4K 는 bs 를 4K → 64K 로 키우면 416.0 → 486.3 MiB/s(+16.9 %)로 오른다.
-- bs < 매핑인 5 조합의 대역폭은 같은 매핑에서 bs = 매핑일 때의 0.16–0.52 배로, 조합마다 bs/매핑(0.125–0.5)보다 조금 크다. WAF_total 은 부분 쓰기 증폭(매핑/bs = 2·4·8 배)과 GC 증폭(2.1–3.0)의 곱이다. 16K/8K 는 5.90 = 2 × 2.95, 32K/8K 는 8.97 = 4 × 2.24 다.
+- bs < 매핑인 5 조합의 대역폭은 같은 매핑에서 bs = 매핑일 때의 0.16–0.52 배로, 조합마다 bs/매핑(0.125–0.5)보다 조금 크다. WAF_total 은 부분 쓰기 증폭(매핑/bs = 2·4·8 배)과 GC 증폭(2.1–3.0)의 곱이다. 16K/8K 는 5.90 = 2 × 2.95, 32K/8K 는 8.97 = 4 × 2.243 이다.
 - GC 이전 구간은 NAND 프로그램 한계로 정해진다. bs ≥ 매핑에서는 2,001–2,218 MiB/s 이고, bs < 매핑에서는 한계 × bs/매핑의 92–96 % 다(예: 16K/8K 1,072.0, 32K/8K 512.6 MiB/s). 첫 GC 는 모든 조합에서 5.69–6.32 s 에 시작한다. GC 이후 구간 평균은 bs ≥ 매핑에서 240–312 MiB/s, bs < 매핑에서 47–131 MiB/s 다.
 - 평균 완료 지연은 iodepth 32 ÷ IOPS 로 정해진다. bs 64K 는 4.1–4.5 ms 다. p99 는 bs 가 커질수록 늘어, bs 4K 에서 13.3–14.5 ms, bs 64K 에서 19.0 ms(세 매핑 모두)다.
 - 반복 간 대역폭 편차는 작다. 새로 잰 18 회의 6 조합은 변동계수 평균 0.083 %, 최대 0.280 %(4K/8K)다. 주 데이터셋 회차를 포함한 15 조합은 평균 0.123 %, 최대 0.375 %(4K/4K)다.
 - 블록 계층 병합은 무시할 수 있다(커널 기본값, 주 데이터셋과 같은 설정). 새 회차에서 합쳐진 요청은 bs 8K 의 매핑 4K 에서 가장 많았는데, 회차당 약 1,800 건으로 요청의 0.054 % 다. 나머지 회차는 0–361 건(0.022 % 이하)이고, 장치가 받은 평균 요청 크기와 bs 의 차이는 최대 0.004 KiB 다.
-- 해석: 랜덤 쓰기에서 매핑 단위를 키울 때의 손실은 호스트 쓰기가 매핑 단위보다 작을 때만 생기고, 그 크기는 bs/매핑 비율이 정한다. 쓰기 크기가 매핑 단위 이상이면 매핑 16K·32K 도 매핑 4K 와 비슷한 성능(최대 −12.6 %)을 낸다. 다만 NVMeVirt 는 부분 쓰기의 RMW 읽기를 모델링하지 않으므로, bs < 매핑의 불이익은 실제 SSD 보다 작게 나올 수 있다(5.5 절).
+- 해석: 랜덤 쓰기에서 매핑 단위를 키울 때의 손실은 호스트 쓰기가 매핑 단위보다 작을 때만 생기고, 그 크기는 bs/매핑 비율이 정한다. 쓰기 크기가 매핑 단위 이상이면 매핑 16K·32K 도 매핑 4K 와 비슷한 성능(최대 −12.6 %)을 낸다. 다만 NVMeVirt 는 부분 쓰기의 RMW 읽기를 모델링하지 않으므로, bs < 매핑의 불이익은 실제 SSD 보다 작게 나올 수 있다(8.3 절).
 
 ---------------------------------------------------------------------------------------------------
 
@@ -856,12 +865,30 @@ dccearth ALL=(root) NOPASSWD: /usr/sbin/insmod, /usr/sbin/rmmod, /usr/bin/fio, /
 
 ### 9.2 순차 쓰기 기록 검증 워크플로 (wf_7abaf97b-cba, 21:3x–22:1x KST)
 - 구성: 검사자 5 명(수치 / md 서술 / docx 서술·절 번호 / 재현성·스크립트 / 보안·KST), 검사자마다 반박 검증자 1 명. 에이전트 10 개, 오류 0.
-- 지적 49 건(medium 11, low 38), 반박 검증 결과 39 건 확인, 10 건 기각. 확인된 것은 22:1x 에 모두 고쳤다(커밋 전).
+- 지적 49 건(medium 11, low 38), 반박 검증 결과 39 건 확인, 10 건 기각. 확인된 것은 22:12–22:17 에 모두 고쳤다(커밋 a86fc87 뒤에 고쳤고, 커밋 403a6ae 에 들어갔다).
   - 수치: md 0 절 WAF 9.16/3.41 → 9.15/3.40(이중 반올림). findings 의 bs 4K 범위 문장이 대상 집합과 어긋난 것, 랜덤 416–482 MiB/s 에 「bs ≥ 매핑」 한정이 빠진 것. 사전 점검 C 의 「N 개 중 1 개」에서 N 을 fio 요청 수 1,144,511 로 고침.
   - md: 8.7 의 절 번호(docx 의 8.3 → md 의 7.1), 7.1 시각(19:58 작성, 20:00:53 검토 시작), 10.4 시각(analyze 21:26:45, plot·gallery 21:27:38–42, findings 21:29:43), 1.18 의 「8 개 명령」→ 10 개 중 8 개 확인, 5.6 의 FLUSH 설명(conv_flush 는 예약된 NAND 작업을 기다림), 6.6 의 결과·로그 이름·「[i/N]」 설명, 9.1 의 표기, 7.1 의 evict 설명(16K/4K 의 18 개는 순서 바뀜으로 추정).
-  - docx: 3.3·9 절 sudoers 이력에 제거 시각을 반영했다(KSC_SUDOERS_REMOVED2). push 예정 문구는 origin/main 을 읽어 쓰게 했다. 4.3 에 `bash build_modules.sh wbuffix` 줄을 추가하고 tee 로그 이름을 고쳤다. 4.4 job 틀 이름, 3.2·부록 A 의 findings_seq_ko.txt, 8.2 퍼징 규모(약 180 만 명령), 1.3 시각을 고쳤다. 원래부터 틀렸던 절 참조 세 곳(5.5→5.4, 6.3→7, 6.4→6.3)도 고쳤다.
+  - docx: 3.3·10 절(검증 당시에는 9 절, 「실험 후 상태와 정리」) sudoers 이력에 제거 시각을 반영했다(KSC_SUDOERS_REMOVED2). push 예정 문구는 origin/main 을 읽어 쓰게 했다. 4.3 에 `bash build_modules.sh wbuffix` 줄을 추가하고 tee 로그 이름을 고쳤다. 4.4 job 틀 이름, 3.2·부록 A 의 findings_seq_ko.txt, 8.2 퍼징 규모(약 180 만 명령), 1.3 시각을 고쳤다. 원래부터 틀렸던 절 참조 세 곳(5.5→5.4, 6.3→7, 6.4→6.3)도 고쳤다.
   - 스크립트: build_modules.sh 사용법에 merge 를 추가했다. run_all_seq.sh 에 [i/N] 설명 주석을 달았다.
 - 기각된 것: collect_env.sh 의 rm 범위, sudoers 와일드카드, git checkout 줄, env 비교 문단 등. 문서나 코드가 이미 맞았다.
+
+### 9.3 랜덤 bs 8K·64K 기록 검증 워크플로 (wf_b166ccdc-994, 22:40–23:1x KST)
+- 구성: 검사자 4 명(수치 / md 서술 / docx 서술·절 번호 / 스크립트·재현성·보안), 검사자마다 반박 검증자 1 명. 에이전트 8 개, 오류 0.
+- 지적 33 건(high 1, medium 4, low 28), 반박 검증 결과 30 건 확인, 3 건 기각. 확인된 것은 23:1x KST 에 모두 고쳤다(다음 커밋에 들어감).
+- 측정값은 틀린 것이 없었다. 수치 검사자가 randbs 18 회의 summary_runs.csv 모든 열을 원자료에서 다시 계산했고(불일치 0), rand3x5 의 15 조합이 주 데이터셋 9 조합·randbs 6 조합과 같음을 확인했다. md 11.4·11.5 절과 docx 9 장 표의 모든 칸도 CSV 와 맞았다.
+- **보안(high) — make_handoff.sh 의 git 이력 credential 검사가 fail-open 이었다.**
+  - 원인: `set -o pipefail` 아래에서 `if git log -p --all | grep -qE "$CRED_PAT"; then 차단`. 일치가 있으면 grep -q 가 첫 일치에서 끝나고, git 이 SIGPIPE(141)로 죽어 파이프라인 상태가 0 이 아니게 된다. 그래서 if 가 거짓이 되어 **이력에 credential 이 있을 때 오히려 통과**한다. 이 코드는 16:0x KST 부터 있었으므로, 그동안 만든 모든 묶음의 「git 이력 검사」는 실제로는 이력을 막지 못하는 상태였다.
+  - 실제 피해는 없다. 검사자가 실행 시 뽑은 실제 패턴으로 `git log -p --all`·작업 트리·메모리 노트·docx 본문을 따로 검사해 0 건을 확인했다. 18:27 KST 에도 모든 git 객체를 검사했다(10.3 절). 묶음 파일 검사(guard 2)는 파이프가 아니라 영향이 없다.
+  - 수정: 이력을 임시 파일에 쓴 뒤 `grep -c` 로 줄 수를 세어, 0 이 아니거나 숫자가 아니면 중단한다. 고친 뒤 만든 최종 묶음에서 이 검사가 통과했다(= 이력에 패턴 0 건).
+- 재현성(medium) — docx 4.3 의 `git checkout e598e75` 로는 같은 블록의 순차·랜덤 bs 명령을 실행할 수 없었다(그 커밋에 스크립트가 없음).
+  - 수정: 태그가 없을 때는 main 을, 최종본에서는 새 태그 ksc2026-v2 를 쓰고, 주석에 랜덤 bs 스크립트 커밋 a86fc87 을 넣었다. 태그에는 결과도 들어 있어 같은 실험 이름이면 DONE 회차를 건너뛴다는 안내 줄도 넣었다.
+- 그 밖에 고친 것:
+  - 스크립트: run_all.sh·run_all_seq.sh·run_all_rand_bs.sh 의 모듈 확인을 SHA256SUMS 존재가 아니라 .ko 파일 존재로 바꿨다(clone 에는 SHA256SUMS 만 있고 .ko 는 없어서, 예전 조건으로는 빌드를 건너뛰고 run_experiment.sh 가 「missing … .ko」로 멈춘다). link_runs.py 는 링크를 만들기 전에 모든 것을 검사하고(중복, 링크가 아닌 폴더), SOURCES.txt 를 보기 아래 실제 링크 전체에서 만든다.
+  - 그림: 축 분리 때 fig_timeseries_* 의 크기 계산이 바뀌어, main3x3·main 의 저장된 PNG 4 개만 옛 크기로 남아 있었다. analyze.py 를 다시 돌려 맞췄다(CSV 는 같음).
+  - docx: 1.3 표의 실험 끝 시각(22:32:55), 3.2·부록 A 목록의 findings_randbs_ko.txt, 부록 A 의 스크립트 변경 이력 문단, findings 의 「8.97 = 4 × 2.243」.
+  - md: 0 절 절 번호(1.20–1.23), 8.8 의 절 번호(docx 5.5 → md 8.3), 10.5 의 끝 시각(22:32:58)과 커밋·docx 기록, 9.2 의 커밋 귀속과 docx 절 번호, 6.4 의 설치·제거 이력, 6.7 의 커밋 귀속, 4 절 .gitignore, H 절의 링크 복구 방법, 갱신 이력.
+  - 산출물 사본: KSC2026/산출물/ 의 실험 기록 docx 가 18:35 KST 판으로 남아 있어 묶음의 materials/산출물/ 과 deliverables/ 에 서로 다른 판이 들어갔다. 최종 docx 를 산출물/ 에 다시 복사했다(10.5 절).
+- 기각 3 건: 블록 계층 「0.054 %」 표현 2 건(가장 큰 회차의 값이라 맞음), 13 절 sudoers 줄(검사 도중 이미 고쳐짐).
 
 ---------------------------------------------------------------------------------------------------
 
@@ -967,12 +994,19 @@ dccearth ALL=(root) NOPASSWD: /usr/sbin/insmod, /usr/sbin/rmmod, /usr/bin/fio, /
 - 21:34:17 KST sudoers 제거: 사용자가 `sudo rm /etc/sudoers.d/nvmevirt-exp` 를 실행했다(/etc/sudoers.d 수정 시각 12:34:17 UTC). Claude 가 확인했다: /etc/sudoers.d 에는 README 만 남았고, `sudo -n -l /usr/sbin/insmod` 는 허용되지 않는다.
 
 ### 10.5 랜덤 쓰기 bs 8K·64K 실험 randbs_20261008
-- 22:1x 커밋 a86fc87 (순차 쓰기 결과·문서 진행본, run_all_rand_bs.sh·link_runs.py, 축 분리). 그 커밋으로 실행했다.
+- 22:11:48 커밋 a86fc87(순차 쓰기 결과·문서 진행본, run_all_rand_bs.sh·link_runs.py, analyze.py·plot.py·make_md_results.py 축 분리; 순차 쓰기 기록 검증 반영 전). 그 커밋으로 실행했다.
 - 22:11:48 KST 시작(tmux ksc2026rbs). 18 회, 예상 약 21 분.
-- 진행(로그 results/run_all_randbs_20261008.log, UTC): 22:11:48 env_before → 18 회(반복 1→3 × 매핑 4K→32K × bs 8K→64K, 회차당 약 70 s) → 22:32:55 env_after_wbuffix, analyze.py("18 runs, 0 failed") → link_runs.py → results/rand3x5_20261008 에 45 회 링크(주 데이터셋 wbuffix_nodrop 27 + randbs 18, SOURCES.txt) → analyze.py("45 runs, 0 failed"). 22:32:56 KST 에 끝났다(RBS-ALL-DONE).
+- 진행(로그 results/run_all_randbs_20261008.log, UTC): 22:11:48 env_before → 18 회(반복 1→3 × 매핑 4K→32K × bs 8K→64K, 회차당 약 70 s) → 22:32:55 env_after_wbuffix, analyze.py("18 runs, 0 failed") → link_runs.py → results/rand3x5_20261008 에 45 회 링크(주 데이터셋 wbuffix_nodrop 27 + randbs 18, SOURCES.txt) → analyze.py("45 runs, 0 failed"). 22:32:58 KST 에 끝났다(RBS-ALL-DONE; rand3x5 의 summary_agg.csv 는 22:32:56).
   - 18/18 DONE, FAILED 0, NOTE/WARNING/ERROR 0, chmodel 0, kernel_warn 0. 모든 회차의 meta.txt git_head 는 a86fc87 이다. nvmev 는 내려가 있고 tmux 세션도 끝났다.
   - 블록 계층(nomerges 0, mq-deadline): 4K/8K 회차당 1,774–1,817 건(요청의 0.053–0.054 %), 16K/8K 288–361 건(0.017–0.022 %), 나머지 0–1 건이 합쳐졌다.
 - 22:33–22:3x analyze.py results/seq3x3_20261008 다시 실행(그림 제목 수정; summary_agg.csv 는 바이트 단위로 같음). plot.py all(seq3x3·randbs·rand3x5 각 25 장), make_gallery.py(seq3x3 40 장, randbs·rand3x5 각 32 장). findings_randbs_ko.txt 작성.
+- 22:37 docx 생성(--seq --rbs --rview; 91 쪽; 9 장 = 랜덤 bs 8K·64K, 10 장 = 실험 후 상태와 정리)과 렌더링 확인. 22:38:23 커밋 403a6ae(랜덤 bs 8K·64K 결과, rand3x5 보기, 순차 쓰기 기록 검증 반영 39 건, make_report.py 축 분리; 로컬). 22:38:37 검증 전 묶음 ksc2026_handoff_20261008_2238_seq_randbs_wip.tgz 를 만들어 구조를 확인했다(전달용 아님; 최종 묶음을 만든 뒤 지운다).
+- 22:40 기록 검증 워크플로 wf_b166ccdc-994 시작(9.3 절).
+- 23:08:30 KST sudoers 제거: 사용자가 `sudo rm /etc/sudoers.d/nvmevirt-exp` 를 실행했다(/etc/sudoers.d 수정 시각 14:08:30 UTC). Claude 가 확인했다: /etc/sudoers.d 에는 README 만 남았고, `sudo -n -l /usr/sbin/insmod` 는 허용되지 않는다.
+- 23:10–23:2x 검증 워크플로 결과 반영(9.3 절): make_handoff.sh 이력 검사 수정, run_all*.sh 모듈 확인, link_runs.py, main3x3·main 의 fig_timeseries PNG 다시 생성, docx 생성기·findings·이 파일 수정.
+  - 23:20 고친 make_handoff.sh 를 scratch 출력으로 시험했다. 실제 패턴으로는 통과했고(이력·파일 0 건), 이력에 실제로 있는 문자열을 패턴으로 주면 「2 line(s)」로 중단했다.
+- 23:2x 최종 docx 생성: `KSC_PUSH_TAG=ksc2026-v2 KSC_SUDOERS_REMOVED=18:33 KSC_SUDOERS_REMOVED2=21:34 KSC_SUDOERS_REMOVED3=23:08 make_report.py results/main3x3_20261008 --supp results/main_20261008 --seq results/seq3x3_20261008 --rbs results/randbs_20261008 --rview results/rand3x5_20261008`. 92 쪽. 렌더링으로 4.3 절 재현 명령과 10 장 sudoers 이력을 확인했다. 같은 파일을 /home/dccearth/jsw/KSC2026/산출물/ 에 복사했다(18:35 KST 판을 덮어씀).
+- 23:2x 커밋(순차 쓰기·랜덤 bs 8K·64K 결과와 문서 최종본) → 태그 ksc2026-v2 → GitHub push(main 과 태그). 결과 확인은 이 항목 아래에 적는다.
 
 ---------------------------------------------------------------------------------------------------
 
@@ -6492,7 +6526,7 @@ wbuffix 32k 64k r3 | 5.973 | 2130 2125 2115 2124 2120 1609 147 150 167 182 190 1
 - 응답·보고는 한국어로만 한다.
 - (아래 sudo·push·tmux 관련 항목은 실험 서버에서 작업하는 Claude 에게만 해당한다. 묶음을 받은 Claude 는 서버에 접근할 수 없다.)
 - sudo 비밀번호는 사용자가 한 번 알려 줬지만 기록하지 않았다. Claude 가 그 비밀번호를 명령에 넣는 것은 자동 모드 분류기가 막는다(1.18). sudo 가 필요한 설치·제거는 사용자에게 명령을 주고 직접 실행해 달라고 한다.
-- sudoers 규칙: 18:33 제거 → 20:17 순차 쓰기 실험을 위해 사용자가 다시 설치(6.4 절; 지금 파일은 새 경로·nomerges 포함) → 21:34 사용자가 다시 제거. 서버에서 또 실험하려면 사용자에게 설치를 부탁한다(`sudo rm` 은 규칙에 없다).
+- sudoers 규칙: 18:33 제거 → 20:17 순차 쓰기 실험을 위해 사용자가 다시 설치(6.4 절; 지금 파일은 새 경로·nomerges 포함) → 21:34 사용자가 제거 → 22:11 랜덤 bs 8K·64K 실험을 위해 사용자가 다시 설치 → 23:08 사용자가 제거. 지금은 없다. 서버에서 또 실험하려면 사용자에게 설치를 부탁한다(`sudo rm` 은 규칙에 없다).
 - 실험 대상·설계를 바꾸는 결정(예: base 를 돌릴지)은 반드시 먼저 사용자에게 묻는다(1.15).
 - base/wbuffix 를 설명할 때는 비유 대신 1.14 절의 사실로 설명한다. NAND 로 보내는 시점은 같고, 다른 것은 쓰기 버퍼 장부(back-pressure)뿐이다.
 - GitHub push 는 사용자의 forwarded ssh-agent 소켓이 필요하다(`ls /tmp/ssh-*/agent.*`). 사용자가 접속해 있지 않으면 push 할 수 없다.
@@ -6537,5 +6571,6 @@ wbuffix 32k 64k r3 | 5.973 | 2130 2125 2115 2124 2120 1609 147 150 167 182 190 1
 - 19:53–20:23 순차 쓰기 실험 준비: 사용자 선택(1.16), 병합 모델 WBUF_MERGE 작성(5.6)과 코드 검토 워크플로(9.1), 스크립트 확장(6.6), 커밋 66446ea, sudoers 재설치(사용자, 1.18), 사전 점검(7.1)과 블록 계층 병합 발견(8.5).
 - 20:23–21:26 순차 쓰기 실험(10.4). 실험 중 이 파일의 1.11–1.18, 5.6, 6.6, 7.1, 8.5–8.6, 9.1 을 쓰고, docx 생성기에 8 장(순차 쓰기)을 넣었다.
 - 21:3x 순차 쓰기 결과 반영: 0 절, 8.7, 10.4, 11.3(자동 생성). env_after 중복 처리.
-- 21:34 순차 쓰기 실험 후 sudoers 제거(사용자). 22:08 사용자 요청으로 랜덤 쓰기 bs 8K·64K 실험을 추가했다(1.20, 6.7). 22:1x 순차 쓰기 기록 검증 워크플로의 지적 39 건을 반영했다(9.2). 커밋 a86fc87.
+- 21:34 순차 쓰기 실험 후 sudoers 제거(사용자). 22:08 사용자 요청으로 랜덤 쓰기 bs 8K·64K 실험을 추가했다(1.20, 6.7). 22:11:48 커밋 a86fc87(순차 쓰기 결과·랜덤 bs 스크립트; 검증 반영 전). 22:12–22:17 순차 쓰기 기록 검증 워크플로의 지적 39 건을 반영했다(9.2; 커밋 403a6ae 에 들어감).
 - 22:11–22:33 랜덤 쓰기 bs 8K·64K 실험(10.5). 22:3x 결과 반영: 0 절, 8.8, 10.5, 11.4·11.5(자동 생성), docx 9 장(랜덤 bs 8K·64K; 「실험 후 상태와 정리」는 10 장이 됨).
+- 23:08 sudoers 제거(사용자), ssh -A 재접속. 23:1x 랜덤 bs 8K·64K 기록 검증 워크플로의 지적 30 건 반영(9.3; make_handoff.sh 이력 검사 fail-open 수정 포함). 23:2x 최종 docx(92 쪽), 커밋, 태그 ksc2026-v2, push, 최종 인계 묶음(10.5 절 끝).

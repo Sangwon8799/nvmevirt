@@ -10,7 +10,7 @@ EXP="${1:?usage: bash run_all_rand_bs.sh <EXP_NAME> [PRIMARY_EXP] [VIEW_NAME]}"
 PRIMARY="${2:-main3x3_20261008}"
 VIEW="${3:-rand3x5_${EXP##*_}}"
 export MAPS="4k 16k 32k" BSS="8k 64k" REPS=3 CACHE_MODES=nodrop WORKLOAD=randwrite NOMERGES=
-[[ -f modules/wbuffix/SHA256SUMS ]] || bash build_modules.sh wbuffix
+ls modules/wbuffix/nvmev_map{4k,16k,32k}.ko > /dev/null 2>&1 || bash build_modules.sh wbuffix   # .ko files are not in git
 bash run_experiment.sh "$EXP" wbuffix
 ./.venv/bin/python analyze.py "results/$EXP"
 ./.venv/bin/python link_runs.py "results/$VIEW" "results/$PRIMARY/wbuffix_nodrop" "results/$EXP/wbuffix"

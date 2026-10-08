@@ -6,6 +6,6 @@ set -euo pipefail
 cd "$(dirname "$0")"
 EXP="${1:?usage: bash run_all.sh <EXP_NAME>}"
 export MAPS="4k 16k 32k" BSS="4k 16k 32k" REPS=3 CACHE_MODES="nodrop drop"
-[[ -f modules/wbuffix/SHA256SUMS ]] || bash build_modules.sh wbuffix
+ls modules/wbuffix/nvmev_map{4k,16k,32k}.ko > /dev/null 2>&1 || bash build_modules.sh wbuffix   # .ko files are not in git
 bash run_experiment.sh "$EXP" wbuffix
 ./.venv/bin/python analyze.py "results/$EXP"

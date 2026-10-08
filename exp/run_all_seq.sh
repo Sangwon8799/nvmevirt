@@ -10,8 +10,9 @@ cd "$(dirname "$0")"
 EXP="${1:?usage: bash run_all_seq.sh <EXP_NAME>}"
 export MAPS="4k 16k 32k" BSS="4k 16k 32k" CACHE_MODES=nodrop WORKLOAD=seqwrite
 export NOMERGES="${NOMERGES:-2}"   # the device must see the fio bs: no block-layer merging of adjacent requests
-[[ -f modules/wbuffix/SHA256SUMS ]] || bash build_modules.sh wbuffix
-[[ -f modules/merge/SHA256SUMS ]] || bash build_modules.sh merge
+for v in wbuffix merge; do   # .ko files are not in git: build what is missing
+	ls modules/$v/nvmev_map{4k,16k,32k}.ko > /dev/null 2>&1 || bash build_modules.sh $v
+done
 for r in 1 2 3; do
 	for v in wbuffix merge; do
 		# runs with a DONE marker are skipped, so this adds repetition r (the "N runs" / "[i/N]" in the log count

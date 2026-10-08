@@ -8,7 +8,7 @@
 #   TEXT_DIR  (default $OUT_DIR/_materials_text)  plain-text extracts of the materials (research plan redacted)
 #
 # Contents: the log, README_FIRST.txt, MANIFEST.txt (size + sha256 of every file), repo/ (working tree without
-# .git, .venv, *.ko), repo.gitbundle (full git history), git_log.txt, materials/ (PDFs, 산출물/, text extracts),
+# .git, .venv, *.ko, gallery_*.html), repo.gitbundle (full git history), git_log.txt, materials/ (PDFs, 산출물/, text extracts),
 # deliverables/ (the .docx record if it exists), server_state/ (progress and state at bundle time),
 # claude_memory/ (this server's Claude memory notes).
 # The research-plan .docx is never copied: it contains server credentials. Only the redacted text is included.
@@ -53,8 +53,14 @@ PYCRED
 )}"
 [[ -n "$CRED_PAT" ]] || { echo "ERROR: no credential patterns (research-plan .docx not readable?) — bundle NOT written" >&2; exit 1; }
 # --- guard 1: the git history that goes into repo.gitbundle must not contain credentials either
-if git -C "$REPO" log -p --all | grep -qE "$CRED_PAT"; then
-	echo "ERROR: credential-looking strings in the git history — rewrite those commits first; bundle NOT written" >&2
+# (count with grep -c, which reads all of its input: 'git log | grep -q' under pipefail fails OPEN, because grep -q
+#  exits at the first match, git dies of SIGPIPE and the pipeline status is then non-zero = "no match")
+HIST="$STAGE/git_history.txt"
+git -C "$REPO" log -p --all > "$HIST"
+n_hist=$(grep -cE "$CRED_PAT" "$HIST" || true)
+rm -f "$HIST"
+if [[ ! "$n_hist" =~ ^[0-9]+$ ]] || (( n_hist > 0 )); then
+	echo "ERROR: credential-looking strings in the git history ($n_hist line(s)) — rewrite those commits first; bundle NOT written" >&2
 	exit 1
 fi
 
@@ -64,7 +70,7 @@ cp "$REPO/EXPERIMENT_LOG_FOR_CLAUDE.md" "$B/"
 # --- repository working tree (what is on disk now, committed or not) + full history
 rsync -a --exclude .git --exclude upstream_tmp --exclude 'exp/.venv' --exclude '*.ko' --exclude '*.o' \
 	--exclude '*.mod' --exclude '*.mod.c' --exclude '.*.cmd' --exclude __pycache__ --exclude Module.symvers \
-	--exclude modules.order "$REPO/" "$B/repo/"
+	--exclude modules.order --exclude 'gallery_*.html' "$REPO/" "$B/repo/"
 git -C "$REPO" bundle create "$B/repo.gitbundle" --all 2> /dev/null
 {
 	echo "# git log --stat --all, dates in KST (TZ=Asia/Seoul --date=iso-local), at $(TZ=Asia/Seoul date '+%F %T') KST"
@@ -95,8 +101,8 @@ for f in "$REPO"/exp/report/*.docx; do [[ -e "$f" ]] && cp "$f" "$B/deliverables
 	for d in "$REPO"/exp/results/*/; do
 		for v in "$d"*/; do
 			[[ -d "$v" ]] || continue
-			n_done=$(find "$v" -maxdepth 2 -name DONE | wc -l)
-			n_fail=$(find "$v" -maxdepth 2 -name FAILED | wc -l)
+			n_done=$(find -L "$v" -maxdepth 2 -name DONE | wc -l)   # -L: a combined view links to run directories
+			n_fail=$(find -L "$v" -maxdepth 2 -name FAILED | wc -l)
 			(( n_done + n_fail > 0 )) && echo "results $(basename "$d")/$(basename "$v"): DONE $n_done FAILED $n_fail"
 		done
 	done

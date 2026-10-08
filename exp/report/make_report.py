@@ -2,13 +2,16 @@
 """Build the KSC2026 NVMeVirt mapping-unit experiment record (.docx, Korean).
 
 usage:  python3 exp/report/make_report.py exp/results/<PRIMARY_EXP> [--supp exp/results/<SUPP_EXP>]
+                                        [--rbs exp/results/<RBS_EXP> --rview exp/results/<VIEW>]
                                         [--seq exp/results/<SEQ_EXP>] [--out out.docx]
         PRIMARY = final data set (main3x3_*), SUPP = first-design data set (main_*, partial),
-        SEQ = sequential-write experiment (seq3x3_*, models wbuffix and merge)
+        SEQ = sequential-write experiment (seq3x3_*, models wbuffix and merge),
+        RBS = random-write bs 8k/64k runs (randbs_*), VIEW = RBS + the primary nodrop runs (rand3x5_*, link_runs.py)
 
 Everything is read from the repository: scripts (appendix), NVMeVirt diff, environment snapshots,
 per-run results (exp/results/<EXP>/<variant>/...), analysis CSV/figures (exp/results/<EXP>/analysis/),
-and the hand-written interpretation in exp/report/findings_ko.txt (findings_seq_ko.txt for the sequential experiment).
+and the hand-written interpretation in exp/report/findings_ko.txt (findings_seq_ko.txt for the sequential experiment,
+findings_randbs_ko.txt for the random-write bs 8k/64k experiment).
 """
 import csv
 import difflib
@@ -302,7 +305,7 @@ R.table(["시각 (KST)", "내용"], [
        ["20:18–20:23", "사전 점검: 커널 기본 설정에서 블록 계층이 순차 4K 요청을 평균 약 120 KiB 로 합치는 것을 발견 → 순차 쓰기는 nomerges=2 로 측정 (8.3 절)"],
        ["20:23:24–21:26:45", "순차 쓰기 실험 실행 (8 절)"]] if SEQ else []),
     *([["22:08", "사용자 요청: 랜덤 쓰기에 8K·64K 도 측정. 사용자가 'bs 만 추가(매핑은 4K·16K·32K 그대로)', '새 조합만 측정하고 기존 bs 4K·16K·32K 값은 주 데이터셋 nodrop 값을 재사용'을 골랐다"],
-       ["22:11:48–", f"랜덤 쓰기 bs 8K·64K 실험 실행 ({RBS_N} 절)"]] if RBS else []),
+       ["22:11:48–22:32:55", f"랜덤 쓰기 bs 8K·64K 실험 실행 ({RBS_N} 절)"]] if RBS else []),
 ], widths=[2.8, 14.2], size=8.5, caption="설계 변경 경위")
 if FINDINGS:
     R.h("1.4 결과 요약", 2)
@@ -430,7 +433,7 @@ R.table(["경로", "내용"], [
     ["exp/make_gallery.py", "한 실험의 모든 그림을 HTML 한 파일로 모음"],
     ["exp/run_all_rand_bs.sh", "랜덤 쓰기 bs 8K·64K: 매핑 3 × bs 2 × 3 회 → 분석 → link_runs.py 로 합친 보기 → 분석"],
     ["exp/link_runs.py", "여러 데이터셋의 회차 폴더를 상대 심볼릭 링크로 모은 보기(view) 데이터셋을 만듦"],
-    ["exp/report/", "이 문서·인계 기록 생성기 (make_report.py, docx_helpers.py, make_md_results.py, findings_ko.txt, findings_seq_ko.txt, make_handoff.sh), 감사 결과, sudoers 사본, 이 문서(.docx)"],
+    ["exp/report/", "이 문서·인계 기록 생성기 (make_report.py, docx_helpers.py, make_md_results.py, findings_ko.txt, findings_seq_ko.txt, findings_randbs_ko.txt, make_handoff.sh), 감사 결과, sudoers 사본, 이 문서(.docx)"],
     [f"exp/results/{EXP}/", "주 데이터셋 (wbuffix_nodrop/, wbuffix_drop/, env_before·env_after, analysis/)"],
     [f"exp/results/{SUP['name'] if SUP else 'main_*'}/", "보조 데이터셋 (base/, wbuffix/, env_before·env_after_stop, analysis/)"],
     *([[f"exp/results/{SEQ['name']}/", "순차 쓰기 실험 (wbuffix/, merge/, env_before·env_after, analysis/)"]] if SEQ else []),
@@ -600,10 +603,12 @@ if _sums:
 R.h("4.3 재현 명령", 2)
 _supname = SUP["name"] if SUP else "main_20261008"
 R.code(f"""git clone https://github.com/Sangwon8799/nvmevirt.git nvmevirt && cd nvmevirt   # 공개 저장소 (SSH 키 불필요)
-git checkout {PUSH_TAG or HEAD[:7]}   # 태그 = 실험 스크립트 {HEAD[:7]}""" + (f" + 순차 쓰기 스크립트·병합 모델 {SEQ_HEAD[:7]}" if SEQ else "") + f""" + 이 문서·생성기·결과
+git checkout {PUSH_TAG or 'main'}   # {'태그' if PUSH_TAG else 'main (push 예정)'} = 실험 스크립트 {HEAD[:7]}""" + (f" + 순차 쓰기 스크립트·병합 모델 {SEQ_HEAD[:7]}" if SEQ else "") + (f" + 랜덤 bs 8K·64K 스크립트 {RBS_HEAD[:7]}" if RBS else "") + f""" + 이 문서·생성기·결과
+# 이 커밋에는 결과(exp/results/)도 들어 있다. 아래 명령을 같은 실험 이름으로 실행하면 DONE 표지가 있는 회차는 건너뛴다.
+# 새로 재려면 실험 이름을 바꾼다(예: main3x3_<날짜>, seq3x3_<날짜>, randbs_<날짜>).
 cd exp
 python3 -m venv .venv && ./.venv/bin/pip install -r requirements.txt
-bash build_modules.sh wbuffix   # make MAPPING_UNIT=<바이트> GC_STATS=1 WBUF_FIX=1 (매핑 단위 6 개; run_all.sh 도 없으면 빌드한다)
+bash build_modules.sh wbuffix   # make MAPPING_UNIT=<바이트> GC_STATS=1 WBUF_FIX=1 (매핑 단위 6 개). .ko 는 git 에 없으므로 clone 뒤에는 빌드가 필요하다
 # 3.1 절 GRUB 설정·패키지가 있어야 한다. 3.3 절 sudoers 는 이 clone 의 경로와 내 사용자 이름으로 바꿔 설치한다:
 sed -e "s|/home/dccearth/jsw/nvmevirt/exp/\\*|$(cd .. && pwd)/exp/*|" -e "s|dccearth|$(id -un)|g" report/nvmevirt-exp.sudoers > /tmp/nvmevirt-exp.sudoers   # 장치 이름이 nvme1n1 이 아니면 nomerges 경로도 바꾼다
 sudo visudo -cf /tmp/nvmevirt-exp.sudoers && sudo install -m 0440 -o root -g root /tmp/nvmevirt-exp.sudoers /etc/sudoers.d/nvmevirt-exp
@@ -1152,8 +1157,12 @@ for rel in ("exp/common.sh", "exp/build_modules.sh", "exp/run_experiment.sh", "e
     R.h(f"A. {rel}", 2)
     R.code(read(REPO / rel))
 R.p("부록의 스크립트는 문서를 만든 시점의 작업 트리 내용이다. 랜덤 쓰기 실험 때의 run_experiment.sh·common.sh·analyze.py 는 커밋 " + HEAD[:7] + " 의 것이며, "
-    "그 뒤 순차 쓰기용으로 WORKLOAD·NOMERGES·블록 계층 기록·merge 변형을 더했다(기본값은 이전 동작과 같다; git diff " + HEAD[:7] + " " + (SEQ_HEAD[:7] if SEQ else "HEAD") + " -- exp).", size=9)
-R.p("이 문서와 인계 기록을 만드는 exp/report/ 의 make_report.py · docx_helpers.py · make_md_results.py · findings_ko.txt · findings_seq_ko.txt · make_handoff.sh 는 "
+    "그 뒤 순차 쓰기용으로 WORKLOAD·NOMERGES·블록 계층 기록·merge 변형을 더했다(기본값은 이전 동작과 같다; git diff " + HEAD[:7] + " " + (SEQ_HEAD[:7] if SEQ else "HEAD") + " -- exp)."
+    + ((" 이어서 랜덤 bs 8K·64K 실험용으로 run_all_rand_bs.sh·link_runs.py 를 더하고, analyze.py·plot.py 가 매핑 단위(행)와 bs(열)를 따로 다루게 했으며, "
+        "collect_env.sh 가 같은 폴더의 옛 스냅샷을 지우고 새로 쓰게 했다(git diff " + SEQ_HEAD[:7] + " " + RBS_HEAD[:7] + " -- exp). 랜덤 bs 8K·64K 회차는 " + RBS_HEAD[:7]
+        + " 의 스크립트로 실행했다(run_experiment.sh·common.sh 는 " + SEQ_HEAD[:7] + " 와 같다). 그 뒤의 커밋에서는 주석, run_all*.sh 의 모듈 확인 방식(.ko 파일 존재 검사), "
+        "link_runs.py 의 오류 처리, make_gallery.py 만 고쳤고 측정 절차는 같다.") if RBS and SEQ else ""), size=9)
+R.p("이 문서와 인계 기록을 만드는 exp/report/ 의 make_report.py · docx_helpers.py · make_md_results.py · findings_ko.txt · findings_seq_ko.txt · findings_randbs_ko.txt · make_handoff.sh 는 "
     + (f"태그 {PUSH_TAG} 의 커밋에 있다" if PUSH_TAG else "작업 트리에 있다(커밋 예정)") + "(분량상 생략).", size=9)
 R.page_break()
 R.h("부록 B. NVMeVirt 변경 diff 전문 (원본 61c90f7 대비)")
