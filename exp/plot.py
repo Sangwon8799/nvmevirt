@@ -29,7 +29,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import analyze as A  # noqa: E402  (collect / aggregate / palette)
 
-SIZES = A.SIZES
+SIZES = list(A.SIZES)   # narrowed in main() to the sizes present in the results
 METRICS = {
     "bw_MiBps": "write bandwidth, 60 s mean (MiB/s)",
     "iops": "IOPS, 60 s mean",
@@ -60,11 +60,11 @@ def parse_args():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("cmd", choices=["list", "bs", "map", "heatmap", "ts", "compare", "all"])
     ap.add_argument("--exp")
-    ap.add_argument("--variant", default="base,wbuffix")
+    ap.add_argument("--variant", default="all", help="comma list of result subdirectories (default: all present)")
     ap.add_argument("--metric", default="bw_MiBps")
     ap.add_argument("--ts-metric", default="bw", choices=list(TS_LOGS))
-    ap.add_argument("--maps", default=",".join(SIZES))
-    ap.add_argument("--bss", default=",".join(SIZES))
+    ap.add_argument("--maps", default="")
+    ap.add_argument("--bss", default="")
     ap.add_argument("--reps", default="1,2,3")
     ap.add_argument("--logy", action="store_true")
     ap.add_argument("--out")
@@ -255,8 +255,14 @@ def main():
     if not rows:
         sys.exit(f"no finished runs under {exp}")
     agg = A.aggregate(rows)
-    variants = [v for v in split(a.variant) if any(r["variant"] == v for r in rows)]
-    maps, bss, reps = split(a.maps), split(a.bss), [int(x) for x in split(a.reps)]
+    global SIZES
+    SIZES[:] = sorted({r["map"] for r in rows} | {r["bs"] for r in rows}, key=A.kib)
+    A.SIZES = SIZES
+    present = sorted({r["variant"] for r in rows})
+    variants = [v for v in split(a.variant) if v in present] if a.variant != "all" else present
+    if not variants:
+        variants = present
+    maps, bss, reps = split(a.maps) or list(SIZES), split(a.bss) or list(SIZES), [int(x) for x in split(a.reps)]
     pdir = exp / "plots"
     out = Path(a.out) if a.out else None
 

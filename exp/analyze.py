@@ -21,7 +21,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 
-SIZES = ["4k", "8k", "16k", "32k", "64k", "128k"]
+SIZES = ["4k", "8k", "16k", "32k", "64k", "128k"]   # replaced in main() by the sizes present in the results
 # categorical slots (fixed order) and chart chrome — light mode
 SERIES = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#4a3aa7", "#e34948"]
 INK, INK2, MUTED, GRID, AXIS, SURFACE = "#0b0b0b", "#52514e", "#898781", "#e1e0d9", "#c3c2b7", "#fcfcfb"
@@ -326,28 +326,128 @@ def timeseries_grid(series, variant, path):
 
 
 def variant_compare(agg, path):
+    """One panel per mapping unit: every variant (or cache mode) against bs; shaded = bs < mapping unit."""
     variants = sorted({a["variant"] for a in agg})
     if len(variants) < 2:
         return
-    maps = [mp for mp in SIZES[1:]]
-    fig, axes = plt.subplots(1, len(maps), figsize=(16, 3.8), facecolor=SURFACE, sharey=False)
-    for ax, mp in zip(axes, maps):
+    maps = [mp for mp in SIZES if any(a["map"] == mp for a in agg)]
+    fig, axes = plt.subplots(1, len(maps), figsize=(3.4 * len(maps) + 1, 3.8), facecolor=SURFACE, squeeze=False)
+    for ax, mp in zip(axes[0], maps):
         style(ax)
         for vi, v in enumerate(variants):
             pts = [(SIZES.index(a["bs"]), a["bw_MiBps_mean"], a["bw_MiBps_std"])
-                   for a in agg if a["variant"] == v and a["map"] == mp and kib(a["bs"]) < kib(mp)]
+                   for a in agg if a["variant"] == v and a["map"] == mp]
             if pts:
                 xs, ys, es = zip(*sorted(pts))
                 ax.errorbar(xs, ys, yerr=es, color=SERIES[vi], linewidth=2, marker="o", markersize=5,
                             capsize=3, label=v)
-        ax.set_xticks(range(SIZES.index(mp)), [s.upper() for s in SIZES[:SIZES.index(mp)]])
-        ax.set_title(f"map {mp.upper()} (bs < map)", color=INK, fontsize=10, loc="left")
+        ax.axvspan(-0.5, SIZES.index(mp) - 0.5, color="#f0efec", zorder=0)
+        ax.set_xticks(range(len(SIZES)), [s.upper() for s in SIZES], fontsize=8)
+        ax.set_title(f"map {mp.upper()}", color=INK, fontsize=10, loc="left")
         ax.set_xlabel("fio block size", color=INK2, fontsize=9)
-    axes[0].set_ylabel("write bandwidth (MiB/s)", color=INK2)
-    axes[0].legend(frameon=False, fontsize=8, labelcolor=INK2)
-    fig.tight_layout()
+    axes[0][0].set_ylabel("write bandwidth (MiB/s)", color=INK2)
+    axes[0][0].legend(frameon=False, fontsize=8, labelcolor=INK2)
+    fig.suptitle("Variants compared, mean ± std (shaded: bs < mapping unit)", color=INK, fontsize=11, x=0.01, ha="left")
+    fig.tight_layout(rect=(0, 0, 1, 0.92))
     fig.savefig(path, dpi=200)
     plt.close(fig)
+
+
+def _betacf(a, b, x):
+    qab, qap, qam = a + b, a + 1.0, a - 1.0
+    c, d = 1.0, 1.0 - qab * x / qap
+    d = 1.0 / (d if abs(d) > 1e-300 else 1e-300)
+    h = d
+    for m in range(1, 300):
+        m2 = 2 * m
+        aa = m * (b - m) * x / ((qam + m2) * (a + m2))
+        d = 1.0 + aa * d
+        d = 1.0 / (d if abs(d) > 1e-300 else 1e-300)
+        c = 1.0 + aa / c if abs(c) > 1e-300 else 1e-300
+        h *= d * c
+        aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2))
+        d = 1.0 + aa * d
+        d = 1.0 / (d if abs(d) > 1e-300 else 1e-300)
+        c = 1.0 + aa / c if abs(c) > 1e-300 else 1e-300
+        de = d * c
+        h *= de
+        if abs(de - 1.0) < 1e-12:
+            break
+    return h
+
+
+def t_two_sided_p(t, df):
+    """Two-sided p-value of Student's t (regularized incomplete beta), no scipy needed."""
+    import math
+    if df <= 0 or t != t:
+        return float("nan")
+    x = df / (df + t * t)
+    a, b = df / 2.0, 0.5
+    lbeta = math.lgamma(a) + math.lgamma(b) - math.lgamma(a + b)
+    front = math.exp(a * math.log(x) + b * math.log(1 - x) - lbeta) if 0 < x < 1 else (1.0 if x >= 1 else 0.0)
+    if x == 0 or x == 1:
+        return 0.0 if x == 0 else 1.0
+    if x < (a + 1) / (a + b + 2):
+        ib = front * _betacf(a, b, x) / a
+    else:
+        ib = 1 - front * _betacf(b, a, 1 - x) / b
+    return ib
+
+
+def t_quantile_975(df):
+    lo, hi = 0.0, 50.0
+    for _ in range(100):
+        mid = (lo + hi) / 2
+        if t_two_sided_p(mid, df) > 0.05:
+            lo = mid
+        else:
+            hi = mid
+    return (lo + hi) / 2
+
+
+def cache_compare(rows, out):
+    """Paired comparison of <v>_drop vs <v>_nodrop (same map, bs, rep). Writes cache_compare.csv / cache_pairs.csv."""
+    import math
+    by = {(r["variant"], r["map"], r["bs"], r["rep"]): r for r in rows}
+    bases = sorted({r["variant"][: -len("_nodrop")] for r in rows if r["variant"].endswith("_nodrop")})
+    metrics = ["bw_MiBps", "iops", "clat_mean_us", "clat_p99_us", "gc_onset_s", "bw_pre_gc_MiBps", "bw_post_gc_MiBps", "waf_total"]
+    pair_rows, summ = [], []
+    for b in bases:
+        keys = sorted({(r["map"], r["bs"]) for r in rows if r["variant"] == f"{b}_nodrop"}, key=lambda k: (kib(k[0]), kib(k[1])))
+        allrel = {m: [] for m in metrics}
+        for mp, bs in keys:
+            for m in metrics:
+                diffs, rels, nd, dr = [], [], [], []
+                for rep in (1, 2, 3, 4, 5):
+                    a, c = by.get((f"{b}_nodrop", mp, bs, rep)), by.get((f"{b}_drop", mp, bs, rep))
+                    if not a or not c or m not in a or m not in c:
+                        continue
+                    nd.append(a[m]); dr.append(c[m]); diffs.append(c[m] - a[m])
+                    rel = (c[m] - a[m]) / a[m] * 100 if a[m] else float("nan")
+                    rels.append(rel); allrel[m].append(rel)
+                    if m == "bw_MiBps":
+                        pair_rows.append({"variant": b, "map": mp, "bs": bs, "rep": rep, "nodrop_bw_MiBps": a[m], "drop_bw_MiBps": c[m], "diff_pct": rel})
+                if len(diffs) < 2:
+                    continue
+                md, sd = statistics.fmean(diffs), statistics.stdev(diffs)
+                t = md / (sd / math.sqrt(len(diffs))) if sd > 0 else float("inf") if md else 0.0
+                summ.append({"variant": b, "map": mp, "bs": bs, "metric": m, "n_pairs": len(diffs),
+                             "nodrop_mean": statistics.fmean(nd), "drop_mean": statistics.fmean(dr),
+                             "mean_diff": md, "mean_diff_pct": statistics.fmean(rels), "sd_diff": sd,
+                             "paired_t": t, "p_two_sided": t_two_sided_p(t, len(diffs) - 1) if sd > 0 else float("nan")})
+        for m in metrics:
+            v = [x for x in allrel[m] if x == x]
+            if len(v) >= 2:
+                mean, sd = statistics.fmean(v), statistics.stdev(v)
+                half = t_quantile_975(len(v) - 1) * sd / math.sqrt(len(v))
+                t = mean / (sd / math.sqrt(len(v))) if sd > 0 else float("nan")
+                summ.append({"variant": b, "map": "ALL", "bs": "ALL", "metric": m, "n_pairs": len(v),
+                             "mean_diff_pct": mean, "sd_diff": sd, "ci95_low_pct": mean - half, "ci95_high_pct": mean + half,
+                             "paired_t": t, "p_two_sided": t_two_sided_p(t, len(v) - 1)})
+    if summ:
+        write_csv(out / "cache_compare.csv", summ)
+        write_csv(out / "cache_pairs.csv", pair_rows)
+    return summ
 
 
 def main():
@@ -360,6 +460,8 @@ def main():
     if not rows:
         sys.exit(f"no finished runs under {exp_dir}")
     rows.sort(key=lambda r: (r["variant"], kib(r["map"]), kib(r["bs"]), r["rep"]))
+    global SIZES
+    SIZES = sorted({r["map"] for r in rows} | {r["bs"] for r in rows}, key=kib)
     agg = aggregate(rows)
     write_csv(out / "summary_runs.csv", rows)
     write_csv(out / "summary_agg.csv", agg)
@@ -381,6 +483,7 @@ def main():
                 f"Total write amplification ({v})", out / f"fig_waf_heatmap_{v}.png")
         timeseries_grid(series, v, out / f"fig_timeseries_{v}.png")
     variant_compare(agg, out / "fig_variant_compare.png")
+    cache_compare(rows, out)
     print(f"{len(rows)} runs, {len(failed)} failed -> {out}")
 
 

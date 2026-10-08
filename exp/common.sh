@@ -24,6 +24,11 @@ RAMP="${RAMP:-0}"             # ramp_time 0: keep the pre-GC part of every run
 LOG_MSEC="${LOG_MSEC:-500}"   # bw/iops/lat time-series averaging window (ms)
 SETTLE_SEC="${SETTLE_SEC:-5}" # idle seconds between insmod and fio
 
+# ---- OS page cache before each run ----
+# nodrop: nothing / drop: sync; echo 3 > /proc/sys/vm/drop_caches right after insmod (before SETTLE_SEC)
+# "nodrop drop": both, back to back for every (map, bs, rep); the order alternates with rep (odd: nodrop first)
+CACHE_MODES="${CACHE_MODES:-nodrop}"
+
 # Expected NVMeVirt logical capacity: (12 GiB - 1 MiB) * 100 / 107 (OP 7 %), with some slack
 DEV_MIN_BYTES=$(( 11 * 1024**3 ))
 DEV_MAX_BYTES=$(( 12 * 1024**3 ))

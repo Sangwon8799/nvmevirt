@@ -254,8 +254,9 @@ R.table(["CPU", "역할", "근거"], [
     ["cpu0–2", "운영체제, fio(고정하지 않음 — isolcpus 때문에 0–2 에서만 실행됨), dmesg 기록 프로세스", "isolcpus=3-5"],
     ["cpu3", "NVMeVirt 디스패처 (I/O 명령 처리, FTL, GC 를 모두 이 스레드가 수행)", "cpus= 의 첫 값 · dmesg 'nvmev_dispatcher started on cpu 3'"],
     ["cpu4", "NVMeVirt I/O 워커 0 (데이터 복사·완료 처리) — 실제로 모든 I/O 를 처리", "dmesg 'nvmev_io_worker_0 started on cpu 4'"],
-    ["cpu5", "NVMeVirt I/O 워커 1 — 이 실험에서는 거의 쉬고 있음", "가상 장치의 I/O 큐가 1 개('1/0/0 default/read/poll queues')이고 "
-     "CONFIG_NVMEV_IO_WORKER_BY_SQ 로 큐 번호에 따라 워커를 고르므로 워커 0 만 쓰인다"],
+    ["cpu5", "NVMeVirt I/O 워커 1 — I/O 는 받지 않고 폴링만 함. 가상 장치의 인터럽트(IRQ 15)가 이 CPU 로 전달되어 호스트 nvme 완료 처리가 여기서 실행됨",
+     "가상 장치가 MSI-X 없이 레거시 IO-APIC IRQ 15 하나(nvme1q0·nvme1q1 공유)만 받아 I/O 큐가 1 개('1/0/0 default/read/poll queues'). "
+     "CONFIG_NVMEV_IO_WORKER_BY_SQ 로 큐 번호에 따라 워커를 고르므로 워커 0 만 쓰인다. /proc/irq/15/effective_affinity_list = 5, irqbalance 꺼짐"],
 ], widths=[2.0, 8.0, 7.0], size=8.5, caption="CPU 배치")
 
 # ============================================================================ 3
@@ -395,7 +396,8 @@ R.numbered([
     "5 초 쉰 뒤 'fio-start' 표지를 남기고 fio 를 60 초 실행한다(JSON 결과 + 0.5 초 시계열).",
     "'fio-end', 'rmmod' 표지를 남기고 rmmod 한다 — 이때 GC 통계(파티션별 호스트/GC 페이지 수)가 로그에 찍힌다.",
     "커널 로그를 run 구간(dmesg_run.txt)과 rmmod 구간(dmesg_unload.txt)으로 나누고, 결과 파일 소유자를 사용자로 바꾼다.",
-    "fio 종료 코드와 JSON 의 error 필드를 확인한 뒤 DONE 표지를 만든다. DONE 이 있는 회차는 다시 실행할 때 건너뛴다.",
+    "fio 종료 코드와 JSON 의 error 필드가 모두 0 이면 DONE 표지를, 아니면 FAILED 표지(원인 커널 줄 포함)를 만들고 다음 회차로 넘어간다. DONE·FAILED 회차는 다시 실행할 때 건너뛴다. "
+    "fio 는 감시 타이머(60 s + 180 s 에 SIGTERM, 다시 60 s 뒤 SIGKILL) 아래에서 실행한다.",
 ])
 R.h("4.2 실행 순서와 시간", 2)
 wb, we = run_window("base")
@@ -405,6 +407,10 @@ R.table(["변형", "회차 수", "순서", "시작", "끝"], [
     ["wbuffix", str(n_runs["wbuffix"]), "같음", fb, fe],
 ], widths=[2.0, 1.6, 7.4, 3.0, 3.0], size=8.5, caption="실행 순서와 시각 (UTC)")
 R.p("반복을 바깥 루프에 둬서 시간에 따른 서버 상태 변화가 특정 조합에 몰리지 않게 했다. 회차 하나는 적재·대기·측정·내림을 합쳐 약 70 초 걸린다.")
+R.p("실제 실행 경과: run_all.sh(빌드 → base → wbuffix)로 05:20:28 에 시작했으나 base 21 번째 회차(매핑 32K·bs 16K)에서 가상 장치가 멈춰(5.6 절) "
+    "당시 스크립트(커밋 5769378)가 실험을 중단했다(05:46:57). 실패 회차를 FAILED 로 남기고 계속하도록 스크립트를 고친 뒤(커밋 2a462a3) 05:49:13 에 "
+    "wbuffix 108 회를 먼저, 이어서 base 의 나머지 회차를 실행했다. 모듈은 다시 빌드하지 않아 base 의 앞 20 회와 뒤 회차는 같은 바이너리다(SHA-256 확인). "
+    "base 의 회차별 스크립트 커밋은 meta.txt 의 git_head(2a462a3 이후)와 base/git_head.txt 에 있다.", size=9.5)
 R.h("4.3 재현 명령", 2)
 R.code(f"""git clone git@github.com:Sangwon8799/nvmevirt.git && cd nvmevirt
 git checkout {HEAD[:7]}
@@ -487,7 +493,7 @@ if ab:
     R.table(["빌드", "회", "MiB/s", "IOPS", "clat 평균 µs"], ab, widths=[5.0, 1.5, 3.0, 3.5, 3.0], size=8.5,
             caption="GC_STATS 계측 유무 비교 (매핑 4K, bs 4K, 20 s)", align_right_from=2)
 R.p("GC 통계(첫 GC 시각, 호스트/GC 페이지 수)를 남기는 계측은 디스패처 스레드에서 정수 증가 몇 번과 첫 GC 때 printk 1 줄만 더한다. "
-    "CPU 가 병목인 4K/4K 에서 계측을 끈 빌드와 켠 빌드를 20 초씩 3 회 비교해 차이가 반복 간 편차(약 0.3 %) 안에 있음을 확인한 뒤 본 실험의 두 변형 모두에 켰다.")
+    "요청 수가 가장 많아 디스패처의 요청당 작업이 결과에 가장 잘 드러나는 4K/4K 에서 계측을 끈 빌드와 켠 빌드를 20 초씩 3 회 비교해 차이가 반복 간 편차(약 0.3 %) 안에 있음을 확인한 뒤 본 실험의 두 변형 모두에 켰다.")
 R.h("5.4 발견 1 — 매핑 단위보다 작은 쓰기에서 쓰기 버퍼가 과다 반환된다 (base)", 2)
 R.p("NVMeVirt conventional SSD 의 conv_write() 는 요청 크기만큼 쓰기 버퍼를 할당하고(buffer_allocate(wbuf, LBA_TO_BYTE(nr_lba))), "
     "flash page(wordline)가 다 차서 프로그램될 때 'oneshot page 크기'만큼 반환한다(schedule_internal_operation(…, pgs_per_oneshotpg × pgsz)). "
@@ -523,10 +529,39 @@ R.table(["특성", "내용", "영향"], [
     ["지우기 지연 0", "tBERS = 0 (기본값).", "GC 비용이 실제보다 작다 (모든 조합에 같게 적용)."],
     ["매핑 표 = 호스트 메모리 배열", "DRAM 캐시(DFTL) 모델이 없다.", "매핑 표 크기 감소 효과는 성능에 나타나지 않는다 — 3.5 절의 L2P 크기로 따로 보고."],
     ["활성 I/O 워커 1 개", "I/O 큐가 1 개라 cpu4 워커만 일한다.", "논문에는 '디스패처 1 + 워커 2 (활성 1)' 로 적는 것이 정확하다."],
-    ["작은 bs 의 CPU 병목", "4K 근처에서는 GC 전 처리량이 NAND 가 아니라 디스패처 CPU 속도로 정해진다.", "절대값은 다른 서버로 옮겨지지 않는다."],
+    ["GC 이전 처리량의 한계", "bs ≥ 매핑 단위이면 GC 전 처리량은 NAND 프로그램 한계(16 die 합 2,233 MiB/s @32K page, 64K 3,805, 128K 5,871) 또는 PCIe 한계(3,357 MiB/s)에 가깝다(4K/4K 실측 약 2,005 MiB/s = NAND 한계의 90 %). "
+     "base 의 bs < 매핑 단위(매핑 ≤ 32K)는 GC 전에는 NAND 한계 × bs/매핑 수준(8K/4K 약 1,116 MiB/s)에 머물고, GC 이후에는 5.4 절의 문제로 에뮬레이터 산물이 된다.",
+     "GC 전 구간은 NAND 모델을, GC 후 구간은 GC 모델을 반영한다 — 6 절의 GC 전/후 표로 나눠 본다."],
+    ["fio randommap 주기 현상", "fio 기본값(norandommap=0)은 한 바퀴(11.21 GiB) 동안 같은 블록을 다시 쓰지 않는다. 첫 바퀴에는 무효 페이지가 없어 GC 가 시작되는 순간(둘째 바퀴 약 0.66 GiB 지점) 희생 line 에 유효 페이지가 거의 가득해 대역폭이 급락하고, "
+     "둘째 바퀴가 진행될수록 회복하다가 끝 무렵 첫 바퀴의 line 이 모두 무효가 되며 치솟은 뒤 셋째 바퀴에서 다시 떨어진다.",
+     "60 s 평균에 이 주기가 섞인다. 시계열(6.4 절)을 함께 봐야 한다. GC 구간은 정상 상태가 아니다."],
     ["GC 시작 시각 차이", "포맷 직후 60 s 라 조합마다 GC 이전 구간 비율이 다르다.", "60 s 평균과 함께 GC 전/후 BW, 시계열을 같이 본다."],
     ["randrepeat=1", "모든 회차가 같은 난수 순서를 쓴다.", "3 회 반복은 에뮬레이터 타이밍 편차만 담는다."],
 ], widths=[3.2, 7.6, 6.2], size=8, caption="해석 시 주의할 모델 특성")
+
+R.h("5.6 발견 2 — base 에서 가상 장치가 멈추는 조합", 2)
+FAILED_RUNS = load_csv(AN / "failed_runs.csv")
+R.p("요청 설정 그대로인 base 의 bs < 매핑 단위 조합에서는 쓰기 버퍼가 호스트를 붙잡지 못해 NAND 작업 대기열이 계속 늘어난다. NVMeVirt 의 I/O 워커 작업 큐"
+    "(워커당 16,384 항목)가 차면 io.c:302 의 WARN_ON_ONCE('IO queue is almost full')가 찍히고 이후 명령이 처리되지 않아, 리눅스 nvme 드라이버의 "
+    "I/O 시간 초과(30 s) → 중단(abort) → 컨트롤러 리셋 → 장치 비활성화 → I/O 오류로 이어진다. 그런 회차는 FAILED 로 표시해 평균에서 빼고 아래에 따로 적었다. "
+    "rmmod 는 매번 정상 처리되었고 다음 회차의 insmod 도 정상이었다.")
+if FAILED_RUNS:
+    R.table(["변형", "매핑", "bs", "회", "fio\n종료", "fio\n오류", "실행\n시간 s", "큐 포화\n경고 s", "nvme\n시간초과 s", "리셋 s", "비활성 s", "채널모델\n오류 줄"],
+            [[r["variant"], r["map"].upper(), r["bs"].upper(), str(int(r["rep"])), str(r.get("fio_exit", "")), str(r.get("fio_json_error", "")),
+              fnum(r.get("runtime_s"), 1), fnum(r.get("t_queue_full_warn_s"), 1), fnum(r.get("t_nvme_timeout_s"), 1), fnum(r.get("t_reset_s"), 1),
+              fnum(r.get("t_disable_s"), 1), fnum(r.get("chmodel_msgs"), 0)] for r in FAILED_RUNS],
+            widths=[1.4, 1.1, 1.1, 0.7, 1.1, 1.1, 1.4, 1.5, 1.6, 1.3, 1.4, 2.2], size=7, caption="실패(FAILED) 회차 — 시각은 fio 시작 기준", align_right_from=3)
+else:
+    R.p("(failed_runs.csv 없음)")
+R.code("""# base map32k_bs16k_r1 의 kernel.log (fio-start = 62505.554)
+[62511.194665] NVMeVirt: KSC2026: first GC part=1 victim line=12 vpc=86 ipc=170 free_lines=2 host_pgs=97280      (+5.6 s)
+[62530.521783] WARNING: CPU: 3 PID: 30089 at …/nvmevirt/io.c:302 __allocate_work_queue_entry+0x8a/0xb0 [nvmev]  (+25.0 s)
+[62560.640166] nvme nvme1: I/O tag 192 (80c0) opcode 0x1 (I/O Cmd) QID 1 timeout, aborting req_op:WRITE(1) size:16384  (+55.1 s)
+[62590.847614] nvme nvme1: I/O tag 192 (80c0) opcode 0x1 (I/O Cmd) QID 1 timeout, reset controller                    (+85.3 s)
+[62652.289426] nvme nvme1: I/O tag 28 (301c) QID 0 timeout, disable controller                                        (+146.7 s)
+[62652.306429] nvme nvme1: Disabling device after reset failure: -5
+[62652.313386] I/O error, dev nvme1n1, sector 6011360 op 0x1:(WRITE) flags 0x8800 phys_seg 1 prio class 2
+fio: io_u error on file /dev/nvme1n1: Input/output error: write offset=…, buflen=16384   → fio error 5 (EIO), 146.5 s""")
 
 # ============================================================================ 6
 R.h("6. 결과")

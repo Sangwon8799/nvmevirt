@@ -16,7 +16,7 @@
   - `tail /home/dccearth/jsw/KSC2026/nvmevirt/exp/results/run_all_main_20261008.log`
   - `ls /home/dccearth/jsw/KSC2026/nvmevirt/exp/results/main_20261008/{base,wbuffix}/ | grep -c _r` (각 108 이면 완료)
 - 실험 행렬: 매핑 단위 {4k,8k,16k,32k,64k,128k} × fio bs {4k,8k,16k,32k,64k,128k} × 3 회. 변형 2 개(base, wbuffix) → 216 회. 회차당 약 70 s, 전체 약 4.2 시간.
-- 일정: 2026-10-08 05:20:28 UTC 시작(모듈 빌드). base 측정 1 회차 05:21:02. 예상 종료 09:35 UTC 전후.
+- 일정: 2026-10-08 05:20:28 UTC 시작(모듈 빌드). base 측정 1 회차 05:21:02. base 21 회차(map32k_bs16k_r1)에서 장치 실패로 05:46:57 중단 → 스크립트 수정 후 05:49:13 재개. 재개 순서는 wbuffix 108 회 → base 나머지 87 회(10 절). wbuffix 종료 약 07:55, base 종료는 실패 회차 수에 따라 약 09:40–10:30 UTC 로 예상.
 - 최종 산출물(완료 후):
   - 실험 기록 Word 문서: `/home/dccearth/jsw/KSC2026/nvmevirt/exp/report/KSC2026_NVMeVirt_매핑단위_실험기록.docx`. 같은 파일을 /home/dccearth/jsw/KSC2026/산출물/ 에도 복사할 예정.
   - 결과 CSV: `exp/results/main_20261008/analysis/summary_runs.csv`(회차별), `summary_agg.csv`(조합별 평균·표준편차·최소·최대)
@@ -80,6 +80,16 @@
   - exp/plot.py — 명령줄 그래프 도구(8 절)
   - 이 파일 — /home/dccearth/jsw/KSC2026/nvmevirt/EXPERIMENT_LOG_FOR_CLAUDE.md, git 으로 관리하며 push 된다.
 
+### 1.6 다섯 번째 메시지 (2026-10-08 06:3x UTC, 본 실험 진행 중)
+
+- 원문: 「실험이 끝나면 nvmevirt 폴더 위치를 ~/jsw로 옮겨주고 ~/jsw에 있는 ~/jsw/exp 폴더는 내용물을 포함해서 모두 삭제해줘.」
+- 계획(실험 종료 후):
+  - /home/dccearth/jsw/KSC2026/nvmevirt → /home/dccearth/jsw/nvmevirt 로 이동
+  - /home/dccearth/jsw/exp(2.2 절의 이전 작업 폴더) 전체 삭제. 삭제 전에 그 안의 iodepth 결과 수치를 2.2 절에 옮겨 적는다.
+  - 저장소 안 upstream_tmp/ 삭제, exp/.venv 재생성(절대경로), KSC2026/EXPERIMENT_LOG_FOR_CLAUDE.md 심볼릭 링크 갱신
+  - 문서의 경로를 갱신하고 이동 사실을 기록한다.
+- 이행 결과는 「갱신 이력」과 14 절에 적는다.
+
 ---------------------------------------------------------------------------------------------------
 
 ## 2. 연구 배경과 사전 자료
@@ -100,9 +110,23 @@
 
 ### 2.2 이 세션 이전에 서버에 있던 작업 흔적 (참고만, 이번 실험에 쓰지 않음)
 
-- /home/dccearth/jsw/before.txt, after.txt — insmod 전후 `ls -l /dev/nvme*` (after 에 /dev/nvme1, /dev/nvme1n1 이 생김). 2026-10-07 작성.
+- /home/dccearth/jsw/before.txt, after.txt — insmod 전후 `ls -l /dev/nvme*` (after 에 /dev/nvme1, /dev/nvme1n1 이 생김). 2026-10-07 작성. 06:4x 확인 때 두 파일이 /home/dccearth/jsw 에 없었다(디렉터리 mtime 06:42). Claude 가 지운 것이 아니며 사용자가 정리한 것으로 보인다. 내용(세션 시작 때 읽음):
+  - before.txt: /dev/nvme0 (241,0), /dev/nvme0n1 (259,0), nvme0n1p1 (259,1), nvme0n1p2 (259,2), /dev/nvme-fabrics (10,261) — 날짜 Sep 30/Oct 1
+  - after.txt: 위 + /dev/nvme1 (241,1, Oct 7 12:28), /dev/nvme1n1 (259,3, Oct 7 12:28)
 - /home/dccearth/jsw/exp/ (이전 실험 폴더, KSC2026 밖에 있음. 이번 실험과 별개이며 그대로 두었다):
-  - jobs/randwrite.fio, results/iodepth_test/ (iodepth 1–128, 매핑 4K, bs 4K, ramp_time 10, runtime 60, 모듈 재적재 없이 연속 실행 → GC 정상 상태). iodepth_summary.csv 에 따르면 QD32 에서 64,041 IOPS, 250.2 MiB/s, clat 평균 498.8 µs, p99 14,352 µs이고, QD 1–128 모두 약 59–66K IOPS 다.
+  - jobs/randwrite.fio, results/iodepth_test/ (iodepth 1–128, 매핑 4K, bs 4K, ramp_time 10, runtime 60, 모듈 재적재 없이 연속 실행 → GC 정상 상태, filename=/dev/nvme1n1, 2026-10-08 02:33–02:41 UTC). iodepth_summary.csv 에 따르면 QD32 에서 64,041 IOPS, 250.2 MiB/s, clat 평균 498.8 µs, p99 14,352 µs이고, QD 1–128 모두 약 59–66K IOPS 다. 이 폴더는 사용자 지시(1.6)로 실험 후 삭제되므로 CSV 전문을 여기에 옮겨 둔다:
+```
+iodepth,n,iops,iops_std,bw_MiBps,bw_MiBps_std,clat_mean_us,clat_mean_us_std,clat_p99_us,clat_p99_us_std
+1,1,63305.478242,0.0,247.28702354431152,0.0,14.575670484,0.0,9.024,0.0
+2,1,58896.25754,0.0,230.06357097625732,0.0,32.815967144000005,0.0,80.384,0.0
+4,1,66315.294745,0.0,259.04431533813477,0.0,59.271949227,0.0,173.056,0.0
+8,1,63891.351441,0.0,249.57604694366455,0.0,124.220571154,0.0,236.544,0.0
+16,1,64332.477792,0.0,251.2997179031372,0.0,247.75240136600002,0.0,11730.944,0.0
+32,1,64040.532658,0.0,250.1603479385376,0.0,498.76462219800004,0.0,14352.384,0.0
+64,1,64377.054098,0.0,251.4769687652588,0.0,993.2828929670001,0.0,15400.96,0.0
+128,1,64931.726908,0.0,253.64782428741455,0.0,1970.194035148,0.0,16580.608,0.0
+```
+    그때 쓴 jobs/randwrite.fio: [global] filename=${DEV} ioengine=libaio direct=1 rw=randwrite time_based runtime=60 ramp_time=${RAMP_TIME} iodepth=${IODEPTH} numjobs=1 group_reporting=1 / [randwrite] bs=${BS} (JSON 의 job options: ramp_time 10).
   - run_mapunit_test.sh, patch_nvmevirt.sh, plot_mapunit.py, mapunit_exp.tar.gz — 예전 Claude 세션이 만든 매핑 단위 실험 스크립트(MAPS 4k 16k 32k, fob/steady 모드). 이번 실험에서는 쓰지 않았다(설계 참고만).
   - .venv (numpy, matplotlib)
 - ~/.bash_history 기록(2026-10-06–07):
@@ -234,7 +258,7 @@ NVMEV_INFO("KSC2026: mapping unit=%u B, flash page=%u B, oneshot page=%u B, pgs_
 8. SETTLE_SEC=5 s 쉬고, "KSC2026-MARK <회차> fio-start <ns>" 를 남긴 뒤 `sudo -n fio --output-format=json --output=fio.json job.fio`(stdout/stderr 는 fio_stdout.txt). 끝나면 "fio-end" 표지를 남긴다.
 9. "KSC2026-MARK <회차> rmmod <ns>" 표지 → unload_nvmev(rmmod; GC 통계가 찍힌다) → 0.5 s → dmesg 기록 프로세스 kill → chmodel_msgs.txt 를 최대 60 s 기다림 → `sudo -n chown -R dccearth:dccearth <회차폴더>`
 10. kernel.log 를 표지로 나눈다: fio-start ~ rmmod 표지 = dmesg_run.txt (chmodel 줄 제외), rmmod 표지 이후 = dmesg_unload.txt. meta.txt 에 end, fio_exit, chmodel_msgs, kernel_warn 을 더한다.
-11. fio 종료 코드가 0 이고 fio.json jobs[0].error == 0 인지 확인한다(아니면 die). 결과 1 줄을 출력하고 DONE 을 만든다.
+11. fio 종료 코드가 0 이고 fio.json jobs[0].error == 0 이면 결과 1 줄을 출력하고 DONE 을 만든다. 아니면 FAILED 표지를 만들고 계속한다(커밋 2a462a3 부터. 그 전 5769378 에서는 die 했다 — 10 절 첫 중단). fio 는 백그라운드로 실행하고 감시 타이머(RUNTIME+180 s SIGTERM, +60 s SIGKILL)가 지킨다.
 - 시작할 때: sudo -n -l 로 insmod·rmmod·fio·dmesg·"tee /dev/kmsg" 권한 확인, /proc/cmdline 에 memmap=12G$12G 확인, 모든 .ko 존재 확인, sha256sum -c 확인. 그 뒤 env_before 스냅샷(없을 때만), modules_SHA256SUMS·modules_build_info.txt·randwrite.fio.in·git_head.txt·nvmevirt_vs_upstream.diff·nvmevirt_uncommitted.diff 를 <변형>/ 에 복사한다. 끝날 때: unload, env_after_<변형> 스냅샷.
 - **알려진 결함 1**: run_experiment.sh 가 만든 `nvmevirt_vs_upstream.diff` 는 `git diff -M 61c90f7 HEAD -- nvmevirt` 라서, pathspec 때문에 rename 을 찾지 못하고 모든 파일을 새 파일로 표시한다(수천 줄). 올바른 diff 는 `git diff d508610 HEAD -- nvmevirt` 다. 실험이 실행 중이라 스크립트를 고치지 못했다. bash 는 스크립트를 실행 중에 조금씩 읽으므로, 실행 중인 run_experiment.sh·run_all.sh 를 같은 inode 로 덮어쓰면 위험하다. 실험이 끝난 뒤 고치고 결과 폴더의 파일도 다시 만들 것이다(갱신 이력에 기록).
 - **알려진 결함 2**: meta.txt 의 kernel_warn 은 kernel.log 에서 chmodel 이 아닌 줄을 세려 했지만, 처음 20 개 chmodel 표본 줄 중 "No free entry" 줄도 셌다. analyze.py 는 kernel.log 에서 '[chmodel_request]' 와 'KSC2026' 줄을 빼고 WARNING|almost full|timeout|reset|Oops|BUG|Disk read failed|I/O error 를 다시 센다. CSV 의 kernel_warn 은 이렇게 다시 센 값이다.
@@ -340,7 +364,7 @@ dccearth ALL=(root) NOPASSWD: /usr/sbin/insmod, /usr/sbin/rmmod, /usr/bin/fio, /
   - GC 는 디스패처 스레드에서 동기로 실행된다(conv_write → check_and_refill_write_credit → foreground_gc → do_gc, line 1 개씩).
   - GC 의 NAND 비용은 LUN 시간만 점유하고, 호스트에는 버퍼가 찰 때만 보인다(GC 쓰기는 버퍼를 쓰지 않는다).
   - 지우기 지연은 0 이다. GC 읽기→쓰기 의존이 강제되지 않고, GC 는 '지금' 시각에 시작한다.
-- 활성 I/O 워커 1 개: nvmev.h 의 `#define CONFIG_NVMEV_IO_WORKER_BY_SQ` 때문에 워커 = (sqid−1) % nr_io_workers 다. 가상 장치의 I/O 큐가 1 개("nvme nvme1: 1/0/0 default/read/poll queues")라서 cpu4 의 워커 0 만 쓰인다. 논문에는 「디스패처 1 + 워커 2(활성 1)」로 적는 것이 정확하다.
+- 활성 I/O 워커 1 개: nvmev.h 의 `#define CONFIG_NVMEV_IO_WORKER_BY_SQ` 때문에 워커 = (sqid−1) % nr_io_workers 다. 가상 장치가 MSI-X 없이 레거시 IO-APIC IRQ 15 하나(/proc/interrupts: "15: … IR-IO-APIC 15-edge nvme1q0, nvme1q1")만 받아 I/O 큐가 1 개("nvme nvme1: 1/0/0 default/read/poll queues")다. 그래서 모든 요청이 sqid 1 → cpu4 의 워커 0 만 쓰이고, fio 가 어느 CPU 에 있든 같다. 워커 1(cpu5)은 I/O 없이 폴링만 한다. /proc/irq/15/effective_affinity_list = 5 (smp_affinity_list 0-5, irqbalance inactive)라서 호스트 nvme 완료 인터럽트는 cpu5 에서 처리된다(06:2x 확인, IRQ 15 누적 112,040,881 회 전부 CPU5). 논문에는 「디스패처 1 + 워커 2(활성 1)」로 적는 것이 정확하다.
 - 매핑 표가 호스트 메모리 배열(DFTL 캐시 모델 없음)이라 L2P 크기 효과는 성능에 나타나지 않는다. L2P 크기는 계산으로 따로 보고한다: 전체 FTL 페이지 × 8 B = 4K 24 MiB, 8K 12, 16K 6, 32K 3, 64K 1.5, 128K 0.75 MiB. rmap 도 같은 크기다.
 - GC 문턱: free line ≤ 2 (gc_thres_lines = gc_thres_lines_high = 2). 쓰기 크레딧(pgs_per_line)을 다 쓸 때마다 검사한다. 처음 free line 은 파티션당 382 개(384 − 사용자·GC 쓰기 포인터 2). 첫 GC 는 파티션당 380 line = 장치 전체 12,160 MiB 의 페이지 쓰기 뒤에 온다. 측정에서도 첫 GC 시점의 host_pgs = 778,240/파티션(4K 매핑, = 380 × 2048) — 정확히 일치한다.
 - fio randommap 의 주기 현상(05:3x 에 시계열로 확인):
@@ -349,6 +373,11 @@ dccearth ALL=(root) NOPASSWD: /usr/sbin/insmod, /usr/sbin/rmmod, /usr/bin/fio, /
   - 둘째 바퀴가 끝날 무렵에는 첫 바퀴에 쓴 line 이 모두 무효라 GC 비용이 0 에 가까워져 대역폭이 치솟는다(4k/4k 약 51 s 에 1,400 MiB/s, 4k/128k·8k/128k 약 36 s 에 1,700 MiB/s). 그 뒤 셋째 바퀴에서 다시 떨어진다.
   - 이 주기는 fio 의 randommap(norandommap=0)과 장치 크기로 정해지는 실험 특성이다. 60 s 평균에 그대로 섞이므로 해석에 반드시 고려해야 한다. 감사 C6 이 예측한 내용이다.
 - 이전 iodepth 실험의 64K IOPS(250 MiB/s)는 재적재 없이 연속 실행한 GC 정상 상태 값이다. 이번 실험의 GC 이후 구간(약 120–250 MiB/s, 회복 구간 제외)과 같은 수준이다.
+- GC 이전 처리량(감사 검증 단계의 정정, 실측과 일치):
+  - bs ≥ 매핑 단위이면 NAND 프로그램 한계(16 die 합 2,233 MiB/s @32K page, 64K 3,805, 128K 5,871)나 PCIe 한계(3,357 MiB/s)에 가깝다. 실측 4k/4k GC 전 약 2,005–2,008 MiB/s(약 513K IOPS) = NAND 한계의 90 %, 4k/128k 약 2,230 MiB/s.
+  - 즉 4K 쓰기도 GC 전에는 CPU 병목이 아니다. Claude 가 처음에 「4K 근처는 CPU 병목」이라고 적은 것은 틀렸다.
+  - base 의 bs < 매핑 단위(매핑 ≤ 32K)는 GC 전에 NAND 한계 × bs/MAP 에 머문다(8k/4k 약 1,116–1,128, 16k/4k 약 558, 32k/4k 약 279, 16k/8k 약 1,120 MiB/s). io-worker 의 대기 항목 정렬 삽입(__insert_req_sorted, O(N))이 브레이크 역할을 하기 때문이다. GC 이후에는 백로그가 393 ms 창을 넘으면서 printk 폭주가 일어나 에뮬레이터 산물이 된다.
+  - 매핑 64K/128K 의 bs < 매핑 단위는 GC 전에도 printk 에 묶인다(base 128k/4k 26K IOPS vs NAND 기준 47K).
 - rmmod 때 파티션 읽기 실패(base 의 bs < 매핑 회차에서만 관찰): "ldm_validate_partition_table(): Disk read failed. / Dev nvme1n1: unable to read RDB block 0 / nvme1n1: unable to read partition table / partition table beyond EOD, truncated". fio 가 장치를 닫은 뒤 udev 가 파티션을 다시 읽는데, 그 읽기가 NVMeVirt 워커 큐의 미래 시각 작업 뒤에 밀려 있다가 rmmod 로 실패한 것이다. fio-end 표지 이후의 일이라 측정값에는 영향이 없다. analyze 의 kernel_warn 으로 센다.
 - 반복 간 편차: 4k/4k 20 s A/B 에서 약 0.2–0.3 %(randrepeat=1 이므로 같은 주소 순서).
 
@@ -379,7 +408,16 @@ dccearth ALL=(root) NOPASSWD: /usr/sbin/insmod, /usr/sbin/rmmod, /usr/bin/fio, /
   - [high] 장치는 모델명으로 찾아야 한다(루트가 nvme0n1). 이미 반영했다.
   - [medium] RMW 미모델, DFTL 없음, 60 s 창에서 GC 시작 시점이 달라 GC 전후 구간이 섞임(시계열·GC 시각 기록으로 대응), 워커 1 개만 활성(fio 고정 권고 — 고정은 하지 않음. 큐가 1 개라 워커가 바뀌지 않는다), 64K/128K 에서 FLASH_PAGE_SIZE 를 안 바꾸면 assert(이미 반영).
   - [info] assert 전부 통과, 블록 2 MiB·용량·OP 가 모든 매핑에서 같음, MAX_CH_XFER_SIZE 는 쓰기에 무관, MDTS 로 128k 가 분할되지 않음, rmmod/insmod 가 FTL 을 완전히 초기화(저장 데이터는 남음), 4KB 전용 상수(ssd.c 394, conv_ftl.c 867)는 쓰기 전용 실험에 무관.
-- 검증 단계의 최종 판정은 워크플로가 끝난 뒤 exp/report/audit_summary_ko.txt 에 정리하고 docx 부록 E 에 넣는다.
+- 워크플로 완료: 06:22 UTC, 에이전트 51 개(오류 0), 하위 에이전트 토큰 약 4.94 M, 소요 약 92 분.
+  - 결과 원본: exp/report/audit_result.json (spec = 설정조사 보고서에서 뽑은 기본값 전체, ctx = 논문 맥락, audit = 렌즈별 주장·검증 판정)
+  - 한국어 요약: exp/report/audit_summary_ko.txt (docx 부록 E)
+- 검증 판정 요약: 핵심 주장은 하나도 뒤집히지 않았다. 「refuted」로 표시된 판정은 모두 세부 정정이다. 주요 정정:
+  - (a) GC 전 4k/4k 는 CPU 병목이 아니라 NAND 한계의 90 %
+  - (b) base 의 bs<MAP(MAP≤32K)는 GC 전에 NAND×bs/MAP 에 머문다
+  - (c) 워커 선택은 큐가 1 개라 고정이다(IRQ 15 → cpu5)
+  - (d) bs≥MAP 의 GC 영향은 버퍼 정체 재시도 + do_gc CPU 시간으로 나타난다
+  - (e) randommap 주기: 둘째 바퀴 끝에 WA 약 1.5, bs<MAP 는 WA 7.6–8.4 까지 상승
+  - (f) WB-2 의 「무한 증가」는 O(N) 브레이크 때문에 GC 전에는 제한된다
 
 ---------------------------------------------------------------------------------------------------
 
@@ -387,6 +425,29 @@ dccearth ALL=(root) NOPASSWD: /usr/sbin/insmod, /usr/sbin/rmmod, /usr/bin/fio, /
 
 - 05:20:28 시작. base 1/108 05:21:02.
 - base 첫 회차들(60 s): 4k/4k r1 418.4 MiB/s 107,109 IOPS clat 297.7 µs, 첫 GC 6.30 s, WAF_gc 3.14 / 4k/8k r1 433.6 MiB/s / 4k/128k r1 496.8 MiB/s 3,974 IOPS clat 8047.2 µs / 8k/4k r1 chmodel_msgs 8,242,206, kernel_warn 1(그 회차의 "No free entry" 표본 줄), rmmod 때 파티션 읽기 실패 4 줄.
+- **05:44:22–05:46:57 첫 중단**: base 21/108 회차 map32k_bs16k_r1 에서 fio 가 I/O 오류(fio error 5 = EIO, exit 1)로 실패했다. run_experiment.sh(당시 커밋 5769378)가 die 하면서 run_all.sh(set -e)도 끝났고, tmux 세션 ksc2026 이 종료되었다.
+  - 시간선(fio-start 표지 기준, 해당 회차 kernel.log 에서 추출):
+    - +5.64 s 첫 GC
+    - +24.97 s `WARNING: CPU: 3 PID: 30089 at …/nvmevirt/io.c:302 __allocate_work_queue_entry+0x8a/0xb0 [nvmev]` — "IO queue is almost full" WARN_ON_ONCE. 쓰기 버퍼 과다 반환으로 NAND 완료 시각이 먼 미래인 internal operation 이 io-worker 작업 큐(16384 항목)를 채운 것이다(감사 WB-2/C2 예측과 같음).
+    - +55.09 s `nvme nvme1: I/O tag 192 … QID 1 timeout, aborting req_op:WRITE(1) size:16384` (커널 nvme 기본 io_timeout 30 s)
+    - +85.29 s `timeout, reset controller` → Abort status 0x371
+    - +146.74 s `I/O tag 28 (301c) QID 0 timeout, disable controller` → `Identify Controller failed (-4)` → `Disabling device after reset failure: -5`
+    - +146.76 s 이후 `I/O error, dev nvme1n1 … op 0x1:(WRITE)` 10 줄 → fio 종료(runtime 146,507 ms, 그때까지 평균 114.4 MiB/s, 7,319 IOPS, 16.36 GiB). udev 의 파티션 읽기 Buffer I/O error / attempt to access beyond end of device.
+    - rmmod 정상("Virtual NVMe device closed"). GC 통계: 파티션별 host_pgs 약 268K, gc_pgs 약 839K, gc_cnt 약 3,946. chmodel_msgs 10,038,918.
+  - 판단: 요청 설정 그대로인 base 모델이 bs < 매핑 단위에서 무너지는 현상이므로 그 자체를 결과로 남긴다.
+  - 조치(커밋 2a462a3, 05:49):
+    - run_experiment.sh 가 fio 실패 회차에 FAILED 표지(첫 줄 `fio_exit=… fio_json_error=… kernel_warn=… chmodel_msgs=…`, 그 뒤 관련 커널 줄 최대 20 개)를 남기고 다음 회차로 넘어가도록 바꿨다. 다시 실행해도 FAILED 회차는 건너뛴다.
+    - fio 감시 타이머: RUNTIME + FIO_GRACE(180 s) 에 SIGTERM, 60 s 뒤 SIGKILL. sudo 프로세스로 보내면 sudo 가 fio 에 전달한다.
+    - meta.txt 에 git_head 를 추가했다. git_head.txt 는 실행마다 한 줄씩 덧붙인다(base 의 git_head.txt 첫 줄은 손으로 시각을 붙였다: "2026-10-08T05:21:02+00:00 5769378…").
+    - nvmevirt_vs_upstream.diff 를 rename 커밋 기준으로 고쳤다.
+    - kernel_warn 집계에서 chmodel 표본 줄을 뺐다.
+    - analyze.py 가 failed_runs.csv 를 쓰도록 했다(t_gc_s, t_queue_full_warn_s, t_nvme_timeout_s, t_reset_s, t_disable_s, t_first_io_error_s).
+    - plot.py, 보고서 생성기, 이 파일도 같은 커밋에 넣었다.
+  - map32k_bs16k_r1 은 손으로 FAILED 표지를 만들어 보존했다(첫 줄에 "marked by hand" 명시).
+- **05:49:13 재개**(tmux ksc2026): `bash run_experiment.sh main_20261008 wbuffix` → 이어서 `bash run_experiment.sh main_20261008 base`(완료된 20 회와 FAILED 1 회는 건너뜀) → `analyze.py`. 로그는 같은 run_all_main_20261008.log 에 이어 쓴다.
+  - 순서를 바꾼 이유: 유효한 데이터셋(wbuffix)을 먼저 확보하기 위해서다.
+  - 모듈은 다시 빌드하지 않았다. 05:20 에 빌드한 exp/modules/{base,wbuffix} 를 그대로 써서 base 의 앞 20 회와 같은 바이너리다(sha256 검사).
+  - 따라서 실제 실행 순서는 run_all.sh(빌드 → base → wbuffix)와 다르다. base 회차는 1–20(커밋 5769378 스크립트)과 22–108(커밋 2a462a3 스크립트)이다. NVMeVirt 소스와 모듈은 같고, 스크립트 차이는 실패 처리·기록 방식뿐이라 측정 절차는 같다.
 - 진행 중 이상은 이 절에 이어서 적는다(완료 후 갱신).
 
 ---------------------------------------------------------------------------------------------------
@@ -440,3 +501,5 @@ dccearth ALL=(root) NOPASSWD: /usr/sbin/insmod, /usr/sbin/rmmod, /usr/bin/fio, /
 
 ## 갱신 이력
 - 2026-10-08 05:40경 최초 작성(본 실험 base 진행 중, 약 13/108).
+- 2026-10-08 05:50 10 절에 첫 중단(base map32k_bs16k_r1 장치 실패)과 재개(wbuffix 먼저) 기록.
+- 2026-10-08 06:25 감사 워크플로 완료 반영(9 절), GC 이전 처리량 정정과 IRQ 15/cpu5 사실(8.3 절) 추가. 저장소에 credential 이 없는지 검사(grep 으로 sudo 비밀번호·서버 IP 문자열 검사 → 없음.

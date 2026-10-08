@@ -3,12 +3,13 @@
 #
 # Every run:  (rmmod nvmev if loaded) -> insmod nvmev_map<MAP>.ko (fresh FTL state = formatted device)
 #             -> fio randwrite bs=<BS>, iodepth 32, 60 s, ramp_time 0 (pre-GC part included) -> rmmod nvmev
-# Order:      for rep in 1..REPS; for MAP in MAPS; for BS in BSS
+# Order:      for rep in 1..REPS; for MAP in MAPS; for BS in BSS; for cache mode in CACHE_MODES (order alternates by rep)
 #
 # usage:  bash run_experiment.sh <EXP_NAME> [VARIANT]
 #   - runs as the normal user; privileged steps use 'sudo -n' (/etc/sudoers.d/nvmevirt-exp)
 #   - modules must be built first:  bash build_modules.sh [VARIANT]
-#   - results: exp/results/<EXP_NAME>/<VARIANT>/map<MAP>_bs<BS>_r<REP>/
+#   - results: exp/results/<EXP_NAME>/<VARIANT>/map<MAP>_bs<BS>_r<REP>/   (CACHE_MODES=nodrop, default)
+#              exp/results/<EXP_NAME>/<VARIANT>_<nodrop|drop>/...          (any other CACHE_MODES)
 #   - re-running the same command resumes: runs with a DONE or FAILED marker are skipped
 #   - a run whose fio fails (I/O errors, watchdog) gets a FAILED marker and the experiment continues
 #   - ONLY_BS_LT_MAP=1 runs only the (MAP, BS) pairs with BS < MAP
@@ -19,7 +20,15 @@ EXP="${1:?usage: bash run_experiment.sh <EXP_NAME> [VARIANT]}"
 VARIANT="${2:-base}"
 ONLY_BS_LT_MAP="${ONLY_BS_LT_MAP:-0}"
 OUT="$EXP_DIR/results/$EXP"
-VOUT="$OUT/$VARIANT"
+read -r -a CM_LIST <<< "$CACHE_MODES"
+vout_of() {   # result directory for cache mode $1
+	if [[ "$CACHE_MODES" == nodrop ]]; then echo "$OUT/$VARIANT"; else echo "$OUT/${VARIANT}_$1"; fi
+}
+VOUTS=()
+for cm in "${CM_LIST[@]}"; do
+	[[ "$cm" == nodrop || "$cm" == drop ]] || { echo "CACHE_MODES: unknown mode '$cm'" >&2; exit 1; }
+	VOUTS+=("$(vout_of "$cm")")
+done
 MOD_DIR="$EXP_DIR/modules/$VARIANT"
 UPSTREAM_COMMIT=61c90f7758cbd9545b4a4727e89377bf88eab060
 FIO_GRACE="${FIO_GRACE:-180}"   # seconds allowed beyond RUNTIME before fio is stopped (nvme timeout 30 s + abort + reset)
@@ -87,14 +96,16 @@ load_nvmev() {   # $1 = mapping unit (4k ...), $2 = run dir  -> sets DEV
 	DEV="/dev/$d"
 }
 
-run_one() {   # $1 = mapping unit, $2 = bs, $3 = repetition
-	local map="$1" bs="$2" r="$3" rdir size rc=0 tag_fio tag_un n_chm n_warn fio_pid waited=0 jerr
-	rdir="$VOUT/map${map}_bs${bs}_r${r}"
+meminfo_line() { awk '/^(MemFree|Buffers|Cached|Dirty|Writeback):/ { printf "%s%s kB ", $1, $2 }' /proc/meminfo; }
+
+run_one() {   # $1 = mapping unit, $2 = bs, $3 = repetition, $4 = cache mode (nodrop | drop)
+	local map="$1" bs="$2" r="$3" cm="${4:-nodrop}" rdir size rc=0 tag_fio tag_un n_chm n_warn fio_pid waited=0 jerr
+	rdir="$(vout_of "$cm")/map${map}_bs${bs}_r${r}"
 	if [[ -f "$rdir/DONE" ]]; then log "skip (already done): $(basename "$rdir")"; return 0; fi
 	if [[ -f "$rdir/FAILED" ]]; then log "skip (failed earlier, see FAILED): $(basename "$rdir")"; return 0; fi
 	rm -rf "$rdir"
 	mkdir -p "$rdir"
-	log "=== [$((++RUN_IDX))/$N_RUNS] variant=$VARIANT map=$map bs=$bs rep=$r ==="
+	log "=== [$((++RUN_IDX))/$N_RUNS] variant=$VARIANT cache=$cm map=$map bs=$bs rep=$r ==="
 
 	unload_nvmev                     # rmmod: make sure no previous FTL state is left
 	# Follow the kernel log for the whole run: NVMeVirt's '[chmodel_request] Need to increase array size'
@@ -109,12 +120,22 @@ run_one() {   # $1 = mapping unit, $2 = bs, $3 = repetition
 	load_nvmev "$map" "$rdir"        # insmod: fresh (empty) device
 	size=$(check_target_dev "${DEV#/dev/}")
 
+	# OS page cache: the NVMeVirt device is used with O_DIRECT, so this only changes the host's memory state
+	{ echo "cache_mode: $cm"; echo "before: $(meminfo_line)"; } > "$rdir/cache.txt"
+	if [[ "$cm" == drop ]]; then
+		sync
+		echo 3 | sudo -n tee /proc/sys/vm/drop_caches > /dev/null
+		echo "dropped: sync; echo 3 > /proc/sys/vm/drop_caches at $(date -Is)" >> "$rdir/cache.txt"
+	fi
+	echo "after:  $(meminfo_line)" >> "$rdir/cache.txt"
+
 	sed -e "s|@DEV@|$DEV|g" -e "s|@BS@|$bs|g" -e "s|@IODEPTH@|$IODEPTH|g" \
 		-e "s|@RUNTIME@|$RUNTIME|g" -e "s|@RAMP@|$RAMP|g" -e "s|@LOG_MSEC@|$LOG_MSEC|g" \
 		-e "s|@LOG_PREFIX@|$rdir/fio|g" "$EXP_DIR/jobs/randwrite.fio.in" > "$rdir/job.fio"
 
 	{
 		echo "variant:      $VARIANT"
+		echo "cache_mode:   $cm"
 		echo "map_unit:     $map ($(to_bytes "$map") B)"
 		echo "bs:           $bs ($(to_bytes "$bs") B)"
 		echo "rep:          $r"
@@ -128,6 +149,7 @@ run_one() {   # $1 = mapping unit, $2 = bs, $3 = repetition
 	} > "$rdir/meta.txt"
 
 	sleep "$SETTLE_SEC"
+	echo "pre_fio: $(meminfo_line)" >> "$rdir/cache.txt"
 	tag_fio="$(basename "$rdir") fio-start $(date +%s%N)"
 	kmark "$tag_fio"                 # GC onset is measured from this kernel-log timestamp
 	sudo -n fio --output-format=json --output="$rdir/fio.json" "$rdir/job.fio" > "$rdir/fio_stdout.txt" 2>&1 &
@@ -196,7 +218,9 @@ PY
 }
 
 # ------------------------------------------------------------------ preflight
-for c in /usr/sbin/insmod /usr/sbin/rmmod /usr/bin/fio /usr/bin/dmesg "/usr/bin/tee /dev/kmsg"; do
+PRIV=(/usr/sbin/insmod /usr/sbin/rmmod /usr/bin/fio /usr/bin/dmesg "/usr/bin/tee /dev/kmsg")
+[[ " ${CM_LIST[*]} " == *" drop "* ]] && PRIV+=("/usr/bin/tee /proc/sys/vm/drop_caches")
+for c in "${PRIV[@]}"; do
 	# shellcheck disable=SC2086
 	sudo -n -l $c > /dev/null 2>&1 || die "'sudo -n $c' is not allowed — install /etc/sudoers.d/nvmevirt-exp first"
 done
@@ -214,34 +238,41 @@ for m in "${MAP_LIST[@]}"; do
 		PAIRS+=("$m $bs")
 	done
 done
-N_RUNS=$(( REPS * ${#PAIRS[@]} ))
+N_RUNS=$(( REPS * ${#PAIRS[@]} * ${#CM_LIST[@]} ))
 RUN_IDX=0
 
-mkdir -p "$VOUT"
-exec > >(tee -a "$VOUT/run.log") 2>&1
+mkdir -p "${VOUTS[@]}"
+exec > >(tee -a "${VOUTS[@]/%//run.log}") 2>&1
 KLOG_PID=""
 trap '[[ -n "$KLOG_PID" ]] && kill "$KLOG_PID" 2> /dev/null; sudo -n chown -R "$ME:$ME" "$OUT" 2> /dev/null || true' EXIT
 
-log "experiment=$EXP variant=$VARIANT maps=[$MAPS] bss=[$BSS] reps=$REPS only_bs_lt_map=$ONLY_BS_LT_MAP"
+log "experiment=$EXP variant=$VARIANT maps=[$MAPS] bss=[$BSS] reps=$REPS cache_modes=[$CACHE_MODES] only_bs_lt_map=$ONLY_BS_LT_MAP"
 log "fio: libaio randwrite iodepth=$IODEPTH runtime=${RUNTIME}s ramp_time=${RAMP}s log=${LOG_MSEC}ms; insmod memmap_start=$MEMMAP_START memmap_size=$MEMMAP_SIZE cpus=$CPUS"
 log "$N_RUNS runs, about $(( N_RUNS * (RUNTIME + SETTLE_SEC + 8) / 60 )) min"
 
 [[ -d "$OUT/env_before" ]] || bash "$EXP_DIR/collect_env.sh" "$OUT/env_before"
-cp "$MOD_DIR/SHA256SUMS" "$VOUT/modules_SHA256SUMS"
-cp "$MOD_DIR/build_info.txt" "$VOUT/modules_build_info.txt"
-cp "$EXP_DIR/jobs/randwrite.fio.in" "$VOUT/randwrite.fio.in"
-echo "$(date -Is) $(git -C "$REPO_DIR" rev-parse HEAD)" >> "$VOUT/git_head.txt"   # one line per invocation
 MOVE_COMMIT=$(git -C "$REPO_DIR" log --format=%H --grep='^Move NVMeVirt sources into nvmevirt/' -1)
-git -C "$REPO_DIR" diff "$MOVE_COMMIT" HEAD -- nvmevirt > "$VOUT/nvmevirt_vs_upstream.diff"   # upstream + pure rename -> HEAD
-git -C "$REPO_DIR" diff -- nvmevirt > "$VOUT/nvmevirt_uncommitted.diff"
+for VOUT in "${VOUTS[@]}"; do
+	cp "$MOD_DIR/SHA256SUMS" "$VOUT/modules_SHA256SUMS"
+	cp "$MOD_DIR/build_info.txt" "$VOUT/modules_build_info.txt"
+	cp "$EXP_DIR/jobs/randwrite.fio.in" "$VOUT/randwrite.fio.in"
+	echo "$(date -Is) $(git -C "$REPO_DIR" rev-parse HEAD)" >> "$VOUT/git_head.txt"   # one line per invocation
+	git -C "$REPO_DIR" diff "$MOVE_COMMIT" HEAD -- nvmevirt > "$VOUT/nvmevirt_vs_upstream.diff"   # upstream + pure rename -> HEAD
+	git -C "$REPO_DIR" diff -- nvmevirt > "$VOUT/nvmevirt_uncommitted.diff"
+done
 
 for r in $(seq "$REPS"); do
 	for p in "${PAIRS[@]}"; do
 		read -r m bs <<< "$p"
-		run_one "$m" "$bs" "$r"
+		order=("${CM_LIST[@]}")
+		if (( r % 2 == 0 )); then   # even repetitions: reversed order, so neither mode always runs first
+			order=()
+			for (( i = ${#CM_LIST[@]} - 1; i >= 0; i-- )); do order+=("${CM_LIST[i]}"); done
+		fi
+		for cm in "${order[@]}"; do run_one "$m" "$bs" "$r" "$cm"; done
 	done
 done
 
 unload_nvmev
 bash "$EXP_DIR/collect_env.sh" "$OUT/env_after_$VARIANT"
-log "finished: $VOUT"
+log "finished: ${VOUTS[*]}"
