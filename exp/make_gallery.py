@@ -18,7 +18,7 @@ GROUPS = [
         ("plots/bs_bw_MiBps.png", "60 s 평균 쓰기 대역폭. x = fio bs, 선 = 매핑 단위, 패널 = 변형(캐시 조건), 오차막대 = 표준편차"),
         ("plots/heatmap_bw_MiBps.png", "매핑 단위 × bs 평균 대역폭 열지도(변형별 패널)"),
         ("plots/map_bw_MiBps.png", "같은 값을 매핑 단위 축으로: 선 = bs"),
-        ("plots/compare_bw_MiBps.png", "변형 비교(주 데이터셋: drop vs nodrop, 보조: base vs wbuffix). 회색 = bs < 매핑 단위"),
+        ("plots/compare_bw_MiBps.png", "변형 비교(주 데이터셋: drop vs nodrop, 보조: base vs wbuffix, 순차: wbuffix vs merge). 회색 = bs < 매핑 단위"),
         ("plots/bs_iops.png", "IOPS (로그 축)"),
         ("plots/map_iops.png", "IOPS, 매핑 단위 축 (로그 축)"),
     ]),
@@ -62,7 +62,8 @@ GROUPS = [
 ]
 
 TITLE = {"main3x3_20261008": "주 데이터셋 — 매핑 4K·16K·32K × bs 4K·16K·32K × 3 회 × 페이지 캐시 drop/no-drop (wbuffix)",
-         "main_20261008": "보조 데이터셋 — 첫 설계 6×6 중 측정한 부분 (base 20 회 + 실패 1, wbuffix 53 회)"}.get(EXP.name, EXP.name)
+         "main_20261008": "보조 데이터셋 — 첫 설계 6×6 중 측정한 부분 (base 20 회 + 실패 1, wbuffix 53 회)",
+         "seq3x3_20261008": "순차 쓰기 추가 실험 — 매핑 4K·16K·32K × bs 4K·16K·32K × 3 회 × 모델 wbuffix / merge (쓰기 버퍼 병합)"}.get(EXP.name, EXP.name)
 
 
 def img(path):

@@ -1,0 +1,4 @@
+cache_mode: nodrop
+before: MemFree:4855532 kB Buffers:324752 kB Cached:5868784 kB Dirty:144 kB Writeback:112 kB 
+after:  MemFree:4855532 kB Buffers:324752 kB Cached:5868784 kB Dirty:144 kB Writeback:112 kB 
+pre_fio: MemFree:4874152 kB Buffers:324752 kB Cached:5868800 kB Dirty:168 kB Writeback:0 kB 

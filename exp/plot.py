@@ -30,6 +30,7 @@ sys.path.insert(0, str(HERE))
 import analyze as A  # noqa: E402  (collect / aggregate / palette)
 
 SIZES = list(A.SIZES)   # narrowed in main() to the sizes present in the results
+MAPS, BSS = list(SIZES), list(SIZES)   # mapping units / fio bs present (they differ in a combined view)
 METRICS = {
     "bw_MiBps": "write bandwidth, 60 s mean (MiB/s)",
     "iops": "IOPS, 60 s mean",
@@ -148,9 +149,9 @@ def plot_heatmaps(agg, variants, metric, out, show):
     cmap = matplotlib.colors.LinearSegmentedColormap.from_list("seqblue", A.SEQ_BLUE)
     grids = []
     for v in variants:
-        g = np.full((len(SIZES), len(SIZES)), np.nan)
-        for i, mp in enumerate(SIZES):
-            for k, bs in enumerate(SIZES):
+        g = np.full((len(MAPS), len(BSS)), np.nan)
+        for i, mp in enumerate(MAPS):
+            for k, bs in enumerate(BSS):
                 a = look.get((v, mp, bs))
                 if a and f"{metric}_mean" in a:
                     g[i, k] = a[f"{metric}_mean"]
@@ -158,14 +159,14 @@ def plot_heatmaps(agg, variants, metric, out, show):
     vmax = np.nanmax([np.nanmax(g) for g in grids if not np.isnan(g).all()] or [1])
     for ax, v, g in zip(axes[0], variants, grids):
         im = ax.imshow(g, cmap=cmap, aspect="auto", origin="lower", vmin=0, vmax=vmax)
-        for i in range(len(SIZES)):
-            for k in range(len(SIZES)):
+        for i in range(len(MAPS)):
+            for k in range(len(BSS)):
                 if not np.isnan(g[i, k]):
                     val = g[i, k]
                     txt = f"{val:.0f}" if val >= 100 else f"{val:.2f}" if val < 10 else f"{val:.1f}"
                     ax.text(k, i, txt, ha="center", va="center", fontsize=8, color="#ffffff" if val > 0.55 * vmax else A.INK)
-        ax.set_xticks(range(len(SIZES)), [s.upper() for s in SIZES])
-        ax.set_yticks(range(len(SIZES)), [s.upper() for s in SIZES])
+        ax.set_xticks(range(len(BSS)), [s.upper() for s in BSS])
+        ax.set_yticks(range(len(MAPS)), [s.upper() for s in MAPS])
         ax.set_xlabel("fio block size", color=A.INK2)
         ax.set_ylabel("FTL mapping unit", color=A.INK2)
         ax.set_title(v, color=A.INK, fontsize=11, loc="left")
@@ -231,12 +232,12 @@ def plot_compare(agg, metric, maps, logy, out, show):
         A.style(ax)
         for vi, v in enumerate(variants):
             pts = [(k, look[(v, mp, bs)][f"{metric}_mean"], look[(v, mp, bs)].get(f"{metric}_std", 0.0))
-                   for k, bs in enumerate(SIZES) if (v, mp, bs) in look and f"{metric}_mean" in look[(v, mp, bs)]]
+                   for k, bs in enumerate(BSS) if (v, mp, bs) in look and f"{metric}_mean" in look[(v, mp, bs)]]
             if pts:
                 xk, ys, es = zip(*pts)
                 ax.errorbar(xk, ys, yerr=es, color=A.SERIES[vi], linewidth=2, marker="o", markersize=4, capsize=3, label=v)
-        ax.axvspan(-0.5, SIZES.index(mp) - 0.5, color="#f0efec", zorder=0)   # bs < mapping unit
-        ax.set_xticks(range(len(SIZES)), [s.upper() for s in SIZES], fontsize=7)
+        ax.axvspan(-0.5, sum(1 for b in BSS if A.kib(b) < A.kib(mp)) - 0.5, color="#f0efec", zorder=0)   # bs < mapping unit
+        ax.set_xticks(range(len(BSS)), [s.upper() for s in BSS], fontsize=7)
         ax.set_title(f"map {mp.upper()}", color=A.INK, fontsize=10, loc="left")
         if logy:
             ax.set_yscale("log")
@@ -255,14 +256,16 @@ def main():
     if not rows:
         sys.exit(f"no finished runs under {exp}")
     agg = A.aggregate(rows)
-    global SIZES
+    global SIZES, MAPS, BSS
     SIZES[:] = sorted({r["map"] for r in rows} | {r["bs"] for r in rows}, key=A.kib)
-    A.SIZES = SIZES
+    MAPS[:] = sorted({r["map"] for r in rows}, key=A.kib)
+    BSS[:] = sorted({r["bs"] for r in rows}, key=A.kib)
+    A.SIZES, A.MAPS, A.BSS = SIZES, MAPS, BSS
     present = sorted({r["variant"] for r in rows})
     variants = [v for v in split(a.variant) if v in present] if a.variant != "all" else present
     if not variants:
         variants = present
-    maps, bss, reps = split(a.maps) or list(SIZES), split(a.bss) or list(SIZES), [int(x) for x in split(a.reps)]
+    maps, bss, reps = split(a.maps) or list(MAPS), split(a.bss) or list(BSS), [int(x) for x in split(a.reps)]
     pdir = exp / "plots"
     out = Path(a.out) if a.out else None
 
@@ -288,14 +291,14 @@ def main():
     elif a.cmd == "all":
         for m, logy in (("bw_MiBps", False), ("iops", True), ("clat_mean_us", True), ("clat_p99_us", True),
                         ("bw_pre_gc_MiBps", False), ("bw_post_gc_MiBps", False), ("gc_onset_s", False), ("waf_total", True)):
-            plot_lines(agg, variants, m, "bs", SIZES, SIZES, logy, pdir / f"bs_{m}.png", False)
-            plot_lines(agg, variants, m, "map", SIZES, SIZES, logy, pdir / f"map_{m}.png", False)
+            plot_lines(agg, variants, m, "bs", MAPS, BSS, logy, pdir / f"bs_{m}.png", False)
+            plot_lines(agg, variants, m, "map", MAPS, BSS, logy, pdir / f"map_{m}.png", False)
         for m in ("bw_MiBps", "waf_total", "gc_onset_s", "bw_post_gc_MiBps"):
             plot_heatmaps(agg, variants, m, pdir / f"heatmap_{m}.png", False)
         for kind in ("bw", "clat"):
-            plot_ts(exp, variants, SIZES, SIZES, [1], kind, kind == "clat", pdir / f"ts_{kind}_all_rep1.png", False)
+            plot_ts(exp, variants, MAPS, BSS, [1], kind, kind == "clat", pdir / f"ts_{kind}_all_rep1.png", False)
         for m in ("bw_MiBps", "clat_mean_us", "waf_total"):
-            plot_compare(agg, m, SIZES, m != "bw_MiBps", pdir / f"compare_{m}.png", False)
+            plot_compare(agg, m, MAPS, m != "bw_MiBps", pdir / f"compare_{m}.png", False)
 
 
 if __name__ == "__main__":

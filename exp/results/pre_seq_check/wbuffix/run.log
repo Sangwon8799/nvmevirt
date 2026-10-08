@@ -1,0 +1,15 @@
+[2026-10-08 11:18:45] experiment=pre_seq_check variant=wbuffix maps=[16k 32k] bss=[4k 16k] reps=1 cache_modes=[nodrop] only_bs_lt_map=0
+[2026-10-08 11:18:45] fio: libaio seqwrite iodepth=32 runtime=15s ramp_time=0s log=500ms; insmod memmap_start=12G memmap_size=12G cpus=3,4,5
+[2026-10-08 11:18:45] block layer: nomerges=2
+[2026-10-08 11:18:45] 4 runs, about 1 min
+environment snapshot -> /home/dccearth/jsw/nvmevirt/exp/results/pre_seq_check/env_before
+[2026-10-08 11:18:45] === [1/4] variant=wbuffix cache=nodrop map=16k bs=4k rep=1 ===
+    -> 411.0 MiB/s, 105214 IOPS, clat mean 303.1 us
+[2026-10-08 11:19:11] === [2/4] variant=wbuffix cache=nodrop map=16k bs=16k rep=1 ===
+    -> 2231.8 MiB/s, 142834 IOPS, clat mean 222.6 us
+[2026-10-08 11:19:36] === [3/4] variant=wbuffix cache=nodrop map=32k bs=4k rep=1 ===
+    -> 232.9 MiB/s, 59632 IOPS, clat mean 535.5 us
+[2026-10-08 11:20:01] === [4/4] variant=wbuffix cache=nodrop map=32k bs=16k rep=1 ===
+    -> 654.6 MiB/s, 41897 IOPS, clat mean 762.3 us
+environment snapshot -> /home/dccearth/jsw/nvmevirt/exp/results/pre_seq_check/env_after_wbuffix
+[2026-10-08 11:20:27] finished: /home/dccearth/jsw/nvmevirt/exp/results/pre_seq_check/wbuffix

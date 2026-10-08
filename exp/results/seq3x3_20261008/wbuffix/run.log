@@ -1,0 +1,100 @@
+[2026-10-08 11:23:24] experiment=seq3x3_20261008 variant=wbuffix maps=[4k 16k 32k] bss=[4k 16k 32k] reps=1 cache_modes=[nodrop] only_bs_lt_map=0
+[2026-10-08 11:23:24] fio: libaio seqwrite iodepth=32 runtime=60s ramp_time=0s log=500ms; insmod memmap_start=12G memmap_size=12G cpus=3,4,5
+[2026-10-08 11:23:24] block layer: nomerges=2
+[2026-10-08 11:23:24] 9 runs, about 10 min
+environment snapshot -> /home/dccearth/jsw/nvmevirt/exp/results/seq3x3_20261008/env_before
+[2026-10-08 11:23:24] === [1/9] variant=wbuffix cache=nodrop map=4k bs=4k rep=1 ===
+    -> 2097.9 MiB/s, 537053 IOPS, clat mean 58.6 us
+[2026-10-08 11:24:35] === [2/9] variant=wbuffix cache=nodrop map=4k bs=16k rep=1 ===
+    -> 2231.8 MiB/s, 142835 IOPS, clat mean 222.6 us
+[2026-10-08 11:25:45] === [3/9] variant=wbuffix cache=nodrop map=4k bs=32k rep=1 ===
+    -> 2232.7 MiB/s, 71446 IOPS, clat mean 446.0 us
+[2026-10-08 11:26:55] === [4/9] variant=wbuffix cache=nodrop map=16k bs=4k rep=1 ===
+    -> 334.3 MiB/s, 85582 IOPS, clat mean 372.9 us
+[2026-10-08 11:28:06] === [5/9] variant=wbuffix cache=nodrop map=16k bs=16k rep=1 ===
+    -> 2232.5 MiB/s, 142879 IOPS, clat mean 222.5 us
+[2026-10-08 11:29:16] === [6/9] variant=wbuffix cache=nodrop map=16k bs=32k rep=1 ===
+    -> 2232.2 MiB/s, 71431 IOPS, clat mean 446.1 us
+[2026-10-08 11:30:27] === [7/9] variant=wbuffix cache=nodrop map=32k bs=4k rep=1 ===
+    -> 209.5 MiB/s, 53634 IOPS, clat mean 595.5 us
+[2026-10-08 11:31:37] === [8/9] variant=wbuffix cache=nodrop map=32k bs=16k rep=1 ===
+    -> 369.0 MiB/s, 23618 IOPS, clat mean 1353.4 us
+[2026-10-08 11:32:47] === [9/9] variant=wbuffix cache=nodrop map=32k bs=32k rep=1 ===
+    -> 2231.9 MiB/s, 71421 IOPS, clat mean 446.2 us
+environment snapshot -> /home/dccearth/jsw/nvmevirt/exp/results/seq3x3_20261008/env_after_wbuffix
+[2026-10-08 11:33:58] finished: /home/dccearth/jsw/nvmevirt/exp/results/seq3x3_20261008/wbuffix
+[2026-10-08 11:44:31] experiment=seq3x3_20261008 variant=wbuffix maps=[4k 16k 32k] bss=[4k 16k 32k] reps=2 cache_modes=[nodrop] only_bs_lt_map=0
+[2026-10-08 11:44:31] fio: libaio seqwrite iodepth=32 runtime=60s ramp_time=0s log=500ms; insmod memmap_start=12G memmap_size=12G cpus=3,4,5
+[2026-10-08 11:44:31] block layer: nomerges=2
+[2026-10-08 11:44:31] 18 runs, about 21 min
+[2026-10-08 11:44:31] skip (already done): map4k_bs4k_r1
+[2026-10-08 11:44:31] skip (already done): map4k_bs16k_r1
+[2026-10-08 11:44:31] skip (already done): map4k_bs32k_r1
+[2026-10-08 11:44:31] skip (already done): map16k_bs4k_r1
+[2026-10-08 11:44:31] skip (already done): map16k_bs16k_r1
+[2026-10-08 11:44:31] skip (already done): map16k_bs32k_r1
+[2026-10-08 11:44:31] skip (already done): map32k_bs4k_r1
+[2026-10-08 11:44:31] skip (already done): map32k_bs16k_r1
+[2026-10-08 11:44:31] skip (already done): map32k_bs32k_r1
+[2026-10-08 11:44:31] === [1/18] variant=wbuffix cache=nodrop map=4k bs=4k rep=2 ===
+    -> 2090.0 MiB/s, 535049 IOPS, clat mean 58.9 us
+[2026-10-08 11:45:42] === [2/18] variant=wbuffix cache=nodrop map=4k bs=16k rep=2 ===
+    -> 2232.7 MiB/s, 142895 IOPS, clat mean 222.5 us
+[2026-10-08 11:46:52] === [3/18] variant=wbuffix cache=nodrop map=4k bs=32k rep=2 ===
+    -> 2232.8 MiB/s, 71448 IOPS, clat mean 446.0 us
+[2026-10-08 11:48:02] === [4/18] variant=wbuffix cache=nodrop map=16k bs=4k rep=2 ===
+    -> 335.2 MiB/s, 85807 IOPS, clat mean 371.9 us
+[2026-10-08 11:49:13] === [5/18] variant=wbuffix cache=nodrop map=16k bs=16k rep=2 ===
+    -> 2232.6 MiB/s, 142884 IOPS, clat mean 222.5 us
+[2026-10-08 11:50:23] === [6/18] variant=wbuffix cache=nodrop map=16k bs=32k rep=2 ===
+    -> 2232.6 MiB/s, 71444 IOPS, clat mean 446.0 us
+[2026-10-08 11:51:34] === [7/18] variant=wbuffix cache=nodrop map=32k bs=4k rep=2 ===
+    -> 209.5 MiB/s, 53635 IOPS, clat mean 595.5 us
+[2026-10-08 11:52:44] === [8/18] variant=wbuffix cache=nodrop map=32k bs=16k rep=2 ===
+    -> 369.0 MiB/s, 23618 IOPS, clat mean 1353.4 us
+[2026-10-08 11:53:54] === [9/18] variant=wbuffix cache=nodrop map=32k bs=32k rep=2 ===
+    -> 2232.3 MiB/s, 71434 IOPS, clat mean 446.0 us
+environment snapshot -> /home/dccearth/jsw/nvmevirt/exp/results/seq3x3_20261008/env_after_wbuffix
+[2026-10-08 11:55:05] finished: /home/dccearth/jsw/nvmevirt/exp/results/seq3x3_20261008/wbuffix
+[2026-10-08 12:05:38] experiment=seq3x3_20261008 variant=wbuffix maps=[4k 16k 32k] bss=[4k 16k 32k] reps=3 cache_modes=[nodrop] only_bs_lt_map=0
+[2026-10-08 12:05:38] fio: libaio seqwrite iodepth=32 runtime=60s ramp_time=0s log=500ms; insmod memmap_start=12G memmap_size=12G cpus=3,4,5
+[2026-10-08 12:05:38] block layer: nomerges=2
+[2026-10-08 12:05:38] 27 runs, about 32 min
+[2026-10-08 12:05:38] skip (already done): map4k_bs4k_r1
+[2026-10-08 12:05:38] skip (already done): map4k_bs16k_r1
+[2026-10-08 12:05:38] skip (already done): map4k_bs32k_r1
+[2026-10-08 12:05:38] skip (already done): map16k_bs4k_r1
+[2026-10-08 12:05:38] skip (already done): map16k_bs16k_r1
+[2026-10-08 12:05:38] skip (already done): map16k_bs32k_r1
+[2026-10-08 12:05:38] skip (already done): map32k_bs4k_r1
+[2026-10-08 12:05:38] skip (already done): map32k_bs16k_r1
+[2026-10-08 12:05:38] skip (already done): map32k_bs32k_r1
+[2026-10-08 12:05:38] skip (already done): map4k_bs4k_r2
+[2026-10-08 12:05:38] skip (already done): map4k_bs16k_r2
+[2026-10-08 12:05:38] skip (already done): map4k_bs32k_r2
+[2026-10-08 12:05:38] skip (already done): map16k_bs4k_r2
+[2026-10-08 12:05:38] skip (already done): map16k_bs16k_r2
+[2026-10-08 12:05:38] skip (already done): map16k_bs32k_r2
+[2026-10-08 12:05:38] skip (already done): map32k_bs4k_r2
+[2026-10-08 12:05:38] skip (already done): map32k_bs16k_r2
+[2026-10-08 12:05:38] skip (already done): map32k_bs32k_r2
+[2026-10-08 12:05:38] === [1/27] variant=wbuffix cache=nodrop map=4k bs=4k rep=3 ===
+    -> 2081.1 MiB/s, 532765 IOPS, clat mean 59.1 us
+[2026-10-08 12:06:49] === [2/27] variant=wbuffix cache=nodrop map=4k bs=16k rep=3 ===
+    -> 2232.7 MiB/s, 142892 IOPS, clat mean 222.5 us
+[2026-10-08 12:07:59] === [3/27] variant=wbuffix cache=nodrop map=4k bs=32k rep=3 ===
+    -> 2232.7 MiB/s, 71447 IOPS, clat mean 446.0 us
+[2026-10-08 12:09:10] === [4/27] variant=wbuffix cache=nodrop map=16k bs=4k rep=3 ===
+    -> 335.2 MiB/s, 85809 IOPS, clat mean 371.9 us
+[2026-10-08 12:10:20] === [5/27] variant=wbuffix cache=nodrop map=16k bs=16k rep=3 ===
+    -> 2232.5 MiB/s, 142880 IOPS, clat mean 222.5 us
+[2026-10-08 12:11:30] === [6/27] variant=wbuffix cache=nodrop map=16k bs=32k rep=3 ===
+    -> 2232.6 MiB/s, 71442 IOPS, clat mean 446.0 us
+[2026-10-08 12:12:41] === [7/27] variant=wbuffix cache=nodrop map=32k bs=4k rep=3 ===
+    -> 209.5 MiB/s, 53635 IOPS, clat mean 595.5 us
+[2026-10-08 12:13:51] === [8/27] variant=wbuffix cache=nodrop map=32k bs=16k rep=3 ===
+    -> 369.1 MiB/s, 23620 IOPS, clat mean 1353.3 us
+[2026-10-08 12:15:01] === [9/27] variant=wbuffix cache=nodrop map=32k bs=32k rep=3 ===
+    -> 2232.3 MiB/s, 71432 IOPS, clat mean 446.1 us
+environment snapshot -> /home/dccearth/jsw/nvmevirt/exp/results/seq3x3_20261008/env_after_wbuffix
+[2026-10-08 12:16:12] finished: /home/dccearth/jsw/nvmevirt/exp/results/seq3x3_20261008/wbuffix

@@ -5,6 +5,9 @@ set -uo pipefail
 source "$(dirname "$0")/common.sh"
 D="${1:?usage: bash collect_env.sh <out dir>}"
 mkdir -p "$D"
+# a new snapshot replaces an old one in the same directory (cap appends). Before 2026-10-08 21:3x KST the files were
+# appended to, so results/seq3x3_20261008/env_after_* hold three snapshots in a row (one per run_experiment.sh call)
+rm -f "$D"/[0-9][0-9]_*.txt
 
 cap() {   # cap <file> <command...>: save the command line and its output
 	local f="$1"; shift

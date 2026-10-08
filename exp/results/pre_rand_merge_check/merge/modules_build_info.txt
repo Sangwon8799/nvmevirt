@@ -1,0 +1,18 @@
+date:            2026-10-08T11:13:41+00:00
+variant:         merge (extra make args: 'GC_STATS=1 WBUF_FIX=1 WBUF_MERGE=1')
+kernel:          6.8.0-142-generic
+compiler:        gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+kernel built by: x86_64-linux-gnu-gcc-13 (Ubuntu 13.3.0-6ubuntu2~24.04.1)
+make:            GNU Make 4.3
+git HEAD:        66446ea9017556e3e368925a8104a97db2ce1ad4
+git status (nvmevirt/): 0 modified file(s)
+
+## nvmev_map4k.ko  (make MAPPING_UNIT=4096 GC_STATS=1 WBUF_FIX=1 WBUF_MERGE=1)
+srcversion:     6A6052A2E284AB7E61AB597
+vermagic:       6.8.0-142-generic SMP preempt mod_unload modversions 
+## nvmev_map16k.ko  (make MAPPING_UNIT=16384 GC_STATS=1 WBUF_FIX=1 WBUF_MERGE=1)
+srcversion:     6A6052A2E284AB7E61AB597
+vermagic:       6.8.0-142-generic SMP preempt mod_unload modversions 
+## nvmev_map32k.ko  (make MAPPING_UNIT=32768 GC_STATS=1 WBUF_FIX=1 WBUF_MERGE=1)
+srcversion:     6A6052A2E284AB7E61AB597
+vermagic:       6.8.0-142-generic SMP preempt mod_unload modversions 

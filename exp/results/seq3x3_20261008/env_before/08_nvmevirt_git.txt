@@ -1,0 +1,37 @@
+$ git -C /home/dccearth/jsw/nvmevirt rev-parse HEAD
+66446ea9017556e3e368925a8104a97db2ce1ad4
+
+$ git -C /home/dccearth/jsw/nvmevirt log --oneline -15
+66446ea exp: sequential-write experiment and write-buffer merge model
+cd1fe2b log: record the push (main = tag ksc2026-final = c742c67) and the final hand-over bundle
+c742c67 exp: results, analysis and experiment record (KSC2026 final)
+e598e75 exp: final 3x3 design with OS page-cache comparison
+949ae38 exp: keep going when a run fails; plot tool; report generators
+5769378 exp: scripts for the KSC2026 mapping-unit experiment
+c02b9fd nvmevirt: KSC2026 mapping-unit configuration
+d508610 Move NVMeVirt sources into nvmevirt/ subdirectory
+61c90f7 Merge pull request #72 from duckhanson/fix/zns-append-return-slba
+b48962a Merge pull request #71 from enkerewpo/fix
+e808a49 zns: return allocated SLBA in CQE for Zone Append commands
+d9b62a2 fix: add E820_TYPE_RESERVED_KERN check and fixed access out-of-bound bug
+a6a4252 misc: fixed miscellaneous bugs
+c8ef01d dma: support async DMA processing
+00a9ee1 Merge pull request #62 from WithoutStress/main
+
+$ git -C /home/dccearth/jsw/nvmevirt status --porcelain
+?? exp/modules/merge/
+?? exp/results/main3x3_20261008/gallery_main3x3_20261008.html
+?? exp/results/main_20261008/gallery_main_20261008.html
+?? exp/results/pre_rand_merge_check/
+?? exp/results/pre_seq_all.log
+?? exp/results/pre_seq_blkmerge_default/
+?? exp/results/pre_seq_check/
+?? exp/results/seq3x3_20261008.console.log
+?? exp/results/seq3x3_20261008/
+
+$ git -C /home/dccearth/jsw/nvmevirt remote -v
+origin	git@github.com:Sangwon8799/nvmevirt.git (fetch)
+origin	git@github.com:Sangwon8799/nvmevirt.git (push)
+upstream	https://github.com/snu-csl/nvmevirt.git (fetch)
+upstream	https://github.com/snu-csl/nvmevirt.git (push)
+

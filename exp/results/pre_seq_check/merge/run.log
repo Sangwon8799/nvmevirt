@@ -1,0 +1,14 @@
+[2026-10-08 11:20:27] experiment=pre_seq_check variant=merge maps=[16k 32k] bss=[4k 16k] reps=1 cache_modes=[nodrop] only_bs_lt_map=0
+[2026-10-08 11:20:27] fio: libaio seqwrite iodepth=32 runtime=15s ramp_time=0s log=500ms; insmod memmap_start=12G memmap_size=12G cpus=3,4,5
+[2026-10-08 11:20:27] block layer: nomerges=2
+[2026-10-08 11:20:27] 4 runs, about 1 min
+[2026-10-08 11:20:27] === [1/4] variant=merge cache=nodrop map=16k bs=4k rep=1 ===
+    -> 2105.5 MiB/s, 539020 IOPS, clat mean 58.4 us
+[2026-10-08 11:20:52] === [2/4] variant=merge cache=nodrop map=16k bs=16k rep=1 ===
+    -> 2232.6 MiB/s, 142889 IOPS, clat mean 222.5 us
+[2026-10-08 11:21:18] === [3/4] variant=merge cache=nodrop map=32k bs=4k rep=1 ===
+    -> 2101.6 MiB/s, 538011 IOPS, clat mean 58.5 us
+[2026-10-08 11:21:43] === [4/4] variant=merge cache=nodrop map=32k bs=16k rep=1 ===
+    -> 2232.5 MiB/s, 142881 IOPS, clat mean 222.5 us
+environment snapshot -> /home/dccearth/jsw/nvmevirt/exp/results/pre_seq_check/env_after_merge
+[2026-10-08 11:22:08] finished: /home/dccearth/jsw/nvmevirt/exp/results/pre_seq_check/merge

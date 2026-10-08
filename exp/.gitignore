@@ -3,3 +3,5 @@ modules/*/*.ko
 # python virtualenv for analysis
 .venv/
 __pycache__/
+# one-page HTML galleries (make_gallery.py): large, the PNGs they contain are committed
+results/*/gallery_*.html

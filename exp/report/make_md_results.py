@@ -25,7 +25,12 @@ BEGIN, END = "<!-- AUTO-RESULTS-BEGIN -->", "<!-- AUTO-RESULTS-END -->"
 METRICS = ["bw_MiBps", "iops", "clat_mean_us", "clat_p50_us", "clat_p99_us", "clat_p999_us", "lat_mean_us", "slat_mean_us",
            "bw_first10s_MiBps", "bw_last20s_MiBps", "gc_onset_s", "gc_onset_last_part_s", "bw_pre_gc_MiBps",
            "bw_post_gc_MiBps", "gc_cnt", "ftl_host_pgs", "ftl_gc_pgs", "waf_gc", "waf_total", "written_GiB",
-           "fill_ratio", "chmodel_msgs", "kernel_warn"]
+           "fill_ratio", "chmodel_msgs", "kernel_warn",
+           # recorded from the sequential-write experiment on (block layer) / merge variant only (WBUF_MERGE counters)
+           "blk_wr_ios", "blk_wr_merges", "blk_avg_req_KiB",
+           "mg_open", "mg_merge", "mg_full", "mg_evict", "mg_direct", "mg_still_open"]
+# variant pairs compared as (new - old) / old: base -> wbuffix (first design), wbuffix -> merge (sequential experiment)
+VARIANT_PAIRS = [("base", "wbuffix"), ("wbuffix", "merge")]
 
 
 def kst(utc_str):
@@ -41,6 +46,16 @@ def kst_line(line):
     return f"{m.group(1)}[{kst(m.group(2))}]" + line[m.end():] if m else line
 
 
+def last_snapshot(text):
+    """env files written by several collect_env.sh calls hold several snapshots in a row; keep the last one.
+    Every snapshot of a file starts with the same first '$ command' line."""
+    lines = text.splitlines()
+    if not lines:
+        return text
+    starts = [i for i, ln in enumerate(lines) if ln == lines[0]]
+    return "\n".join(lines[starts[-1]:]) + "\n"
+
+
 def g(v, nd=3):
     if v is None or v != v:
         return "NA"
@@ -54,7 +69,9 @@ def section(EXP_DIR, num, out):
     rows, series = A.collect(EXP_DIR)
     rows.sort(key=lambda r: (r["variant"], A.kib(r["map"]), A.kib(r["bs"]), r["rep"]))
     SIZES[:] = sorted({r["map"] for r in rows} | {r["bs"] for r in rows}, key=A.kib) or list(A.SIZES)
-    A.SIZES = SIZES
+    MAPS = sorted({r["map"] for r in rows}, key=A.kib) or list(SIZES)
+    BSS = sorted({r["bs"] for r in rows}, key=A.kib) or list(SIZES)
+    A.SIZES, A.MAPS, A.BSS = SIZES, MAPS, BSS
     agg = A.aggregate(rows) if rows else []
     look = {(a["variant"], a["map"], a["bs"]): a for a in agg}
     variants = sorted({r["variant"] for r in rows})
@@ -69,7 +86,7 @@ def section(EXP_DIR, num, out):
         w(f"- {v}: 완료 회차 {len(vr)} (DONE 있음). run.log 첫 시각 {kst(ts[0]) if ts else 'NA'}, 마지막 시각 {kst(ts[-1]) if ts else 'NA'}. "
           f"chmodel 오류 줄 합계 {sum(int(r.get('chmodel_msgs', 0) or 0) for r in vr):,}. "
           f"chmodel>0 회차 {sum(1 for r in vr if (r.get('chmodel_msgs') or 0) > 0)}. kernel_warn>0 회차 {sum(1 for r in vr if (r.get('kernel_warn') or 0) > 0)}.")
-        missing = [f"map{m}_bs{b}_r{k}" for m in SIZES for b in SIZES for k in (1, 2, 3)
+        missing = [f"map{m}_bs{b}_r{k}" for m in MAPS for b in BSS for k in (1, 2, 3)
                    if not (EXP_DIR / v / f"map{m}_bs{b}_r{k}" / "DONE").exists()]
         failed = [p.parent.name for p in sorted((EXP_DIR / v).glob("*/FAILED"))]
         if failed:
@@ -87,11 +104,11 @@ def section(EXP_DIR, num, out):
             if not any(f"{m}_mean" in a for a in agg if a["variant"] == v):
                 continue
             w(f"#### {EXP_DIR.name} · {v} · {m}")
-            w("| map\\bs | " + " | ".join(s.upper() for s in SIZES) + " |")
-            w("|---|" + "---|" * len(SIZES))
-            for mp in SIZES:
+            w("| map\\bs | " + " | ".join(s.upper() for s in BSS) + " |")
+            w("|---|" + "---|" * len(BSS))
+            for mp in MAPS:
                 cells = []
-                for bs in SIZES:
+                for bs in BSS:
                     a = look.get((v, mp, bs))
                     if not a or f"{m}_mean" not in a:
                         cells.append("NA")
@@ -99,21 +116,24 @@ def section(EXP_DIR, num, out):
                     cells.append(f"{g(a[m + '_mean'])} ± {g(a[m + '_std'])} [{g(a[m + '_min'])}..{g(a[m + '_max'])}]")
                 w(f"| {mp.upper()} | " + " | ".join(cells) + " |")
             w("")
-    if "base" in variants and "wbuffix" in variants:
-        w(f"### 11.{num}.3 변형 비교 (wbuffix − base) / base, 60 s 평균 대역폭")
-        w("| map\\bs | " + " | ".join(s.upper() for s in SIZES) + " |")
-        w("|---|" + "---|" * len(SIZES))
-        for mp in SIZES:
-            cells = []
-            for bs in SIZES:
-                a, b = look.get(("base", mp, bs)), look.get(("wbuffix", mp, bs))
-                if a and b and a["bw_MiBps_mean"]:
-                    cells.append(f"{(b['bw_MiBps_mean'] - a['bw_MiBps_mean']) / a['bw_MiBps_mean'] * 100:+.2f}% "
-                                 f"({g(a['bw_MiBps_mean'], 1)}→{g(b['bw_MiBps_mean'], 1)})")
-                else:
-                    cells.append("NA")
-            w(f"| {mp.upper()} | " + " | ".join(cells) + " |")
-        w("")
+    for old, new in VARIANT_PAIRS:
+        if old not in variants or new not in variants:
+            continue
+        for m, label in (("bw_MiBps", "60 s 평균 대역폭"), ("waf_total", "WAF_total")):
+            w(f"### 11.{num}.3{'' if m == 'bw_MiBps' else 'w'} 변형 비교 ({new} − {old}) / {old}, {label}")
+            w("| map\\bs | " + " | ".join(s.upper() for s in BSS) + " |")
+            w("|---|" + "---|" * len(BSS))
+            for mp in MAPS:
+                cells = []
+                for bs in BSS:
+                    a, b = look.get((old, mp, bs)), look.get((new, mp, bs))
+                    if a and b and a.get(f"{m}_mean"):
+                        cells.append(f"{(b[m + '_mean'] - a[m + '_mean']) / a[m + '_mean'] * 100:+.2f}% "
+                                     f"({g(a[m + '_mean'], 1 if m == 'bw_MiBps' else 3)}→{g(b[m + '_mean'], 1 if m == 'bw_MiBps' else 3)})")
+                    else:
+                        cells.append("NA")
+                w(f"| {mp.upper()} | " + " | ".join(cells) + " |")
+            w("")
     cmp = A.cache_compare(rows, EXP_DIR / "analysis") if any(v.endswith("_drop") for v in variants) else []
     if cmp:
         w(f"### 11.{num}.3b OS 페이지 캐시 drop vs nodrop (같은 map·bs·rep 쌍; diff = drop − nodrop)")
@@ -160,7 +180,7 @@ def section(EXP_DIR, num, out):
                 t0 = float(m.group(1))
             elif "first GC" in ln and t0 is not None:
                 lines.append(f"+{float(m.group(1)) - t0:.3f}s " + ln.split("KSC2026: ", 1)[-1])
-        stats = [ln.split("KSC2026: ", 1)[-1] for ln in un.splitlines() if "KSC2026: stats" in ln]
+        stats = [ln.split("KSC2026: ", 1)[-1] for ln in un.splitlines() if "KSC2026: stats" in ln or "KSC2026: merge" in ln]
         other = [ln for ln in (run + un).splitlines() if "KSC2026" not in ln and ln.strip()]
         w(f"[{r['variant']} map{r['map']} bs{r['bs']} r{r['rep']}]")
         for ln in lines + stats:
@@ -181,7 +201,7 @@ def section(EXP_DIR, num, out):
         w(f"{key[0]} {key[1]} {key[2]} r{key[3]} | {g(on, 3)} | " + " ".join(vals))
     w("```")
     w("")
-    w(f"### 11.{num}.8 실험 전후 환경 차이 (env_before vs env_after_*; 날짜·부하·여유 메모리 줄 제외)")
+    w(f"### 11.{num}.8 실험 전후 환경 차이 (env_before vs env_after_* 의 마지막 스냅샷; 날짜·부하·여유 메모리 줄 제외)")
     eb = EXP_DIR / "env_before"
     ign = re.compile(r"loadavg|Mem:|Swap:|MemFree|MemAvailable|AnonHugePages|^\$ date|^\d{4}-\d\d-\d\dT|^\d+\.\d+ \d+\.\d+ \d+\.\d+")
     for ad in sorted(p for p in EXP_DIR.iterdir() if p.name.startswith("env_after")):
@@ -191,7 +211,7 @@ def section(EXP_DIR, num, out):
             if f.name == "12_dimm.txt" or not (ad / f.name).exists():
                 continue
             a = [ln for ln in f.read_text(errors="replace").splitlines() if not ign.search(ln)]
-            b = [ln for ln in (ad / f.name).read_text(errors="replace").splitlines() if not ign.search(ln)]
+            b = [ln for ln in last_snapshot((ad / f.name).read_text(errors="replace")).splitlines() if not ign.search(ln)]
             d = [ln for ln in difflib.unified_diff(a, b, lineterm="", n=0) if ln[:1] in "+-" and not ln.startswith(("+++", "---"))]
             if d:
                 any_diff = True

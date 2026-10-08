@@ -1,0 +1,7 @@
+[82980.146819] KSC2026-MARK map4k_bs16k_r1 rmmod 1791458742818160703
+[82980.204495] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+[82980.204519] NVMeVirt: KSC2026: stats part=0 host_pgs=8570250 gc_pgs=0 gc_cnt=3805 free_lines=3
+[82980.204520] NVMeVirt: KSC2026: stats part=1 host_pgs=8570250 gc_pgs=0 gc_cnt=3805 free_lines=3
+[82980.204521] NVMeVirt: KSC2026: stats part=2 host_pgs=8570250 gc_pgs=0 gc_cnt=3805 free_lines=3
+[82980.204521] NVMeVirt: KSC2026: stats part=3 host_pgs=8570250 gc_pgs=0 gc_cnt=3805 free_lines=3
+[82980.272313] NVMeVirt: Virtual NVMe device closed

@@ -1,0 +1,56 @@
+[2026-10-08 11:18:20] experiment=pre_seq_blkmerge_default variant=wbuffix maps=[16k] bss=[4k] reps=1 cache_modes=[nodrop] only_bs_lt_map=0
+[2026-10-08 11:18:20] fio: libaio seqwrite iodepth=32 runtime=15s ramp_time=0s log=500ms; insmod memmap_start=12G memmap_size=12G cpus=3,4,5
+[2026-10-08 11:18:20] block layer: nomerges=kernel default
+[2026-10-08 11:18:20] 1 runs, about 0 min
+environment snapshot -> /home/dccearth/jsw/nvmevirt/exp/results/pre_seq_blkmerge_default/env_before
+[2026-10-08 11:18:20] === [1/1] variant=wbuffix cache=nodrop map=16k bs=4k rep=1 ===
+    -> 935.5 MiB/s, 239491 IOPS, clat mean 132.9 us
+environment snapshot -> /home/dccearth/jsw/nvmevirt/exp/results/pre_seq_blkmerge_default/env_after_wbuffix
+[2026-10-08 11:18:45] finished: /home/dccearth/jsw/nvmevirt/exp/results/pre_seq_blkmerge_default/wbuffix
+[2026-10-08 11:18:45] experiment=pre_seq_check variant=wbuffix maps=[16k 32k] bss=[4k 16k] reps=1 cache_modes=[nodrop] only_bs_lt_map=0
+[2026-10-08 11:18:45] fio: libaio seqwrite iodepth=32 runtime=15s ramp_time=0s log=500ms; insmod memmap_start=12G memmap_size=12G cpus=3,4,5
+[2026-10-08 11:18:45] block layer: nomerges=2
+[2026-10-08 11:18:45] 4 runs, about 1 min
+environment snapshot -> /home/dccearth/jsw/nvmevirt/exp/results/pre_seq_check/env_before
+[2026-10-08 11:18:45] === [1/4] variant=wbuffix cache=nodrop map=16k bs=4k rep=1 ===
+    -> 411.0 MiB/s, 105214 IOPS, clat mean 303.1 us
+[2026-10-08 11:19:11] === [2/4] variant=wbuffix cache=nodrop map=16k bs=16k rep=1 ===
+    -> 2231.8 MiB/s, 142834 IOPS, clat mean 222.6 us
+[2026-10-08 11:19:36] === [3/4] variant=wbuffix cache=nodrop map=32k bs=4k rep=1 ===
+    -> 232.9 MiB/s, 59632 IOPS, clat mean 535.5 us
+[2026-10-08 11:20:01] === [4/4] variant=wbuffix cache=nodrop map=32k bs=16k rep=1 ===
+    -> 654.6 MiB/s, 41897 IOPS, clat mean 762.3 us
+environment snapshot -> /home/dccearth/jsw/nvmevirt/exp/results/pre_seq_check/env_after_wbuffix
+[2026-10-08 11:20:27] finished: /home/dccearth/jsw/nvmevirt/exp/results/pre_seq_check/wbuffix
+[2026-10-08 11:20:27] experiment=pre_seq_check variant=merge maps=[16k 32k] bss=[4k 16k] reps=1 cache_modes=[nodrop] only_bs_lt_map=0
+[2026-10-08 11:20:27] fio: libaio seqwrite iodepth=32 runtime=15s ramp_time=0s log=500ms; insmod memmap_start=12G memmap_size=12G cpus=3,4,5
+[2026-10-08 11:20:27] block layer: nomerges=2
+[2026-10-08 11:20:27] 4 runs, about 1 min
+[2026-10-08 11:20:27] === [1/4] variant=merge cache=nodrop map=16k bs=4k rep=1 ===
+    -> 2105.5 MiB/s, 539020 IOPS, clat mean 58.4 us
+[2026-10-08 11:20:52] === [2/4] variant=merge cache=nodrop map=16k bs=16k rep=1 ===
+    -> 2232.6 MiB/s, 142889 IOPS, clat mean 222.5 us
+[2026-10-08 11:21:18] === [3/4] variant=merge cache=nodrop map=32k bs=4k rep=1 ===
+    -> 2101.6 MiB/s, 538011 IOPS, clat mean 58.5 us
+[2026-10-08 11:21:43] === [4/4] variant=merge cache=nodrop map=32k bs=16k rep=1 ===
+    -> 2232.5 MiB/s, 142881 IOPS, clat mean 222.5 us
+environment snapshot -> /home/dccearth/jsw/nvmevirt/exp/results/pre_seq_check/env_after_merge
+[2026-10-08 11:22:08] finished: /home/dccearth/jsw/nvmevirt/exp/results/pre_seq_check/merge
+[2026-10-08 11:22:08] experiment=pre_rand_merge_check variant=wbuffix maps=[16k] bss=[4k] reps=1 cache_modes=[nodrop] only_bs_lt_map=0
+[2026-10-08 11:22:08] fio: libaio randwrite iodepth=32 runtime=15s ramp_time=0s log=500ms; insmod memmap_start=12G memmap_size=12G cpus=3,4,5
+[2026-10-08 11:22:08] block layer: nomerges=kernel default
+[2026-10-08 11:22:08] 1 runs, about 0 min
+environment snapshot -> /home/dccearth/jsw/nvmevirt/exp/results/pre_rand_merge_check/env_before
+[2026-10-08 11:22:08] === [1/1] variant=wbuffix cache=nodrop map=16k bs=4k rep=1 ===
+    -> 297.9 MiB/s, 76260 IOPS, clat mean 418.5 us
+environment snapshot -> /home/dccearth/jsw/nvmevirt/exp/results/pre_rand_merge_check/env_after_wbuffix
+[2026-10-08 11:22:34] finished: /home/dccearth/jsw/nvmevirt/exp/results/pre_rand_merge_check/wbuffix
+[2026-10-08 11:22:34] experiment=pre_rand_merge_check variant=merge maps=[16k] bss=[4k] reps=1 cache_modes=[nodrop] only_bs_lt_map=0
+[2026-10-08 11:22:34] fio: libaio randwrite iodepth=32 runtime=15s ramp_time=0s log=500ms; insmod memmap_start=12G memmap_size=12G cpus=3,4,5
+[2026-10-08 11:22:34] block layer: nomerges=kernel default
+[2026-10-08 11:22:34] 1 runs, about 0 min
+[2026-10-08 11:22:34] === [1/1] variant=merge cache=nodrop map=16k bs=4k rep=1 ===
+    -> 295.8 MiB/s, 75733 IOPS, clat mean 421.4 us
+environment snapshot -> /home/dccearth/jsw/nvmevirt/exp/results/pre_rand_merge_check/env_after_merge
+[2026-10-08 11:22:59] finished: /home/dccearth/jsw/nvmevirt/exp/results/pre_rand_merge_check/merge
+PRECHECK-ALL-DONE

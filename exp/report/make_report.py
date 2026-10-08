@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """Build the KSC2026 NVMeVirt mapping-unit experiment record (.docx, Korean).
 
-usage:  python3 exp/report/make_report.py exp/results/<PRIMARY_EXP> [--supp exp/results/<SUPP_EXP>] [--out out.docx]
-        PRIMARY = final data set (main3x3_*), SUPP = first-design data set (main_*, partial)
+usage:  python3 exp/report/make_report.py exp/results/<PRIMARY_EXP> [--supp exp/results/<SUPP_EXP>]
+                                        [--seq exp/results/<SEQ_EXP>] [--out out.docx]
+        PRIMARY = final data set (main3x3_*), SUPP = first-design data set (main_*, partial),
+        SEQ = sequential-write experiment (seq3x3_*, models wbuffix and merge)
 
 Everything is read from the repository: scripts (appendix), NVMeVirt diff, environment snapshots,
 per-run results (exp/results/<EXP>/<variant>/...), analysis CSV/figures (exp/results/<EXP>/analysis/),
-and the hand-written interpretation in exp/report/findings_ko.txt.
+and the hand-written interpretation in exp/report/findings_ko.txt (findings_seq_ko.txt for the sequential experiment).
 """
 import csv
 import difflib
@@ -54,6 +56,16 @@ def load_csv(p):
     return rows
 
 
+def last_snapshot(text):
+    """env files written by several collect_env.sh calls hold several snapshots in a row; keep the last one.
+    Every snapshot of a file starts with the same first '$ command' line."""
+    lines = text.splitlines()
+    if not lines:
+        return text
+    starts = [i for i, ln in enumerate(lines) if ln == lines[0]]
+    return "\n".join(lines[starts[-1]:]) + "\n"
+
+
 def fnum(v, nd=1):
     if v is None or v == "" or v != v:
         return "–"
@@ -68,6 +80,7 @@ import argparse  # noqa: E402
 _ap = argparse.ArgumentParser()
 _ap.add_argument("primary")
 _ap.add_argument("--supp")
+_ap.add_argument("--seq")
 _ap.add_argument("--out")
 _args = _ap.parse_args()
 EXP_DIR = Path(_args.primary).resolve()
@@ -77,6 +90,7 @@ EXP = EXP_DIR.name
 OUT = Path(_args.out) if _args.out else EXPD / "report" / "KSC2026_NVMeVirt_매핑단위_실험기록.docx"
 ENV_B = EXP_DIR / "env_before"
 FINDINGS = [ln.strip() for ln in read(EXPD / "report" / "findings_ko.txt").splitlines() if ln.strip() and not ln.startswith("#")]
+FINDINGS_SEQ = [ln.strip() for ln in read(EXPD / "report" / "findings_seq_ko.txt").splitlines() if ln.strip() and not ln.startswith("#")]
 
 
 def load_ds(path):
@@ -93,6 +107,7 @@ def load_ds(path):
 
 PRI = load_ds(EXP_DIR)
 SUP = load_ds(_args.supp)
+SEQ = load_ds(_args.seq)
 AGG, RUNS, AN = PRI["agg"], PRI["runs"], PRI["an"]
 
 
@@ -200,27 +215,37 @@ REWRITTEN = {"1d6cd036893f06bfe8aa8f6bb4327239bc4b720f": "e598e75", "a93ef76bbf9
              "2a462a3a518915e37fa313716bc9721801501e28": "949ae38"}
 HEAD_REC = recorded_head(PRI)
 HEAD = git("rev-parse", REWRITTEN.get(HEAD_REC, HEAD_REC)) or HEAD_REC
-HEAD_NOTE = (f" (원자료에 적힌 커밋 1d6cd03·a93ef76 은 같은 코드로 다시 만든 {HEAD[:7]} 이다 — 8 절)" if HEAD_REC in REWRITTEN else "")
+HEAD_NOTE = (f" (원자료에 적힌 커밋 1d6cd03·a93ef76 은 같은 코드로 다시 만든 {HEAD[:7]} 이다 — 9 절)" if HEAD_REC in REWRITTEN else "")
 PUSH_TAG = os.environ.get("KSC_PUSH_TAG", "")            # set once main and the tag are pushed
 SUDOERS_REMOVED = os.environ.get("KSC_SUDOERS_REMOVED", "")   # "HH:MM" KST when /etc/sudoers.d/nvmevirt-exp was removed
 SUP_HEAD = recorded_head(SUP) if SUP else ""
+SEQ_HEAD = git("rev-parse", recorded_head(SEQ)) if SEQ else ""
+SUDOERS_REMOVED2 = os.environ.get("KSC_SUDOERS_REMOVED2", "")  # "HH:MM" KST, removal after the sequential-write experiment
 n_pri = {v: sum(1 for r in RUNS if r["variant"] == v) for v in PRI["variants"]}
 n_sup = {v: sum(1 for r in SUP["runs"] if r["variant"] == v) for v in SUP["variants"]} if SUP else {}
+if SEQ:   # original model first, then the merge model
+    SEQ["variants"] = [v for v in ("wbuffix", "merge") if v in SEQ["variants"]] + [v for v in SEQ["variants"] if v not in ("wbuffix", "merge")]
+n_seq = {v: sum(1 for r in SEQ["runs"] if r["variant"] == v) for v in SEQ["variants"]} if SEQ else {}
 
-R.title("NVMeVirt FTL 매핑 단위 실험 기록서", "KSC 2026 · FTL 매핑 단위 × fio 랜덤 쓰기 크기 · OS 페이지 캐시 drop 비교")
+R.title("NVMeVirt FTL 매핑 단위 실험 기록서", "KSC 2026 · FTL 매핑 단위 × fio 쓰기 크기 · 랜덤 쓰기(OS 페이지 캐시 drop 비교)"
+        + (" · 순차 쓰기(쓰기 버퍼 병합 모델)" if SEQ else ""))
 R.table(["항목", "내용"], [
     ["주 데이터셋", f"{EXP} — 매핑 4K·16K·32K × bs 4K·16K·32K × 3 회 × 페이지 캐시 drop/no-drop, wbuffix 모델 "
      f"({' + '.join(f'{v} {n}회' for v, n in n_pri.items())})"],
     ["보조 데이터셋", (f"{SUP['name']} — 첫 설계(매핑 4–128K × bs 4–128K × 3 회 × base·wbuffix) 중 설계 변경 전까지 측정한 부분 "
                     f"({' + '.join(f'{v} {n}회' for v, n in n_sup.items())}, FAILED {len(SUP['failed'])}회)") if SUP else "–"],
+    *([["추가 실험 (순차 쓰기)", f"{SEQ['name']} — 매핑 4K·16K·32K × bs 4K·16K·32K × 3 회, fio 순차 쓰기, 모델 wbuffix·merge, 페이지 캐시 그대로 "
+         f"({' + '.join(f'{v} {n}회' for v, n in n_seq.items())}) — 8 절"]] if SEQ else []),
     ["작성일 · 시각 기준", "2026-10-08 · 이 문서의 시각은 모두 KST (서버 시계와 원자료 로그는 UTC = KST − 9 시간)"],
     ["실험 수행", "Sangwon8799 (실험 서버 dccearth), 스크립트 작성·실행·기록: Claude Code (Claude Opus 5.5)"],
     ["저장소", "github.com/Sangwon8799/nvmevirt (main)\n서버: 실험 중 /home/dccearth/jsw/KSC2026/nvmevirt → 실험 후 /home/dccearth/jsw/nvmevirt 로 이동"],
     ["주 데이터셋 소스 커밋", HEAD + HEAD_NOTE],
+    *([["순차 쓰기 소스 커밋", SEQ_HEAD + " (주 데이터셋 커밋 + 쓰기 버퍼 병합 모델·순차 쓰기 스크립트)"]] if SEQ else []),
     ["NVMeVirt 원본", f"github.com/snu-csl/nvmevirt @ {UPSTREAM[:7]} (2026-05-21)"],
 ], widths=[3.6, 13.4], size=9)
 R.p("이 문서는 실험 시작부터 결과를 얻기까지의 전 과정을 기록한다. 다른 사람이 같은 서버 구성에서 문서만 보고 같은 실험을 다시 할 수 있도록 "
-    "환경·버전·바꾼 설정값·사용한 스크립트 전문·실행 순서·결과를 모두 적었다. 진행 중 실험 설계가 한 번 바뀌었으며(1.3 절), 바뀐 최종 설계의 결과가 주 데이터셋이다.", size=9.5)
+    "환경·버전·바꾼 설정값·사용한 스크립트 전문·실행 순서·결과를 모두 적었다. 진행 중 실험 설계가 한 번 바뀌었으며(1.3 절), 바뀐 최종 설계의 결과가 주 데이터셋이다."
+    + (" 그 뒤 같은 3 × 3 설계로 순차 쓰기를 추가로 측정했다(8 절)." if SEQ else ""), size=9.5)
 R.toc()
 R.page_break()
 
@@ -231,7 +256,9 @@ R.p("고용량 SSD 는 4 KiB 매핑을 유지하면 L2P(논리→물리) 매핑 
     "매핑 단위를 16 KiB 이상으로 키우면 DRAM 은 줄지만, 매핑 단위보다 작은 쓰기는 매핑 단위 전체를 새로 써야 하므로 성능이 떨어질 수 있다. "
     "이 실험은 NVMeVirt(커널 모듈 기반 NVMe SSD 에뮬레이터)의 conventional SSD 모델에서 FTL 매핑 단위를 바꾸고, fio 랜덤 쓰기 블록 크기별로 "
     "대역폭(BW), IOPS, 완료 지연(clat)을 잰다. 연구 계획(연구 계획 흐름.docx)의 「(4k mapping ssd) randwrite … → BW, clat / (16k/32k mapping ssd) …」 를 따른다. "
-    "또한 OS 페이지 캐시를 비우는 명령(echo 3 > /proc/sys/vm/drop_caches)을 실험 전에 실행하는지에 따라 결과가 달라지는지 확인한다.")
+    "또한 OS 페이지 캐시를 비우는 명령(echo 3 > /proc/sys/vm/drop_caches)을 실험 전에 실행하는지에 따라 결과가 달라지는지 확인한다."
+    + (" 추가로 같은 매핑 단위·bs 조합에서 순차 쓰기를 측정한다. 이때 NVMeVirt 가 매핑 단위보다 작은 쓰기를 쓰기 버퍼에서 합치지 않는 한계가 결과를 좌우하므로, "
+       "원래 모델(wbuffix)과 이 연구에서 추가한 쓰기 버퍼 병합 모델(merge)을 함께 잰다(8 절)." if SEQ else ""))
 R.h("1.2 최종 실험 행렬과 고정 조건 (주 데이터셋)", 2)
 R.table(["구분", "값"], [
     ["변수 ① FTL 매핑 단위", "4K, 16K, 32K (매핑 단위별로 모듈을 따로 빌드)"],
@@ -253,11 +280,19 @@ R.table(["시각 (KST)", "내용"], [
     ["14:49–15:51", "실패 회차를 기록하고 계속하도록 고친 뒤 wbuffix 부터 재개 (wbuffix 53 회 완료)"],
     ["15:5x", "선배 요청: 매핑·bs 를 4K·16K·32K 로 줄이고, drop_caches 사용 여부에 따른 차이를 확인 → 15:51:23 회차 경계에서 중단"],
     ["15:5x", "모델 선택: base·wbuffix 차이를 설명한 뒤 사용자가 wbuffix 만 선택, drop/no-drop 은 회차마다 교대로 측정하기로 함"],
-    ["16:00:35–", "최종 설계(주 데이터셋) 실행"],
+    ["16:00:35–", "최종 설계(주 데이터셋) 실행 (17:03:57 완료)"],
+    *([["19:53", "사용자 요청: 순차 쓰기도 같은 3 × 3 으로 측정. NVMeVirt 가 매핑 단위보다 작은 쓰기를 쓰기 버퍼에서 합치지 않는 한계(5.5 절)를 설명했고, "
+        "사용자가 '원래 모델(wbuffix)과 병합 모델(merge) 둘 다 측정', '페이지 캐시 nodrop 만'을 골랐다"],
+       ["20:01–20:13", "쓰기 버퍼 병합 모델(WBUF_MERGE) 작성 → 에이전트 5 개의 독립 코드 검토(결함 없음, 8.2 절) → 커밋 66446ea, merge 모듈 빌드"],
+       ["20:18–20:23", "사전 점검: 커널 기본 설정에서 블록 계층이 순차 4K 요청을 평균 약 120 KiB 로 합치는 것을 발견 → 순차 쓰기는 nomerges=2 로 측정 (8.3 절)"],
+       ["20:23:24–", "순차 쓰기 실험 실행 (8 절)"]] if SEQ else []),
 ], widths=[2.8, 14.2], size=8.5, caption="설계 변경 경위")
 if FINDINGS:
     R.h("1.4 결과 요약", 2)
     R.bullets(FINDINGS[:10])
+if SEQ and FINDINGS_SEQ:
+    R.h("1.5 순차 쓰기 추가 실험 결과 요약", 2)
+    R.bullets(FINDINGS_SEQ[:6])
 
 # ============================================================================ 2
 R.h("2. 실험 환경")
@@ -366,30 +401,35 @@ R.table(["경로", "내용"], [
     ["exp/run_experiment.sh", "회차 실행: rmmod → insmod → fio 60 s → rmmod, 커널 로그 기록, 이어서 하기 지원"],
     ["exp/collect_env.sh", "실험 전·후 환경 스냅샷"],
     ["exp/jobs/randwrite.fio.in", "fio 작업 파일 틀 (회차마다 값을 채워 job.fio 로 저장)"],
+    ["exp/jobs/seqwrite.fio.in", "순차 쓰기 틀 (rw=write; 8 절)"],
     ["exp/analyze.py", "결과 집계(CSV), drop/no-drop 쌍 비교, 그림"],
     ["exp/plot.py", "그래프 도구 (bs/map/heatmap/ts/compare/all)"],
     ["exp/run_all.sh", "최종 설계: wbuffix 모듈 → 3×3×3×{nodrop, drop} → 분석"],
     ["exp/run_all_6x6.sh", "첫 설계: 빌드 → base 6×6×3 → wbuffix 6×6×3 → 분석 (보조 데이터셋에 사용)"],
+    ["exp/run_all_seq.sh", "순차 쓰기: 3×3×3 × {wbuffix, merge}, nomerges=2 → 분석"],
+    ["exp/make_gallery.py", "한 실험의 모든 그림을 HTML 한 파일로 모음"],
     ["exp/report/", "이 문서·인계 기록 생성기 (make_report.py, docx_helpers.py, make_md_results.py, findings_ko.txt, make_handoff.sh), 감사 결과, sudoers 사본, 이 문서(.docx)"],
     [f"exp/results/{EXP}/", "주 데이터셋 (wbuffix_nodrop/, wbuffix_drop/, env_before·env_after, analysis/)"],
     [f"exp/results/{SUP['name'] if SUP else 'main_*'}/", "보조 데이터셋 (base/, wbuffix/, env_before·env_after_stop, analysis/)"],
-    ["exp/results/pre_*/", "사전 점검 (스모크 테스트, GC_STATS 영향, 페이지 캐시 drop 시험)"],
+    *([[f"exp/results/{SEQ['name']}/", "순차 쓰기 실험 (wbuffix/, merge/, env_before·env_after, analysis/)"]] if SEQ else []),
+    ["exp/results/pre_*/", "사전 점검 (스모크 테스트, GC_STATS 영향, 페이지 캐시 drop 시험, 순차 쓰기 점검 pre_seq_*·pre_rand_merge_check)"],
     ["EXPERIMENT_LOG_FOR_CLAUDE.md", "다른 Claude 에게 넘기는 상세 기록(모든 지시·결정·수치)"],
 ], widths=[5.4, 11.6], size=8, caption="저장소 구성")
 R.h("3.3 실행 권한 (sudoers)", 2)
 R.p("insmod·rmmod·블록 장치에 대한 fio·dmesg 는 root 권한이 필요하다. 실험을 무인으로 돌리기 위해 필요한 명령만 비밀번호 없이 쓰도록 규칙을 추가했다"
-    "(14:06 KST 설치, 14:08 /dev/kmsg 추가, 15:55 drop_caches 추가). /dev/kmsg 쓰기는 회차의 시작·끝 표지를 커널 로그에 남겨 NVMeVirt 메시지와 같은 시계로 시간을 재기 위해, "
-    "/proc/sys/vm/drop_caches 쓰기는 페이지 캐시 drop 조건에 쓴다.")
+    "(14:06 KST 설치, 14:08 /dev/kmsg 추가, 15:55 drop_caches 추가, 18:33 제거" + (", 20:17 순차 쓰기 실험을 위해 다시 설치" if SEQ else "") + "). /dev/kmsg 쓰기는 회차의 시작·끝 표지를 커널 로그에 남겨 NVMeVirt 메시지와 같은 시계로 시간을 재기 위해, "
+    "/proc/sys/vm/drop_caches 쓰기는 페이지 캐시 drop 조건에, /sys/block/nvme1n1/queue/nomerges 쓰기는 순차 쓰기 실험에서 블록 계층 요청 병합을 끄는 데(8.1 절) 쓴다.")
 R.code(read(EXPD / "report" / "nvmevirt-exp.sudoers") or "(sudoers 파일 사본 없음)")
 R.code("""# 설치 (저장소 최상위 디렉터리에서; 문법 검사 후 설치)
 sudo visudo -cf exp/report/nvmevirt-exp.sudoers && sudo install -m 0440 -o root -g root exp/report/nvmevirt-exp.sudoers /etc/sudoers.d/nvmevirt-exp
 # 실험 후 제거
 sudo rm /etc/sudoers.d/nvmevirt-exp""")
-R.p("위 규칙은 실험 당시 그대로의 기록이다. 마지막 chown 항목은 당시 사용자(dccearth)와 저장소 위치(/home/dccearth/jsw/KSC2026/nvmevirt)에 묶여 있다. "
-    "run_experiment.sh 는 회차마다 'sudo -n chown -R <사용자>:<사용자> <회차 폴더>' 를 실행하고, 이것이 실패하면 set -e 때문에 첫 회차의 rmmod 직후 DONE 표지 없이 멈춘다"
-    "(사전 점검은 chown 을 확인하지 않는다). 저장소를 옮겼거나(이 서버도 실험 후 /home/dccearth/jsw/nvmevirt 로 옮겼다) 다른 곳에 clone 했다면, "
-    "아래처럼 사용자 이름과 경로를 바꾼 규칙을 설치한다(4.3 절).", size=9.5)
-R.code("""<USER> ALL=(root) NOPASSWD: /usr/sbin/insmod, /usr/sbin/rmmod, /usr/bin/fio, /usr/bin/dmesg, /usr/sbin/nvme, /usr/bin/cat /proc/iomem, /usr/bin/tee /dev/kmsg, /usr/bin/tee /proc/sys/vm/drop_caches, /usr/bin/chown -R <USER>\\:<USER> <REPO>/exp/*""")
+R.p("위 규칙은 순차 쓰기 실험(8 절) 때 설치한 것이다(20:17 KST, 사용자가 직접 설치). 랜덤 쓰기 실험(주·보조 데이터셋) 때의 규칙에는 nomerges 항목이 없었고, "
+    "마지막 chown 경로가 저장소를 옮기기 전 위치(/home/dccearth/jsw/KSC2026/nvmevirt/exp/*)였다(태그 ksc2026-final 의 같은 파일). "
+    "chown 항목은 사용자(dccearth)와 저장소 위치에 묶여 있다. run_experiment.sh 는 회차마다 'sudo -n chown -R <사용자>:<사용자> <회차 폴더>' 를 실행하고, 이것이 실패하면 set -e 때문에 "
+    "첫 회차의 rmmod 직후 DONE 표지 없이 멈춘다(사전 점검은 chown 을 확인하지 않는다). nomerges 항목은 이 서버의 NVMeVirt 장치 이름(nvme1n1)을 그대로 적었다"
+    "(sudoers 인자의 * 는 공백과 / 까지 맞으므로 와일드카드를 쓰지 않았다). 다른 곳에 clone 했거나 장치 이름이 다르면 아래처럼 바꾼 규칙을 설치한다(4.3 절).", size=9.5)
+R.code("""<USER> ALL=(root) NOPASSWD: /usr/sbin/insmod, /usr/sbin/rmmod, /usr/bin/fio, /usr/bin/dmesg, /usr/sbin/nvme, /usr/bin/cat /proc/iomem, /usr/bin/tee /dev/kmsg, /usr/bin/tee /proc/sys/vm/drop_caches, /usr/bin/tee /sys/block/<NVMeVirt 장치>/queue/nomerges, /usr/bin/chown -R <USER>\\:<USER> <REPO>/exp/*""")
 R.h("3.4 NVMeVirt 소스 수정 사항", 2)
 R.p("원본(61c90f7) 대비 바꾼 것은 아래가 전부다. 전체 diff 는 부록 B 에 있다.")
 R.table(["파일", "항목", "원본 값", "실험 값", "이유"], [
@@ -402,12 +442,14 @@ R.table(["파일", "항목", "원본 값", "실험 값", "이유"], [
     ["conv_ftl.c", "적재 로그", "–", "'KSC2026: WBUF_FIX=… GC_STATS=…' 1 줄 (#if 밖, 항상 출력)", "회차마다 빌드 변형(base/wbuffix) 확인"],
     ["conv_ftl.c/.h", "GC_STATS (선택)", "–", "base·wbuffix 모두 켬", "첫 GC 시각, 호스트/GC 페이지 수 기록 (관찰만, 영향 없음 — 5.3 절)"],
     ["conv_ftl.c", "WBUF_FIX (선택)", "–", "wbuffix 만 켬", "쓰기 버퍼 과다 반환 수정 (5.4 절)"],
+    *([["conv_ftl.c/.h, Kbuild", "WBUF_MERGE (선택)", "–", "merge 만 켬 (순차 쓰기 실험)", "매핑 단위보다 작은 쓰기를 쓰기 버퍼에서 병합 (8.2 절)"]] if SEQ else []),
 ], widths=[2.2, 2.6, 3.2, 3.8, 5.2], size=8, caption="NVMeVirt 수정 사항")
 R.p("빌드 명령 (매핑 단위 하나):")
 R.code("""cd nvmevirt
 make clean
 make MAPPING_UNIT=16384 GC_STATS=1              # base 변형
 make MAPPING_UNIT=16384 GC_STATS=1 WBUF_FIX=1   # wbuffix 변형
+make MAPPING_UNIT=16384 GC_STATS=1 WBUF_FIX=1 WBUF_MERGE=1   # merge 변형 (순차 쓰기 실험, 커밋 66446ea 부터)
 # exp/build_modules.sh <변형> 이 6 개 매핑 단위를 차례로 빌드해 exp/modules/<변형>/ 에 보관한다
 # 빌드된 .ko 에는 소스의 절대 경로가 들어가므로, SHA-256 비교는 같은 경로에서 빌드한 경우에만 의미가 있다 (원본 값: 4.2 절)""")
 R.h("3.5 매핑 단위별 FTL 파라미터 (적재 로그로 확인한 값)", 2)
@@ -473,6 +515,10 @@ R.bullets([
     "norandommap 은 기본값(0)이다: fio 가 한 바퀴 동안 같은 블록을 두 번 쓰지 않는다.",
     "write_bw_log/write_iops_log/write_lat_log 로 0.5 s 평균 시계열을 남긴다(fio_bw.1.log 등, 단위 KiB/s · IOPS · ns).",
 ])
+if SEQ:
+    R.p("순차 쓰기 실험(8 절)의 틀 exp/jobs/seqwrite.fio.in 은 위와 비교해 rw=write, randrepeat 줄 삭제, 작업 이름 [seqwrite] 만 다르다. "
+        "time_based 라 장치 끝(12,040,984,064 B)에 닿으면 offset 0 으로 돌아가 계속 쓴다.", size=9.5)
+    R.code(read(EXPD / "jobs" / "seqwrite.fio.in"))
 R.h("3.10 OS 페이지 캐시 조건 (drop / nodrop)", 2)
 R.p("drop 조건은 장치 확인 직후(5 초 대기 전) 다음을 실행한다. nodrop 조건은 아무것도 하지 않는다. 두 조건 모두 /proc/meminfo 의 MemFree·Buffers·Cached·Dirty·Writeback 을 "
     "drop 전, drop 후, fio 직전에 회차 폴더의 cache.txt 에 기록한다.")
@@ -505,12 +551,16 @@ if SUP:
     for v in SUP["variants"]:
         a, b = run_window(v, SUP)
         rows42.append([f"보조 · {v}", str(n_sup.get(v, 0)), "반복 1→3, 매핑 4K→128K, bs 4K→128K", a, b])
+if SEQ:
+    for v in SEQ["variants"]:
+        a, b = run_window(v, SEQ)
+        rows42.append([f"순차 · {v}", str(n_seq.get(v, 0)), "반복 r 마다 wbuffix 한 바퀴 → merge 한 바퀴 (바퀴 안: 매핑 4K→32K, bs 4K→32K)", a, b])
 R.table(["데이터셋 · 변형", "완료 회차", "순서", "run.log 첫 시각", "마지막 시각"], rows42,
         widths=[2.8, 1.6, 6.6, 3.0, 3.0], size=8, caption="실행 순서와 시각 (KST)")
 R.p("반복을 바깥 루프에 둬서 시간에 따른 서버 상태 변화가 특정 조합에 몰리지 않게 했다. 회차 하나는 적재·대기·측정·내림을 합쳐 약 70 초 걸린다.")
 R.p("보조 데이터셋 경과: 당시의 exp/run_all.sh(커밋 5769378; 지금의 run_all_6x6.sh 와 주석 한 줄만 다른 같은 내용, 빌드 → base → wbuffix)로 14:20:28 에 시작했으나 "
     "base 21 번째 회차(매핑 32K·bs 16K)에서 가상 장치가 멈춰(5.6 절) 당시 스크립트가 실험을 중단했다(14:46:57). 실패 회차를 FAILED 로 남기고 계속하도록 고친 뒤"
-    "(커밋 2a462a3 → push 전 949ae38 로 다시 만듦, 8 절) `bash run_experiment.sh main_20261008 wbuffix` 로 wbuffix 를 먼저 재개했고(run.log 첫 줄 14:49:14), "
+    "(커밋 2a462a3 → push 전 949ae38 로 다시 만듦, 9 절) `bash run_experiment.sh main_20261008 wbuffix` 로 wbuffix 를 먼저 재개했고(run.log 첫 줄 14:49:14), "
     "15:51:23 에 설계 변경으로 회차 경계에서 멈췄다. 모듈은 14:20 에 한 번 빌드한 것을 끝까지(주 데이터셋 포함) 그대로 썼다(SHA-256 확인).", size=9.5)
 _sums = dict((ln.split()[1], ln.split()[0]) for ln in read(EXP_DIR / (PRI["variants"][0] if PRI["variants"] else "") / "modules_SHA256SUMS").splitlines() if len(ln.split()) == 2)
 if _sums:
@@ -521,11 +571,11 @@ if _sums:
 R.h("4.3 재현 명령", 2)
 _supname = SUP["name"] if SUP else "main_20261008"
 R.code(f"""git clone https://github.com/Sangwon8799/nvmevirt.git nvmevirt && cd nvmevirt   # 공개 저장소 (SSH 키 불필요)
-git checkout {PUSH_TAG or HEAD[:7]}   # 태그 = 실험 스크립트 {HEAD[:7]} + 이 문서·생성기·결과
+git checkout {PUSH_TAG or HEAD[:7]}   # 태그 = 실험 스크립트 {HEAD[:7]}""" + (f" + 순차 쓰기 스크립트·병합 모델 {SEQ_HEAD[:7]}" if SEQ else "") + f""" + 이 문서·생성기·결과
 cd exp
 python3 -m venv .venv && ./.venv/bin/pip install -r requirements.txt
 # 3.1 절 GRUB 설정·패키지가 있어야 한다. 3.3 절 sudoers 는 이 clone 의 경로와 내 사용자 이름으로 바꿔 설치한다:
-sed -e "s|/home/dccearth/jsw/KSC2026/nvmevirt/exp/\\*|$(cd .. && pwd)/exp/*|" -e "s|dccearth|$(id -un)|g" report/nvmevirt-exp.sudoers > /tmp/nvmevirt-exp.sudoers
+sed -e "s|/home/dccearth/jsw/nvmevirt/exp/\\*|$(cd .. && pwd)/exp/*|" -e "s|dccearth|$(id -un)|g" report/nvmevirt-exp.sudoers > /tmp/nvmevirt-exp.sudoers   # 장치 이름이 nvme1n1 이 아니면 nomerges 경로도 바꾼다
 sudo visudo -cf /tmp/nvmevirt-exp.sudoers && sudo install -m 0440 -o root -g root /tmp/nvmevirt-exp.sudoers /etc/sudoers.d/nvmevirt-exp
 tmux new -s ksc2026 'bash run_all.sh {EXP} 2>&1 | tee -a results/run_all_{EXP}.log'   # 주 데이터셋 (약 65 분)
 tmux new -s ksc6x6 'bash run_all_6x6.sh {_supname} 2>&1 | tee -a results/run_all_{_supname}.log'   # (선택) 첫 설계 6×6×3×{{base,wbuffix}} (약 4.3 시간 + base 실패 회차)
@@ -535,7 +585,17 @@ MAPS=128k BSS=4k REPS=1 RUNTIME=10 SETTLE_SEC=2 bash run_experiment.sh pre_smoke
 for v in plain base; do MAPS=4k BSS=4k REPS=3 RUNTIME=20 SETTLE_SEC=3 bash run_experiment.sh pre_gcstats_ab $v; done         # 5.3
 MAPS="4k 16k" BSS=4k REPS=2 RUNTIME=8 SETTLE_SEC=2 CACHE_MODES="nodrop drop" bash run_experiment.sh pre_cache_test wbuffix   # 5.7
 ./.venv/bin/python plot.py all --exp results/{EXP}    # 그래프
-./.venv/bin/python report/make_report.py results/{EXP} --supp results/{_supname}   # 이 문서 (선택 단계를 건너뛰었으면 --supp 생략)""")
+""" + (f"""# 순차 쓰기 실험 (8 절): wbuffix 모듈(위에서 빌드) + merge 모듈, 3×3×3×2 = 54 회 (약 64 분)
+MAPS="4k 16k 32k" bash build_modules.sh merge
+tmux new -s ksc2026seq 'bash run_all_seq.sh {SEQ['name']} 2>&1 | tee -a results/{SEQ['name']}.console.log'
+# 순차 쓰기 사전 점검 (8.3 절; 15 s 회차)
+export REPS=1 RUNTIME=15 CACHE_MODES=nodrop
+WORKLOAD=seqwrite NOMERGES= MAPS=16k BSS=4k bash run_experiment.sh pre_seq_blkmerge_default wbuffix
+for v in wbuffix merge; do WORKLOAD=seqwrite NOMERGES=2 MAPS="16k 32k" BSS="4k 16k" bash run_experiment.sh pre_seq_check $v; done
+for v in wbuffix merge; do WORKLOAD=randwrite NOMERGES= MAPS=16k BSS=4k bash run_experiment.sh pre_rand_merge_check $v; done
+unset REPS RUNTIME CACHE_MODES
+./.venv/bin/python plot.py all --exp results/{SEQ['name']}
+""" if SEQ else "") + f"""./.venv/bin/python report/make_report.py results/{EXP} --supp results/{_supname}""" + (f" --seq results/{SEQ['name']}" if SEQ else "") + """   # 이 문서 (선택 단계를 건너뛰었으면 해당 인자 생략)""")
 R.p("위 sed 는 3.3 절 규칙의 chown 경로와 사용자 이름을 바꾼다. 5.2 절 스모크 테스트는 당시 매핑 4K·128K × bs 4K·128K 로도 돌렸지만 남은 결과는 128K/4K 1 회뿐이다(5.2 절).", size=9)
 R.h("4.4 결과 파일", 2)
 R.table(["파일 (회차 폴더 exp/results/<EXP>/<변형>_<nodrop|drop>/map<단위>_bs<크기>_r<회>/ — CACHE_MODES=nodrop 단독이면 <변형>/map…/)", "내용"], [
@@ -543,12 +603,13 @@ R.table(["파일 (회차 폴더 exp/results/<EXP>/<변형>_<nodrop|drop>/map<단
     ["fio_stdout.txt", "fio 표준 출력·오류와 감시 타이머 기록 (정상 회차는 비어 있음; 실패 회차에는 I/O error 줄)"],
     ["fio_bw.1.log / fio_iops.1.log / fio_lat.1.log / fio_clat.1.log / fio_slat.1.log", "0.5 s 평균 시계열 (ms, 값, 방향, bs, offset)"],
     ["job.fio", "그 회차에 실제로 쓴 fio 작업 파일"],
-    ["meta.txt", "변형·캐시 조건·단위·bs·회차, 장치, 모듈 SHA-256, insmod 인자, git 커밋, 시작/끝(UTC), fio 종료 코드, 채널 모델 오류 수, 커널 경고 수"],
+    ["meta.txt", "변형·캐시 조건·단위·bs·회차, 장치, 모듈 SHA-256, insmod 인자, git 커밋, 시작/끝(UTC), fio 종료 코드, 채널 모델 오류 수, 커널 경고 수. "
+     "순차 쓰기 실험부터: workload(rw), blk_queue(nomerges·스케줄러·max_sectors_kb·write_cache), blk_writes(fio 동안 블록 계층 쓰기 요청 수·합쳐진 수·섹터 수)"],
     ["cache.txt", "페이지 캐시 조건과 meminfo (drop 전/후, fio 직전)"],
     ["DONE / FAILED", "정상 종료 표지 / fio 실패 표지(원인 커널 줄 포함)"],
     ["dmesg_load.txt", "insmod 직후 커널 로그 (NVMeVirt 구성·파라미터)"],
     ["dmesg_run.txt", "fio 실행 중 커널 로그 (첫 GC 줄 포함, 채널 모델 오류 줄 제외)"],
-    ["dmesg_unload.txt", "rmmod 시 커널 로그 (파티션별 GC 통계)"],
+    ["dmesg_unload.txt", "rmmod 시 커널 로그 (파티션별 GC 통계; merge 변형은 파티션별 병합 통계도)"],
     ["kernel.log / chmodel_msgs.txt", "회차 전체 커널 로그 (채널 모델 오류는 처음 20 줄만) / 그 오류 줄 수"],
 ], widths=[7.0, 10.0], size=8, caption="회차 폴더의 파일")
 R.p("변형 폴더(<변형>_<nodrop|drop>/ 또는 <변형>/)에는 run.log, git_head.txt, modules_SHA256SUMS, modules_build_info.txt, randwrite.fio.in, "
@@ -563,6 +624,9 @@ R.bullets([
     [("GC 전/후 BW", "b"), ": GC 시작 시각 이전/이후 시계열 구간의 평균."],
     [("WAF_GC", "b"), ": (호스트 페이지 쓰기 + GC 페이지 복사) ÷ 호스트 페이지 쓰기 — 매핑 단위 페이지 기준."],
     [("WAF_total", "b"), ": (호스트 + GC 페이지) × 매핑 단위 ÷ fio 가 쓴 바이트 — 매핑 단위보다 작은 쓰기의 증폭(매핑 단위/bs)까지 포함."],
+    *([[("블록 계층 요청 (순차 쓰기 실험)", "b"), ": fio 동안 /sys/block/<장치>/stat 의 쓰기 요청 수·합쳐진 수·평균 요청 크기(KiB)."],
+       [("병합 통계 (merge 변형)", "b"), ": open = 부분 쓰기로 연 매핑 단위 수, merge = 열린 단위에 합류한 쓰기 수, full = 가득 차서 flash 에 쓴 단위 수, "
+        "evict = 다른 부분 쓰기에 자리를 내주며 덜 찬 채 쓴 단위 수, direct = 단위 전체를 덮어 바로 쓴 수, still_open = rmmod 때 열려 있던 단위 수 (4 파티션 합)."]] if SEQ else []),
 ])
 
 # ============================================================================ 5
@@ -660,6 +724,9 @@ R.table(["특성", "내용", "영향"], [
      "60 s 평균에 이 주기가 섞인다. 시계열(6.4 절)을 함께 봐야 한다. GC 구간은 정상 상태가 아니다."],
     ["GC 시작 시각 차이", "포맷 직후 60 s 라 조합마다 GC 이전 구간 비율이 다르다.", "60 s 평균과 함께 GC 전/후 BW, 시계열을 같이 본다."],
     ["randrepeat=1", "모든 회차가 같은 난수 순서를 쓴다.", "3 회 반복은 에뮬레이터 타이밍 편차만 담는다."],
+    ["작은 쓰기 병합 없음", "매핑 단위보다 작은 쓰기는 명령마다 매핑 단위 페이지 하나를 새로 쓴다. 같은 단위로 이어서 오는 쓰기도 쓰기 버퍼에서 합치지 않는다(원본 동작, base·wbuffix 모두).",
+     "랜덤 쓰기에서는 실제 SSD 도 단위를 새로 써야 하므로 영향이 작다(RMW 읽기만 빠짐). 순차 쓰기에서는 결과를 좌우한다 — 8 절에서 병합 모델(merge)과 함께 본다."],
+    ["블록 계층 병합", "커널 기본(mq-deadline, nomerges=0)에서는 인접한 요청을 합친다.", "랜덤 쓰기는 합칠 요청이 거의 없다(15 s 동안 1,144,510 개 중 1 개, 8.3 절). 순차 쓰기는 nomerges=2 로 끄고 측정했다."],
 ], widths=[3.2, 7.6, 6.2], size=8, caption="해석 시 주의할 모델 특성")
 
 R.h("5.6 발견 2 — base 에서 가상 장치가 멈추는 조합", 2)
@@ -797,10 +864,149 @@ if SUP:
         if (SUP["an"] / fig).exists():
             R.figure(SUP["an"] / fig, cap, 17.0)
 
+# ============================================================================ 8 (sequential write)
+def _merge_fn_src():
+    m = re.search(r"static bool ksc_conv_write_merge\(.*?\n}\n", read(REPO / "nvmevirt" / "conv_ftl.c"), re.S)
+    return m.group(0) if m else "(conv_ftl.c 에 ksc_conv_write_merge 없음)"
+
+
+def _pre_row(d, label):
+    """one pre-check run directory -> table row"""
+    w = json.loads(read(d / "fio.json"))["jobs"][0]["write"]
+    meta, un = read(d / "meta.txt"), read(d / "dmesg_unload.txt")
+    mp = kib(re.search(r"map(\d+k)", d.name).group(1)) * 1024
+    host = sum(int(x) for x in re.findall(r"host_pgs=(\d+)", un))
+    gcp = sum(int(x) for x in re.findall(r"gc_pgs=(\d+)", un))
+    bm = re.search(r"blk_writes:\s*ios=(\d+) merges=(\d+) sectors=(\d+)", meta)
+    req = f"{int(bm.group(3)) * 512 / 1024 / int(bm.group(1)):.1f}" if bm and int(bm.group(1)) else "–"
+    nm = re.search(r"nomerges=(\d)", meta)
+    return [label, d.parent.name, re.sub(r"_r1$", "", d.name).replace("map", "").replace("_bs", " / ").upper(), nm.group(1) if nm else "–",
+            f"{w['bw'] / 1024:,.1f}", f"{int(bm.group(2)):,}" if bm else "–", req,
+            f"{host * mp / w['io_bytes']:.3f}" if host else "–", f"{(host + gcp) * mp / w['io_bytes']:.3f}" if host else "–"]
+
+
+if SEQ:
+    R.h("8. 추가 실험 — 순차 쓰기 (" + SEQ["name"] + ")")
+    R.h("8.1 목적과 설계", 2)
+    R.p("주 데이터셋과 같은 매핑 단위·bs 조합에서 랜덤 쓰기 대신 순차 쓰기를 쟀다(사용자 요청, 19:53 KST). 순차 쓰기에서는 같은 매핑 단위로 작은 쓰기가 연달아 오므로, "
+        "실제 SSD 는 쓰기 버퍼에서 이를 합쳐 매핑 단위 페이지를 한 번만 쓴다. NVMeVirt 원래 모델은 합치지 않고 쓰기마다 페이지를 새로 쓴다(5.5 절). "
+        "그래서 원래 모델(wbuffix, 주 데이터셋과 같은 모듈 파일)과, 이 연구에서 추가한 쓰기 버퍼 병합 모델(merge, 8.2 절)을 함께 쟀다(사용자 선택).", size=9.5)
+    R.table(["구분", "값"], [
+        ["변수", "매핑 단위 4K·16K·32K × fio bs 4K·16K·32K × 모델 {wbuffix, merge}"],
+        ["반복", "조합마다 3 회 (회차마다 rmmod → insmod) — 9 × 2 × 3 = 54 회"],
+        ["순서", "반복 r = 1, 2, 3 마다 wbuffix 9 조합 → merge 9 조합 (run_all_seq.sh)"],
+        ["fio", "rw=write (순차, offset 0 부터, 장치 끝에서 0 으로 돌아감), 나머지는 주 데이터셋과 같음: libaio, direct=1, iodepth 32, numjobs 1, 60 s, ramp_time 0"],
+        ["OS 페이지 캐시", "그대로 (nodrop) — 주 데이터셋에서 drop 영향이 없었음(6.2 절), 사용자 선택"],
+        ["블록 계층", "회차마다 insmod 직후 echo 2 > /sys/block/nvme1n1/queue/nomerges (요청 병합 끔). 스케줄러는 커널 기본 mq-deadline"],
+        ["모듈", "wbuffix: 주 데이터셋과 같은 .ko (SHA-256 같음) / merge: 커밋 66446ea 에서 make MAPPING_UNIT=<바이트> GC_STATS=1 WBUF_FIX=1 WBUF_MERGE=1"],
+        ["그 밖", "장치·CPU·insmod 인자·SETTLE 5 s·결과 파일 구성은 주 데이터셋과 같음 (3–4 절)"],
+    ], widths=[3.0, 14.0], size=8.5, caption="순차 쓰기 실험 설계")
+    R.p("블록 계층 병합을 끈 이유: 커널 기본 설정(nomerges=0)에서는 fio 의 순차 4K 쓰기(QD 32)가 블록 계층에서 합쳐져 장치에 평균 약 120 KiB 요청으로 도착했다(8.3 절 표의 첫 줄). "
+        "이 상태에서는 bs 축이 의미를 잃는다. 랜덤 쓰기는 인접한 요청이 거의 없어 영향이 없다(8.3 절).", size=9.5)
+
+    R.h("8.2 쓰기 버퍼 병합 모델 (merge, WBUF_MERGE=1)", 2)
+    R.bullets([
+        "파티션(FTL 인스턴스 4 개)마다 '열린 매핑 단위' 하나를 둔다. 매핑 단위 일부만 덮는 쓰기가 오면 그 단위를 열고 쓰기 버퍼에서 매핑 단위 하나만큼을 잡는다.",
+        "같은 단위로 다음 쓰기가 오면 버퍼를 더 잡지 않고 합류시킨다(섹터 비트맵). 단위의 모든 섹터가 채워지면 그때 매핑 단위 페이지 하나를 flash 에 쓴다(원본과 같은 쓰기 경로: 페이지 배정 → wordline 이 차면 프로그램 → 버퍼 반납).",
+        "같은 파티션에 다른 단위의 부분 쓰기가 오면 열린 단위를 덜 찬 채로 쓰고(evict, 원본과 같이 옛 데이터 읽기는 모델링하지 않음) 새 단위를 연다.",
+        "매핑 단위 전체를 덮는 쓰기는 원본(wbuffix)과 똑같이 바로 쓴다. 따라서 bs ≥ 매핑 단위이면 두 모델의 동작이 같다.",
+        "버퍼 장부: 쓰는 페이지마다 매핑 단위 하나가 정확히 한 번 할당되어 반납과 맞는다. 계속 붙잡히는 양은 파티션당 열린 단위 1 개와 덜 찬 wordline 으로 128 KiB 이하다(버퍼 1 MiB).",
+        "한계: 파티션마다 열린 단위가 1 개뿐이다(실제 SSD 는 버퍼 전체를 여러 단위에 쓸 수 있다). 하나의 순차 흐름에는 충분하다. FUA·FLUSH 는 원본처럼 열린 단위를 강제로 쓰지 않는다(이 장치는 VWC=0 이라 커널이 보내지 않음).",
+        "WBUF_MERGE=0 빌드(base·wbuffix)는 이 변경 전과 같은 기계어다(디스어셈블리 비교로 확인).",
+    ])
+    R.p("코드 검토: 실행 전에 에이전트 4 개가 관점 하나씩(쓰기 버퍼 장부, FTL 상태, 실험에 맞는 모델 동작, 커널 안전성) 독립적으로 읽고, 지적마다 반박 검증 1 개를 두었다(20:01–20:13 KST). "
+        "고칠 결함은 없었다. 장부 로직은 Python 으로 옮겨 무작위 명령 수십만 개로 퍼징했다(위반 없음). 지적 1 건(FUA/FLUSH 가 열린 단위를 내보내지 않음)은 원본과 같은 단순화로 판정되어 주석만 보강했다. "
+        "rmmod 때 파티션마다 병합 통계(open·merge·full·evict·direct·still_open)를 찍는다.", size=9.5)
+    R.code(_merge_fn_src())
+
+    R.h("8.3 사전 점검", 2)
+    pre = []
+    for label, base in (("A. 블록 계층 기본값", "pre_seq_blkmerge_default"), ("B. 순차, 병합 끔", "pre_seq_check"), ("C. 랜덤 (주 데이터셋 설정)", "pre_rand_merge_check")):
+        for v in ("wbuffix", "merge"):
+            for d in sorted((EXPD / "results" / base / v).glob("map*_r1"), key=lambda x: (kib(re.search(r"map(\d+k)", x.name).group(1)), kib(re.search(r"bs(\d+k)", x.name).group(1)))):
+                if (d / "fio.json").exists():
+                    pre.append(_pre_row(d, label))
+    if pre:
+        R.table(["점검", "모델", "매핑 / bs", "nomerges", "MiB/s", "블록 계층\n합친 수", "평균 요청\nKiB", "호스트\nWAF", "WAF\ntotal"], pre,
+                widths=[3.4, 1.6, 2.0, 1.4, 1.6, 1.9, 1.6, 1.6, 1.6], size=7.5,
+                caption="순차 쓰기 사전 점검 (15 s, 1 회, 20:18–20:23 KST; 호스트 WAF = FTL 이 쓴 매핑 단위 페이지 × 매핑 단위 ÷ fio 바이트)", align_right_from=3)
+    R.p("A: 커널 기본값에서는 순차 4K 쓰기가 평균 약 120 KiB 요청으로 합쳐졌다. B: 병합을 끄면 장치가 받는 요청이 fio 의 bs 와 같아진다. 이때 wbuffix 의 호스트 WAF 는 정확히 매핑/bs(4·8·2)이고, "
+        "merge 는 1.000 이다(16K/4K 에서 단위마다 쓰기 4 개를 합쳐 한 번 씀). bs = 매핑이면 두 모델의 결과가 같다. "
+        "C: 랜덤 쓰기에서는 합칠 쓰기가 거의 없어 두 모델이 같고(−0.7 %), 블록 계층 병합도 15 s 동안 1 건뿐이다. 따라서 주 데이터셋(블록 계층 기본값)도 병합 영향이 없다.", size=9.5)
+
+    SA = SEQ["agg"]
+    if SA:
+        lt = lambda mp, bs: kib(bs) < kib(mp)  # noqa: E731
+        hdr8 = ["매핑 \\ bs"] + [x.upper() for x in SEQ["sizes"]]
+        W8 = [2.6] + [round(14.4 / len(SEQ["sizes"]), 2)] * len(SEQ["sizes"])
+        R.h("8.4 결과 표", 2)
+        R.p("모든 값은 3 회 평균(± 는 표본 표준편차)이다. * 는 bs < 매핑 단위 조합이다.", size=9)
+        for metric, nd, std, cap in (("bw_MiBps", 1, True, "쓰기 대역폭 MiB/s, 60 s 평균"), ("iops", 0, False, "IOPS, 60 s 평균"),
+                                     ("clat_mean_us", 1, False, "평균 완료 지연 µs"), ("clat_p99_us", 0, False, "p99 완료 지연 µs"),
+                                     ("waf_total", 3, False, "전체 쓰기 증폭 WAF_total (NAND 바이트 ÷ 호스트 바이트)"),
+                                     ("bw_post_gc_MiBps", 1, False, "GC 이후 구간 평균 대역폭 MiB/s")):
+            for v in SEQ["variants"]:
+                R.table(hdr8, matrix_rows(v, metric, nd, std, lt, SEQ), widths=W8, size=8.5, caption=f"{cap} — 순차 · {v}", align_right_from=1, bold_first_col=True)
+        cmp8 = []
+        for mp in SEQ["sizes"]:
+            for bs in SEQ["sizes"]:
+                a, b = agg("wbuffix", mp, bs, SEQ), agg("merge", mp, bs, SEQ)
+                if not a or not b:
+                    continue
+                cmp8.append([mp.upper(), bs.upper(), "예" if lt(mp, bs) else "", fnum(a["bw_MiBps_mean"]), fnum(b["bw_MiBps_mean"]),
+                             f"{(b['bw_MiBps_mean'] - a['bw_MiBps_mean']) / a['bw_MiBps_mean'] * 100:+.1f} %",
+                             fnum(a.get("waf_total_mean"), 3), fnum(b.get("waf_total_mean"), 3)])
+        if cmp8:
+            R.table(["매핑", "bs", "bs<매핑", "wbuffix MiB/s", "merge MiB/s", "차이", "WAF_total\nwbuffix", "WAF_total\nmerge"], cmp8,
+                    widths=[1.5, 1.5, 1.5, 2.6, 2.6, 2.0, 2.6, 2.7], size=8, caption="순차 쓰기 — 원래 모델(wbuffix)과 병합 모델(merge)", align_right_from=3)
+        mg = [[a["map"].upper(), a["bs"].upper()] + [fnum(a.get(f"{k}_mean"), 0) for k in ("mg_open", "mg_merge", "mg_full", "mg_evict", "mg_direct", "mg_still_open")]
+              for a in sorted((a for a in SA if a["variant"] == "merge"), key=lambda a: (kib(a["map"]), kib(a["bs"])))]
+        if mg:
+            R.table(["매핑", "bs", "open", "merge", "full", "evict", "direct", "still_open"], mg, widths=[1.5, 1.5, 2.4, 2.6, 2.4, 1.8, 2.4, 2.4], size=8,
+                    caption="merge 모델의 병합 통계 (4 파티션 합, 3 회 평균)", align_right_from=2)
+        blk = [r for r in SEQ["runs"] if r.get("blk_wr_ios") not in ("", None)]
+        if blk:
+            mx = max(r["blk_wr_merges"] for r in blk)
+            dev = max(abs(r["blk_avg_req_KiB"] - kib(r["bs"])) for r in blk)
+            R.p(f"블록 계층 확인: {len(blk)} 회차 모두 fio 동안 블록 계층이 합친 요청은 최대 {mx:,.0f} 건이고, 장치가 받은 평균 요청 크기와 bs 의 차이는 최대 {dev:.3f} KiB 다.", size=9.5)
+        R.h("8.5 그림", 2)
+        PL = SEQ["dir"] / "plots"
+        for path, cap in ((PL / "compare_bw_MiBps.png", "순차 쓰기 대역폭 — wbuffix / merge (회색 = bs < 매핑 단위)"),
+                          (PL / "compare_waf_total.png", "순차 쓰기 WAF_total — wbuffix / merge"),
+                          (PL / "bs_bw_MiBps.png", "bs 에 따른 순차 쓰기 대역폭 (모델별 패널)"),
+                          *[(SEQ["an"] / f"fig_timeseries_{v}.png", f"0.5 s 평균 순차 쓰기 대역폭 시계열 — {v} (점선 = 첫 GC)") for v in SEQ["variants"]]):
+            if path.exists():
+                R.figure(path, cap, 16.0)
+        R.h("8.6 랜덤 쓰기와 비교", 2)
+        main_v = "wbuffix_nodrop" if "wbuffix_nodrop" in PRI["variants"] else PRI["variants"][0]
+        rows86 = []
+        for mp in SEQ["sizes"]:
+            for bs in SEQ["sizes"]:
+                r_, w_, m_ = agg(main_v, mp, bs), agg("wbuffix", mp, bs, SEQ), agg("merge", mp, bs, SEQ)
+                rows86.append([mp.upper(), bs.upper(), "예" if lt(mp, bs) else "", fnum(r_["bw_MiBps_mean"]) if r_ else "–", fnum(w_["bw_MiBps_mean"]) if w_ else "–",
+                               fnum(m_["bw_MiBps_mean"]) if m_ else "–", fnum(r_.get("waf_total_mean"), 2) if r_ else "–", fnum(w_.get("waf_total_mean"), 2) if w_ else "–",
+                               fnum(m_.get("waf_total_mean"), 2) if m_ else "–"])
+        R.table(["매핑", "bs", "bs<매핑", "랜덤\nMiB/s", "순차 wbuffix\nMiB/s", "순차 merge\nMiB/s", "랜덤\nWAF", "순차 wbuffix\nWAF", "순차 merge\nWAF"], rows86,
+                widths=[1.4, 1.3, 1.5, 1.9, 2.3, 2.2, 1.6, 2.4, 2.4], size=8, caption=f"60 s 평균 대역폭과 WAF_total — 랜덤({EXP} · {main_v}) / 순차({SEQ['name']})", align_right_from=3)
+        R.h("8.7 반복 간 편차", 2)
+        cvs8 = []
+        for v in SEQ["variants"]:
+            aa = [a for a in SA if a["variant"] == v and a["bw_MiBps_mean"]]
+            if aa:
+                worst = max(aa, key=lambda a: a["bw_MiBps_std"] / a["bw_MiBps_mean"])
+                cvs8.append([v, f"{sum(a['bw_MiBps_std'] / a['bw_MiBps_mean'] for a in aa) / len(aa) * 100:.2f} %",
+                             f"{worst['bw_MiBps_std'] / worst['bw_MiBps_mean'] * 100:.2f} %", f"{worst['map'].upper()} / {worst['bs'].upper()}"])
+        R.table(["모델", "평균 변동계수(CV)", "최대 CV", "최대 CV 조합 (매핑/bs)"], cvs8, widths=[3.4, 4.0, 3.0, 6.6], size=8.5, caption="순차 쓰기 대역폭의 반복 간 변동계수")
+        if FINDINGS_SEQ:
+            R.h("8.8 관찰", 2)
+            R.bullets(FINDINGS_SEQ)
+    else:
+        R.note("순차 쓰기 분석 결과(analysis/summary_agg.csv)가 아직 없다.")
+
 # ============================================================================ 8
-R.h("8. 실험 후 상태와 정리")
+R.h("9. 실험 후 상태와 정리")
 diff_rows = []
-for ds in [d for d in (PRI, SUP) if d]:
+for ds in [d for d in (PRI, SUP, SEQ) if d]:
     envb = ds["dir"] / "env_before"
     for ad in sorted(p for p in ds["dir"].iterdir() if p.name.startswith("env_after")):
         for f in sorted(envb.glob("*.txt")):
@@ -808,7 +1014,7 @@ for ds in [d for d in (PRI, SUP) if d]:
                 continue
             ign = re.compile(r"loadavg|^\d+\.\d+ \d+\.\d+|Mem:|Swap:|MemFree|MemAvailable|AnonHugePages|^\$ |^[0-9.]+ [0-9.]+ [0-9.]+ \d+/\d+")
             al = [ln for ln in read(f).splitlines() if not ign.search(ln)]
-            bl = [ln for ln in read(ad / f.name).splitlines() if not ign.search(ln)]
+            bl = [ln for ln in last_snapshot(read(ad / f.name)).splitlines() if not ign.search(ln)]
             changed = [ln for ln in difflib.unified_diff(al, bl, lineterm="", n=0) if ln[:1] in "+-" and not ln.startswith(("+++", "---"))]
             if changed:
                 diff_rows.append([f"{ds['name']}/{ad.name}", f.name, "\n".join(changed[:6]) + ("\n…" if len(changed) > 6 else "")])
@@ -821,11 +1027,14 @@ R.table(["항목", "실험 전", "실험 중", "실험 후"], [
     ["GRUB / 커널 명령줄", "memmap=12G$12G isolcpus=3-5", "변경 없음", "변경 없음"],
     ["nvmev 모듈", "적재 안 됨", "회차마다 적재·내림", "적재 안 됨 (마지막 rmmod)"],
     ["/dev/nvme1n1", "없음", "회차마다 생겼다 사라짐", "없음"],
-    ["/etc/sudoers.d/nvmevirt-exp", "없음", "설치 (3.3 절)", (f"제거함 ({SUDOERS_REMOVED} KST, sudo rm)" if SUDOERS_REMOVED else "아직 설치되어 있음 — 정리 단계에서 제거 예정")],
+    ["/etc/sudoers.d/nvmevirt-exp", "없음", "설치 (3.3 절)" + (" · 18:33 제거 후 순차 쓰기 실험용으로 20:17 다시 설치" if SEQ else ""),
+     (f"제거함 ({SUDOERS_REMOVED} KST, sudo rm)" if SUDOERS_REMOVED else "아직 설치되어 있음 — 정리 단계에서 제거 예정")
+     + ((f" · 순차 쓰기 실험 후 {SUDOERS_REMOVED2} KST 다시 제거" if SUDOERS_REMOVED2 else " · 순차 쓰기 실험 후 제거 예정") if SEQ else "")],
+    *([["블록 장치 nomerges", "0 (커널 기본)", "순차 쓰기 회차마다 insmod 직후 2", "장치가 rmmod 로 사라져 설정도 없어짐"]] if SEQ else []),
     ["CPU governor / 터보", "powersave / 켬", "변경 없음", "변경 없음"],
     ["NVMeVirt 저장소 위치", "–", "/home/dccearth/jsw/KSC2026/nvmevirt", "/home/dccearth/jsw/nvmevirt 로 이동 (사용자 지시)"],
     ["이전 실험 폴더 /home/dccearth/jsw/exp", "있음 (이전 iodepth 시험 등)", "사용 안 함", "삭제 (사용자 지시; 수치는 인계 기록에 보존)"],
-    ["NVMeVirt 소스·결과·문서", f"원본 {UPSTREAM[:7]}", f"{HEAD[:7]} (3.4 절)",
+    ["NVMeVirt 소스·결과·문서", f"원본 {UPSTREAM[:7]}", f"{HEAD[:7]} (3.4 절)" + (f", 순차 쓰기 {SEQ_HEAD[:7]}" if SEQ else ""),
      (f"GitHub main 과 태그 {PUSH_TAG} 로 push (결과·문서·생성기 포함)" if PUSH_TAG else "push 예정 (작성 시점 origin/main = 5769378)")],
     ["예약 메모리 내용", "–", "rmmod/insmod 는 FTL 상태만 초기화 (저장 데이터는 지우지 않음)", "이전 회차 데이터가 남아 있음 (쓰기 전용 실험이라 무관)"],
 ], widths=[4.0, 3.6, 5.0, 4.4], size=8, caption="실험 전·중·후 설정 상태")
@@ -836,7 +1045,7 @@ R.p("커밋 재작성(모두 첫 push 전, 코드·스크립트는 그대로이�
     "나머지 50 회차의 a93ef76 = e598e75 / 보조 데이터셋 wbuffix 53 회차의 2a462a3 = 949ae38 / base 21 회차의 5769378 은 그대로.", size=9)
 R.code("""# 실험 후 정리 (서버) — 실제로 실행한 명령
 lsmod | grep nvmev || echo "nvmev not loaded"
-sudo rm /etc/sudoers.d/nvmevirt-exp      # 8 절 표의 시각
+sudo rm /etc/sudoers.d/nvmevirt-exp      # 9 절 표의 시각 (18:33)
 mv /home/dccearth/jsw/KSC2026/nvmevirt /home/dccearth/jsw/nvmevirt
 rm -rf /home/dccearth/jsw/exp""")
 
@@ -844,9 +1053,12 @@ rm -rf /home/dccearth/jsw/exp""")
 R.page_break()
 R.h("부록 A. 스크립트 전문")
 for rel in ("exp/common.sh", "exp/build_modules.sh", "exp/run_experiment.sh", "exp/collect_env.sh", "exp/jobs/randwrite.fio.in",
-            "exp/run_all.sh", "exp/run_all_6x6.sh", "exp/analyze.py", "exp/plot.py", "exp/requirements.txt", "exp/.gitignore"):
+            "exp/jobs/seqwrite.fio.in", "exp/run_all.sh", "exp/run_all_6x6.sh", "exp/run_all_seq.sh", "exp/analyze.py", "exp/plot.py",
+            "exp/make_gallery.py", "exp/requirements.txt", "exp/.gitignore"):
     R.h(f"A. {rel}", 2)
     R.code(read(REPO / rel))
+R.p("부록의 스크립트는 문서를 만든 시점의 작업 트리 내용이다. 랜덤 쓰기 실험 때의 run_experiment.sh·common.sh·analyze.py 는 커밋 " + HEAD[:7] + " 의 것이며, "
+    "그 뒤 순차 쓰기용으로 WORKLOAD·NOMERGES·블록 계층 기록·merge 변형을 더했다(기본값은 이전 동작과 같다; git diff " + HEAD[:7] + " " + (SEQ_HEAD[:7] if SEQ else "HEAD") + " -- exp).", size=9)
 R.p("이 문서와 인계 기록을 만드는 exp/report/ 의 make_report.py · docx_helpers.py · make_md_results.py · findings_ko.txt · make_handoff.sh 는 "
     + (f"태그 {PUSH_TAG} 의 커밋에 있다" if PUSH_TAG else "작업 트리에 있다(커밋 예정)") + "(분량상 생략).", size=9)
 R.page_break()
@@ -854,6 +1066,10 @@ R.h("부록 B. NVMeVirt 변경 diff 전문 (원본 61c90f7 대비)")
 MOVE = git("log", "--format=%H", "--grep=^Move NVMeVirt sources into nvmevirt/", "-1", HEAD)
 R.p(f"원본 {UPSTREAM[:7]} 의 파일을 그대로 nvmevirt/ 로 옮긴 커밋({MOVE[:7]}, 내용 변경 없음) 이후의 변경이다: git diff {MOVE[:7]} {HEAD[:7]} -- nvmevirt", size=9)
 R.code(git("diff", MOVE, HEAD, "--", "nvmevirt"))
+if SEQ and SEQ_HEAD and SEQ_HEAD != HEAD:
+    R.h("B-2. 순차 쓰기 실험에서 더한 변경 (쓰기 버퍼 병합 모델, " + HEAD[:7] + " → " + SEQ_HEAD[:7] + ")", 2)
+    R.p(f"git diff {HEAD[:7]} {SEQ_HEAD[:7]} -- nvmevirt. WBUF_MERGE=0 인 빌드(base·wbuffix)는 이 변경 전과 같은 코드가 된다(8.2 절).", size=9)
+    R.code(git("diff", HEAD, SEQ_HEAD, "--", "nvmevirt"))
 R.page_break()
 R.h("부록 C. 실험 전 환경 스냅샷 (env_before)")
 R.p("exp/results/" + EXP + "/env_before/ 의 원본 출력을 그대로 옮겼다. 출력 안의 시각은 서버 시계 UTC 다(KST = UTC + 9 시간; 예: 09_block.txt 의 ls 시각 "
@@ -863,7 +1079,7 @@ for f in sorted(ENV_B.glob("*.txt")):
     R.code(read(f), max_lines=160)
 R.page_break()
 R.h("부록 D. 회차별 원자료")
-for ds in [d for d in (PRI, SUP) if d]:
+for ds in [d for d in (PRI, SUP, SEQ) if d]:
     if not ds["runs"]:
         continue
     rows = []

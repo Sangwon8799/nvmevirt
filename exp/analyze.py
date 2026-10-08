@@ -22,6 +22,8 @@ import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 
 SIZES = ["4k", "8k", "16k", "32k", "64k", "128k"]   # replaced in main() by the sizes present in the results
+MAPS, BSS = list(SIZES), list(SIZES)   # mapping units (rows) and fio bs (columns) present; set in main()
+WORKLOAD = "Random-write"   # "Sequential-write" when the runs' meta.txt says workload: seqwrite (set in main())
 # categorical slots (fixed order) and chart chrome — light mode
 SERIES = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#4a3aa7", "#e34948"]
 INK, INK2, MUTED, GRID, AXIS, SURFACE = "#0b0b0b", "#52514e", "#898781", "#e1e0d9", "#c3c2b7", "#fcfcfb"
@@ -255,16 +257,16 @@ def style(ax):
 def line_vs_bs(agg, variant, metric, ylabel, title, path, logy=False):
     fig, ax = plt.subplots(figsize=(7.2, 4.2), facecolor=SURFACE)
     style(ax)
-    x = np.arange(len(SIZES))
-    for i, mp in enumerate(SIZES):
-        pts = [(SIZES.index(a["bs"]), a[f"{metric}_mean"], a[f"{metric}_std"])
+    x = np.arange(len(BSS))
+    for i, mp in enumerate(MAPS):
+        pts = [(BSS.index(a["bs"]), a[f"{metric}_mean"], a[f"{metric}_std"])
                for a in agg if a["variant"] == variant and a["map"] == mp and f"{metric}_mean" in a]
         if not pts:
             continue
         xs, ys, es = zip(*sorted(pts))
         ax.errorbar(xs, ys, yerr=es, color=SERIES[i], linewidth=2, marker="o", markersize=5,
                     capsize=3, label=f"map {mp.upper()}")
-    ax.set_xticks(x, [s.upper() for s in SIZES])
+    ax.set_xticks(x, [s.upper() for s in BSS])
     ax.set_xlabel("fio block size", color=INK2)
     ax.set_ylabel(ylabel, color=INK2)
     if logy:
@@ -277,23 +279,23 @@ def line_vs_bs(agg, variant, metric, ylabel, title, path, logy=False):
 
 
 def heatmap(agg, variant, metric, label, title, path):
-    grid = np.full((len(SIZES), len(SIZES)), np.nan)
+    grid = np.full((len(MAPS), len(BSS)), np.nan)
     for a in agg:
         if a["variant"] == variant and f"{metric}_mean" in a:
-            grid[SIZES.index(a["map"]), SIZES.index(a["bs"])] = a[f"{metric}_mean"]
+            grid[MAPS.index(a["map"]), BSS.index(a["bs"])] = a[f"{metric}_mean"]
     if np.isnan(grid).all():
         return
     fig, ax = plt.subplots(figsize=(6.6, 4.8), facecolor=SURFACE)
     cmap = matplotlib.colors.LinearSegmentedColormap.from_list("seqblue", SEQ_BLUE)
     im = ax.imshow(grid, cmap=cmap, aspect="auto", origin="lower")
     vmax = np.nanmax(grid)
-    for i in range(len(SIZES)):
-        for k in range(len(SIZES)):
+    for i in range(len(MAPS)):
+        for k in range(len(BSS)):
             if not np.isnan(grid[i, k]):
                 ax.text(k, i, f"{grid[i, k]:.0f}", ha="center", va="center", fontsize=8,
                         color="#ffffff" if grid[i, k] > 0.55 * vmax else INK)
-    ax.set_xticks(range(len(SIZES)), [s.upper() for s in SIZES])
-    ax.set_yticks(range(len(SIZES)), [s.upper() for s in SIZES])
+    ax.set_xticks(range(len(BSS)), [s.upper() for s in BSS])
+    ax.set_yticks(range(len(MAPS)), [s.upper() for s in MAPS])
     ax.set_xlabel("fio block size", color=INK2)
     ax.set_ylabel("FTL mapping unit", color=INK2)
     ax.tick_params(colors=INK2, labelsize=9)
@@ -306,13 +308,14 @@ def heatmap(agg, variant, metric, label, title, path):
 
 
 def timeseries_grid(series, variant, path):
-    fig, axes = plt.subplots(len(SIZES), len(SIZES), figsize=(16, 13), sharex=True, facecolor=SURFACE)
+    fig, axes = plt.subplots(len(MAPS), len(BSS), figsize=(2.7 * len(BSS) + 2, 2.2 * len(MAPS) + 1.0), sharex=True,
+                             facecolor=SURFACE, squeeze=False)
     ymax = {}
     for (v, mp, bs, r), (t, bw, on) in series.items():
         if v == variant and len(bw):
             ymax[mp] = max(ymax.get(mp, 0), float(bw.max()))
-    for i, mp in enumerate(SIZES):
-        for k, bs in enumerate(SIZES):
+    for i, mp in enumerate(MAPS):
+        for k, bs in enumerate(BSS):
             ax = axes[i, k]
             style(ax)
             ax.tick_params(labelsize=7)
@@ -330,7 +333,7 @@ def timeseries_grid(series, variant, path):
                 ax.set_title(f"bs {bs.upper()}", color=INK, fontsize=10)
             if k == 0:
                 ax.set_ylabel(f"map {mp.upper()}\nMiB/s", color=INK2, fontsize=9)
-            if i == len(SIZES) - 1:
+            if i == len(MAPS) - 1:
                 ax.set_xlabel("time (s)", color=INK2, fontsize=9)
     handles, labels = axes[0, 0].get_legend_handles_labels()
     if handles:
@@ -347,19 +350,19 @@ def variant_compare(agg, path):
     variants = sorted({a["variant"] for a in agg})
     if len(variants) < 2:
         return
-    maps = [mp for mp in SIZES if any(a["map"] == mp for a in agg)]
+    maps = [mp for mp in MAPS if any(a["map"] == mp for a in agg)]
     fig, axes = plt.subplots(1, len(maps), figsize=(3.4 * len(maps) + 1, 3.8), facecolor=SURFACE, squeeze=False)
     for ax, mp in zip(axes[0], maps):
         style(ax)
         for vi, v in enumerate(variants):
-            pts = [(SIZES.index(a["bs"]), a["bw_MiBps_mean"], a["bw_MiBps_std"])
+            pts = [(BSS.index(a["bs"]), a["bw_MiBps_mean"], a["bw_MiBps_std"])
                    for a in agg if a["variant"] == v and a["map"] == mp]
             if pts:
                 xs, ys, es = zip(*sorted(pts))
                 ax.errorbar(xs, ys, yerr=es, color=SERIES[vi], linewidth=2, marker="o", markersize=5,
                             capsize=3, label=v)
-        ax.axvspan(-0.5, SIZES.index(mp) - 0.5, color="#f0efec", zorder=0)
-        ax.set_xticks(range(len(SIZES)), [s.upper() for s in SIZES], fontsize=8)
+        ax.axvspan(-0.5, sum(1 for b in BSS if kib(b) < kib(mp)) - 0.5, color="#f0efec", zorder=0)
+        ax.set_xticks(range(len(BSS)), [s.upper() for s in BSS], fontsize=8)
         ax.set_title(f"map {mp.upper()}", color=INK, fontsize=10, loc="left")
         ax.set_xlabel("fio block size", color=INK2, fontsize=9)
     axes[0][0].set_ylabel("write bandwidth (MiB/s)", color=INK2)
@@ -478,8 +481,12 @@ def main():
     if not rows:
         sys.exit(f"no finished runs under {exp_dir}")
     rows.sort(key=lambda r: (r["variant"], kib(r["map"]), kib(r["bs"]), r["rep"]))
-    global SIZES
+    global SIZES, MAPS, BSS, WORKLOAD
     SIZES = sorted({r["map"] for r in rows} | {r["bs"] for r in rows}, key=kib)
+    MAPS = sorted({r["map"] for r in rows}, key=kib)
+    BSS = sorted({r["bs"] for r in rows}, key=kib)
+    if any(re.search(r"^workload:\s*seqwrite", p.read_text(), re.M) for p in exp_dir.glob("*/map*/meta.txt")):
+        WORKLOAD = "Sequential-write"
     agg = aggregate(rows)
     write_csv(out / "summary_runs.csv", rows)
     write_csv(out / "summary_agg.csv", agg)
@@ -488,7 +495,7 @@ def main():
         write_csv(out / "failed_runs.csv", failed)
     for v in sorted({r["variant"] for r in rows}):
         line_vs_bs(agg, v, "bw_MiBps", "write bandwidth (MiB/s)",
-                   f"Random-write bandwidth, 60 s from a fresh device ({v}; mean ± std, n=3)",
+                   f"{WORKLOAD} bandwidth, 60 s from a fresh device ({v}; mean ± std, n=3)",
                    out / f"fig_bw_vs_bs_{v}.png")
         line_vs_bs(agg, v, "clat_mean_us", "mean completion latency (µs)",
                    f"Mean completion latency ({v}; mean ± std, n=3)", out / f"fig_clat_mean_vs_bs_{v}.png", logy=True)
