@@ -644,7 +644,11 @@ dccearth ALL=(root) NOPASSWD: /usr/sbin/insmod, /usr/sbin/rmmod, /usr/bin/fio, /
   - findings_ko.txt, make_report.py(위 지적 전부), audit_summary_ko.txt, 이 파일, README.md(GitHub 첫 화면: 존재하지 않는 exp/README.md 링크, 빌드 변형, results 설명)를 고쳤다.
 - 18:33 KST sudoers 규칙 제거: `sudo rm /etc/sudoers.d/nvmevirt-exp`(비밀번호 사용). /etc/sudoers.d 에는 README 만 남았고 `sudo -n -l` 은 비밀번호를 요구한다.
 - 18:3x 최종 .docx 를 생성했다(KSC_SUDOERS_REMOVED=18:33, KSC_PUSH_TAG=ksc2026-final). md 결과 절(11)과 plot.py 그림도 다시 만들었다. .docx 를 KSC2026/산출물/ 에 복사했다.
-- 18:3x 결과(exp/results, 약 25 MB)·모듈 기록(exp/modules/*/SHA256SUMS·build_info·build 로그, .ko 제외)·문서·생성기를 커밋했다. 태그 ksc2026-final 을 붙여 main 과 함께 push 했다(새 agent 소켓 사용). 확인 결과는 바로 아래 줄에 적는다.
+- 18:3x 결과(exp/results, 약 25 MB)·모듈 기록(exp/modules/*/SHA256SUMS·build_info·build 로그, .ko 제외)·문서·생성기를 커밋했다. 태그 ksc2026-final 을 붙여 main 과 함께 push 했다(새 agent 소켓 사용). 
+- 18:35 KST push 확인: `git ls-remote https://github.com/Sangwon8799/nvmevirt.git` → refs/heads/main = c742c67a421cd81b3ca95adb15f84b045c8edba4. 태그 ksc2026-final(태그 객체 eb4e3d6)도 c742c67 을 가리킨다. 커밋 순서는 5769378 → 949ae38 → e598e75 → c742c67 이다.
+  - docx 4.3 의 `git checkout ksc2026-final` 은 c742c67 이다: 실험 스크립트(e598e75 와 같음) + 결과 + 문서 + 생성기.
+  - 그 뒤 main 에는 이 파일만 고친 커밋(push 결과·최종 묶음 기록)이 하나 더 있다.
+- 18:3x 최종 인계 묶음(라벨 final)을 이 파일과 같은 내용으로 만들었다. 묶음 이름과 시각은 묶음의 README_FIRST.txt 첫 줄에 있다.
 
 ---------------------------------------------------------------------------------------------------
 
@@ -3530,3 +3534,4 @@ wbuffix 128k 128k r1 | 3.867 | 3358 3357 3357 2245 360 393 421 418 445 476 504 5
 - 17:10 실험 완료·결과 요약(0 절)·이동·삭제(10.3 절) 반영.
 - 17:24 진행 상태(0 절)·정리 기록(10.3 절) 갱신, 인계 묶음 postexp(ksc2026_handoff_20261008_1724_postexp.tgz) 생성.
 - 18:3x 검증 워크플로 지적 반영, 보안 조치(묶음 삭제·검사 패턴·옛 blob·이메일 제거를 위한 커밋 재작성 2a462a3→949ae38, a93ef76→e598e75), sudoers 제거(18:33), 최종 문서 생성, 커밋·태그·push(10.3 절).
+- 18:36 push 확인(main = 태그 ksc2026-final = c742c67), 최종 인계 묶음 생성.
