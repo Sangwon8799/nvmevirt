@@ -70,7 +70,7 @@
     - 결과는 bs/매핑 비율로 거의 정해진다. 비율이 같으면 대역폭이 3 % 안에서 같고 WAF 도 같다(예: 16K/8K 217.3 vs 32K/16K 219.6 MiB/s, WAF 5.90 vs 5.96).
     - bs ≥ 매핑 10 조합은 416–486 MiB/s(매핑 4K 대비 −12.6 ~ +0.02 %), bs < 매핑 5 조합은 같은 매핑의 bs = 매핑 값의 0.16–0.52 배다.
   - sudoers 는 22:11 에 사용자가 다시 설치했고, 23:08 KST 에 사용자가 제거했다(10.5 절). 지금 서버에 sudoers 규칙은 없다.
-  - 기록 검증(9.3 절)까지 마쳤다. 순차 쓰기와 이 실험의 결과·문서는 GitHub main 과 태그 **ksc2026-v2** 에 있다(push 확인은 10.5 절 끝). 랜덤 쓰기 주 데이터셋만 담은 앞선 태그는 ksc2026-final(c742c67)이다.
+  - 기록 검증(9.3 절)까지 마쳤다. 순차 쓰기와 이 실험의 결과·문서는 커밋 c9dfb23 = 태그 **ksc2026-v2** 에 있다. GitHub push 여부는 10.5 절 끝을 본다(23:22 KST 시도는 ssh-agent 가 없어 실패했고, 그때 GitHub main 은 cd1fe2b 였다). 랜덤 쓰기 주 데이터셋만 담은 앞선 태그는 ksc2026-final(c742c67)이다.
 - **추가 실험 — 순차 쓰기 (seq3x3_20261008; 19:53 KST 사용자 요청, 20:23 KST 시작)**. 지시·결정은 1.13–1.18 절, 코드는 5.6 절, 설계는 6.6 절, 사전 점검은 7.1 절, 발견은 8.5–8.7 절, 코드 검토는 9.1 절, 진행은 10.4 절, 전체 수치는 11.3 절(자동 생성)에 있다.
   - 설계: 매핑 4K·16K·32K × fio bs 4K·16K·32K × 3 회 × 모델 {wbuffix, merge}. fio rw=write(순차), 페이지 캐시 nodrop 만, 블록 계층 병합 끔(nomerges=2). 54 회. 결과 폴더 `results/seq3x3_20261008/{wbuffix,merge}/`.
   - wbuffix = 랜덤 쓰기 주 데이터셋과 같은 모듈 파일(SHA-256 같음). merge = wbuffix + 쓰기 버퍼 병합(WBUF_MERGE=1, 이 세션에서 새로 만든 코드, 커밋 66446ea). 매핑 단위보다 작은 쓰기를 파티션마다 열린 매핑 단위 하나에 모았다가, 가득 차면 flash 에 쓴다.
@@ -1006,7 +1006,11 @@ dccearth ALL=(root) NOPASSWD: /usr/sbin/insmod, /usr/sbin/rmmod, /usr/bin/fio, /
 - 23:10–23:2x 검증 워크플로 결과 반영(9.3 절): make_handoff.sh 이력 검사 수정, run_all*.sh 모듈 확인, link_runs.py, main3x3·main 의 fig_timeseries PNG 다시 생성, docx 생성기·findings·이 파일 수정.
   - 23:20 고친 make_handoff.sh 를 scratch 출력으로 시험했다. 실제 패턴으로는 통과했고(이력·파일 0 건), 이력에 실제로 있는 문자열을 패턴으로 주면 「2 line(s)」로 중단했다.
 - 23:2x 최종 docx 생성: `KSC_PUSH_TAG=ksc2026-v2 KSC_SUDOERS_REMOVED=18:33 KSC_SUDOERS_REMOVED2=21:34 KSC_SUDOERS_REMOVED3=23:08 make_report.py results/main3x3_20261008 --supp results/main_20261008 --seq results/seq3x3_20261008 --rbs results/randbs_20261008 --rview results/rand3x5_20261008`. 92 쪽. 렌더링으로 4.3 절 재현 명령과 10 장 sudoers 이력을 확인했다. 같은 파일을 /home/dccearth/jsw/KSC2026/산출물/ 에 복사했다(18:35 KST 판을 덮어씀).
-- 23:2x 커밋(순차 쓰기·랜덤 bs 8K·64K 결과와 문서 최종본) → 태그 ksc2026-v2 → GitHub push(main 과 태그). 결과 확인은 이 항목 아래에 적는다.
+- 23:21 KST 커밋 c9dfb23(순차 쓰기·랜덤 bs 8K·64K 결과와 문서 최종본, 검증 반영)과 주석 태그 ksc2026-v2(→ c9dfb23)를 만들었다. 둘 다 로컬이다.
+- 23:22 KST GitHub push 시도 실패: `git@github.com: Permission denied (publickey)`. forwarded ssh-agent 소켓이 없었다. 사용자의 23:08 SSH 세션(pts/0)은 접속 직후 끝났다(`last`: 14:08–14:08 UTC).
+  - 이 시점 GitHub 상태(`git ls-remote https://github.com/Sangwon8799/nvmevirt.git`): main = cd1fe2b, 태그 ksc2026-final = c742c67. 즉 GitHub 에는 18:36 KST 상태(랜덤 쓰기 주 데이터셋)까지만 있고, 66446ea·a86fc87·403a6ae·c9dfb23 과 태그 ksc2026-v2 는 아직 없다.
+  - docx 4.3 절의 `git checkout ksc2026-v2` 와 10 장 표의 「GitHub main 과 태그 ksc2026-v2 로 push」 문구는 push 직전에 만든 것이다. push 가 끝나기 전에는 사실이 아니다. push 결과는 이 항목 아래 줄에 적는다(줄이 없으면 아직 push 전이다).
+  - 묶음의 repo.gitbundle 에는 위 커밋과 태그가 모두 들어 있으므로, 묶음을 받은 쪽은 GitHub 와 무관하게 전부 볼 수 있다.
 
 ---------------------------------------------------------------------------------------------------
 
