@@ -1,0 +1,5 @@
+# kernel modules are rebuilt from nvmevirt/ (checksums are kept in modules/<variant>/SHA256SUMS)
+modules/*/*.ko
+# python virtualenv for analysis
+.venv/
+__pycache__/
