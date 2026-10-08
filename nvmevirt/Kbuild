@@ -18,9 +18,13 @@ ccflags-$(CONFIG_NVMEVIRT_SSD) += -DMAPPING_UNIT=$(MAPPING_UNIT)
 # KSC2026 optional switches (default 0 = upstream behaviour):
 #   WBUF_FIX=1  a write occupies whole mapping units in the write buffer (what is released after programming)
 #   GC_STATS=1  log the first GC and per-partition host/GC page counters (printed at rmmod)
+#   WBUF_MERGE=1  (needs WBUF_FIX=1) writes smaller than the mapping unit are merged in the write buffer:
+#               one open mapping unit per partition, written to flash when full or replaced
 WBUF_FIX ?= 0
 GC_STATS ?= 0
+WBUF_MERGE ?= 0
 ccflags-$(CONFIG_NVMEVIRT_SSD) += -DKSC_WBUF_FIX=$(WBUF_FIX) -DKSC_GC_STATS=$(GC_STATS)
+ccflags-$(CONFIG_NVMEVIRT_SSD) += -DKSC_WBUF_MERGE=$(WBUF_MERGE)
 nvmev-$(CONFIG_NVMEVIRT_SSD) += ssd.o conv_ftl.o pqueue/pqueue.o channel_model.o
 
 ccflags-$(CONFIG_NVMEVIRT_ZNS) += -DBASE_SSD=WD_ZN540

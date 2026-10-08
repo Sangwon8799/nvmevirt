@@ -84,6 +84,16 @@ def gc_info(rdir):
                 tot["gc_cnt"] += int(m.group(3))
         if seen:
             out.update(tot)
+        mg = {"mg_open": 0, "mg_merge": 0, "mg_full": 0, "mg_evict": 0, "mg_direct": 0, "mg_still_open": 0}
+        seen = False
+        for line in unload.read_text().splitlines():   # merge variant (WBUF_MERGE=1) only
+            m = re.search(r"KSC2026: merge part=\d+ open=(\d+) merge=(\d+) full=(\d+) evict=(\d+) direct=(\d+) still_open=(\d+)", line)
+            if m:
+                seen = True
+                for k, v in zip(mg, m.groups()):
+                    mg[k] += int(v)
+        if seen:
+            out.update(mg)
     return out
 
 
@@ -131,6 +141,10 @@ def collect(exp_dir):
                 "chmodel_msgs": int(meta_value(meta, "chmodel_msgs").split()[0]) if meta_value(meta, "chmodel_msgs") else 0,
                 "kernel_warn": kernel_warnings(rdir),
             }
+            bm = re.search(r"^blk_writes:\s*ios=(\d+) merges=(\d+) sectors=(\d+)", meta, re.M)
+            if bm:   # block-layer write requests during fio (recorded from the sequential-write experiment on)
+                row["blk_wr_ios"], row["blk_wr_merges"] = int(bm.group(1)), int(bm.group(2))
+                row["blk_avg_req_KiB"] = int(bm.group(3)) * 512 / 1024 / int(bm.group(1)) if int(bm.group(1)) else float("nan")
             g = gc_info(rdir)
             if "gc_onset_s" in g:
                 on = g["gc_onset_s"]
@@ -145,6 +159,9 @@ def collect(exp_dir):
                 row["ftl_gc_pgs"] = g["gc_pgs"]
                 row["waf_gc"] = (g["host_pgs"] + g["gc_pgs"]) / g["host_pgs"]
                 row["waf_total"] = (g["host_pgs"] + g["gc_pgs"]) * pg / w["io_bytes"]
+            for k in ("mg_open", "mg_merge", "mg_full", "mg_evict", "mg_direct", "mg_still_open"):
+                if k in g:
+                    row[k] = g[k]
             rows.append(row)
             series[(vdir.name, m["map"], m["bs"], int(m["rep"]))] = (t, bw, row.get("gc_onset_s"))
     return rows, series

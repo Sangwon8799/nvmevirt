@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# KSC2026: NVMeVirt FTL mapping unit x fio block size random-write experiment.
+# KSC2026: NVMeVirt FTL mapping unit x fio block size write experiment (random or sequential, WORKLOAD in common.sh).
 #
 # Every run:  (rmmod nvmev if loaded) -> insmod nvmev_map<MAP>.ko (fresh FTL state = formatted device)
-#             -> fio randwrite bs=<BS>, iodepth 32, 60 s, ramp_time 0 (pre-GC part included) -> rmmod nvmev
+#             -> fio <WORKLOAD> bs=<BS>, iodepth 32, 60 s, ramp_time 0 (pre-GC part included) -> rmmod nvmev
 # Order:      for rep in 1..REPS; for MAP in MAPS; for BS in BSS; for cache mode in CACHE_MODES (order alternates by rep)
 #
 # usage:  bash run_experiment.sh <EXP_NAME> [VARIANT]
@@ -30,6 +30,9 @@ for cm in "${CM_LIST[@]}"; do
 	VOUTS+=("$(vout_of "$cm")")
 done
 MOD_DIR="$EXP_DIR/modules/$VARIANT"
+JOB_TEMPLATE="$EXP_DIR/jobs/$WORKLOAD.fio.in"
+[[ -f "$JOB_TEMPLATE" ]] || { echo "WORKLOAD: no job template $JOB_TEMPLATE" >&2; exit 1; }
+[[ -z "$NOMERGES" || "$NOMERGES" =~ ^[012]$ ]] || { echo "NOMERGES must be empty, 0, 1 or 2" >&2; exit 1; }
 UPSTREAM_COMMIT=61c90f7758cbd9545b4a4727e89377bf88eab060
 FIO_GRACE="${FIO_GRACE:-180}"   # seconds allowed beyond RUNTIME before fio is stopped (nvme timeout 30 s + abort + reset)
 read -r -a MAP_LIST <<< "$MAPS"
@@ -96,10 +99,20 @@ load_nvmev() {   # $1 = mapping unit (4k ...), $2 = run dir  -> sets DEV
 	DEV="/dev/$d"
 }
 
+queue_line() {   # block-layer settings of the NVMeVirt namespace
+	local q="/sys/block/$1/queue"
+	echo "nomerges=$(cat "$q/nomerges") scheduler=$(cat "$q/scheduler" | xargs) max_sectors_kb=$(cat "$q/max_sectors_kb") write_cache=$(cat "$q/write_cache" | xargs)"
+}
+
+blk_wr_stat() {   # /sys/block/<dev>/stat fields 5-7: write I/Os, write merges, write sectors
+	awk '{ print $5, $6, $7 }' "/sys/block/$1/stat"
+}
+
 meminfo_line() { awk '/^(MemFree|Buffers|Cached|Dirty|Writeback):/ { printf "%s%s kB ", $1, $2 }' /proc/meminfo; }
 
 run_one() {   # $1 = mapping unit, $2 = bs, $3 = repetition, $4 = cache mode (nodrop | drop)
 	local map="$1" bs="$2" r="$3" cm="${4:-nodrop}" rdir size rc=0 tag_fio tag_un n_chm n_warn fio_pid waited=0 jerr
+	local wr_ios0 wr_mrg0 wr_sec0 wr_ios1 wr_mrg1 wr_sec1
 	rdir="$(vout_of "$cm")/map${map}_bs${bs}_r${r}"
 	if [[ -f "$rdir/DONE" ]]; then log "skip (already done): $(basename "$rdir")"; return 0; fi
 	if [[ -f "$rdir/FAILED" ]]; then log "skip (failed earlier, see FAILED): $(basename "$rdir")"; return 0; fi
@@ -119,6 +132,10 @@ run_one() {   # $1 = mapping unit, $2 = bs, $3 = repetition, $4 = cache mode (no
 	sleep 0.5
 	load_nvmev "$map" "$rdir"        # insmod: fresh (empty) device
 	size=$(check_target_dev "${DEV#/dev/}")
+	if [[ -n "$NOMERGES" ]]; then
+		echo "$NOMERGES" | sudo -n tee "/sys/block/${DEV#/dev/}/queue/nomerges" > /dev/null \
+			|| die "could not set /sys/block/${DEV#/dev/}/queue/nomerges (sudoers rule?)"
+	fi
 
 	# OS page cache: the NVMeVirt device is used with O_DIRECT, so this only changes the host's memory state
 	{ echo "cache_mode: $cm"; echo "before: $(meminfo_line)"; } > "$rdir/cache.txt"
@@ -131,10 +148,11 @@ run_one() {   # $1 = mapping unit, $2 = bs, $3 = repetition, $4 = cache mode (no
 
 	sed -e "s|@DEV@|$DEV|g" -e "s|@BS@|$bs|g" -e "s|@IODEPTH@|$IODEPTH|g" \
 		-e "s|@RUNTIME@|$RUNTIME|g" -e "s|@RAMP@|$RAMP|g" -e "s|@LOG_MSEC@|$LOG_MSEC|g" \
-		-e "s|@LOG_PREFIX@|$rdir/fio|g" "$EXP_DIR/jobs/randwrite.fio.in" > "$rdir/job.fio"
+		-e "s|@LOG_PREFIX@|$rdir/fio|g" "$JOB_TEMPLATE" > "$rdir/job.fio"
 
 	{
 		echo "variant:      $VARIANT"
+		echo "workload:     $WORKLOAD ($(grep -m1 '^rw=' "$rdir/job.fio"))"
 		echo "cache_mode:   $cm"
 		echo "map_unit:     $map ($(to_bytes "$map") B)"
 		echo "bs:           $bs ($(to_bytes "$bs") B)"
@@ -143,6 +161,7 @@ run_one() {   # $1 = mapping unit, $2 = bs, $3 = repetition, $4 = cache mode (no
 		echo "module:       $(cd "$MOD_DIR" && sha256sum "nvmev_map$map.ko")"
 		echo "insmod:       insmod nvmev_map$map.ko memmap_start=$MEMMAP_START memmap_size=$MEMMAP_SIZE cpus=$CPUS"
 		echo "fio:          fio --output-format=json --output=fio.json job.fio"
+		echo "blk_queue:    $(queue_line "${DEV#/dev/}")"
 		echo "loadavg:      $(cat /proc/loadavg)"
 		echo "git_head:     $(git -C "$REPO_DIR" rev-parse HEAD)"
 		echo "start:        $(date -Is)"
@@ -151,6 +170,7 @@ run_one() {   # $1 = mapping unit, $2 = bs, $3 = repetition, $4 = cache mode (no
 	sleep "$SETTLE_SEC"
 	echo "pre_fio: $(meminfo_line)" >> "$rdir/cache.txt"
 	tag_fio="$(basename "$rdir") fio-start $(date +%s%N)"
+	read -r wr_ios0 wr_mrg0 wr_sec0 <<< "$(blk_wr_stat "${DEV#/dev/}")"
 	kmark "$tag_fio"                 # GC onset is measured from this kernel-log timestamp
 	sudo -n fio --output-format=json --output="$rdir/fio.json" "$rdir/job.fio" > "$rdir/fio_stdout.txt" 2>&1 &
 	fio_pid=$!
@@ -167,6 +187,7 @@ run_one() {   # $1 = mapping unit, $2 = bs, $3 = repetition, $4 = cache mode (no
 	done
 	wait "$fio_pid" || rc=$?
 	kmark "$(basename "$rdir") fio-end"
+	read -r wr_ios1 wr_mrg1 wr_sec1 <<< "$(blk_wr_stat "${DEV#/dev/}")"
 
 	tag_un="$(basename "$rdir") rmmod $(date +%s%N)"
 	kmark "$tag_un"
@@ -190,6 +211,7 @@ run_one() {   # $1 = mapping unit, $2 = bs, $3 = repetition, $4 = cache mode (no
 		| grep -ciE 'WARNING|almost full|timeout|reset|Oops|BUG|I/O error|Disk read failed' || true)
 	{
 		echo "end:          $(date -Is)"
+		echo "blk_writes:   ios=$((wr_ios1 - wr_ios0)) merges=$((wr_mrg1 - wr_mrg0)) sectors=$((wr_sec1 - wr_sec0))   (block layer, /sys/block/<dev>/stat during fio)"
 		echo "fio_exit:     $rc"
 		echo "chmodel_msgs: $n_chm   (NVMeVirt '[chmodel_request]' errors seen by dmesg -W: NAND backlog beyond the channel-model window)"
 		echo "kernel_warn:  $n_warn   (kernel.log lines matching WARNING|almost full|timeout|reset|Oops|BUG|I/O error|Disk read failed, excluding chmodel/KSC2026 lines)"
@@ -247,7 +269,8 @@ KLOG_PID=""
 trap '[[ -n "$KLOG_PID" ]] && kill "$KLOG_PID" 2> /dev/null; sudo -n chown -R "$ME:$ME" "$OUT" 2> /dev/null || true' EXIT
 
 log "experiment=$EXP variant=$VARIANT maps=[$MAPS] bss=[$BSS] reps=$REPS cache_modes=[$CACHE_MODES] only_bs_lt_map=$ONLY_BS_LT_MAP"
-log "fio: libaio randwrite iodepth=$IODEPTH runtime=${RUNTIME}s ramp_time=${RAMP}s log=${LOG_MSEC}ms; insmod memmap_start=$MEMMAP_START memmap_size=$MEMMAP_SIZE cpus=$CPUS"
+log "fio: libaio $WORKLOAD iodepth=$IODEPTH runtime=${RUNTIME}s ramp_time=${RAMP}s log=${LOG_MSEC}ms; insmod memmap_start=$MEMMAP_START memmap_size=$MEMMAP_SIZE cpus=$CPUS"
+log "block layer: nomerges=${NOMERGES:-kernel default}"
 log "$N_RUNS runs, about $(( N_RUNS * (RUNTIME + SETTLE_SEC + 8) / 60 )) min"
 
 [[ -d "$OUT/env_before" ]] || bash "$EXP_DIR/collect_env.sh" "$OUT/env_before"
@@ -255,7 +278,7 @@ MOVE_COMMIT=$(git -C "$REPO_DIR" log --format=%H --grep='^Move NVMeVirt sources 
 for VOUT in "${VOUTS[@]}"; do
 	cp "$MOD_DIR/SHA256SUMS" "$VOUT/modules_SHA256SUMS"
 	cp "$MOD_DIR/build_info.txt" "$VOUT/modules_build_info.txt"
-	cp "$EXP_DIR/jobs/randwrite.fio.in" "$VOUT/randwrite.fio.in"
+	cp "$JOB_TEMPLATE" "$VOUT/"
 	echo "$(date -Is) $(git -C "$REPO_DIR" rev-parse HEAD)" >> "$VOUT/git_head.txt"   # one line per invocation
 	git -C "$REPO_DIR" diff "$MOVE_COMMIT" HEAD -- nvmevirt > "$VOUT/nvmevirt_vs_upstream.diff"   # upstream + pure rename -> HEAD
 	git -C "$REPO_DIR" diff -- nvmevirt > "$VOUT/nvmevirt_uncommitted.diff"

@@ -18,6 +18,7 @@ BSS="${BSS:-4k 8k 16k 32k 64k 128k}"     # fio block size
 REPS="${REPS:-3}"                        # repetitions per (mapping unit, bs)
 
 # ---- fio ----
+WORKLOAD="${WORKLOAD:-randwrite}"   # job template jobs/<WORKLOAD>.fio.in: randwrite (rw=randwrite) | seqwrite (rw=write)
 IODEPTH="${IODEPTH:-32}"
 RUNTIME="${RUNTIME:-60}"      # seconds, time_based
 RAMP="${RAMP:-0}"             # ramp_time 0: keep the pre-GC part of every run
@@ -28,6 +29,11 @@ SETTLE_SEC="${SETTLE_SEC:-5}" # idle seconds between insmod and fio
 # nodrop: nothing / drop: sync; echo 3 > /proc/sys/vm/drop_caches right after insmod (before SETTLE_SEC)
 # "nodrop drop": both, back to back for every (map, bs, rep); the order alternates with rep (odd: nodrop first)
 CACHE_MODES="${CACHE_MODES:-nodrop}"
+
+# ---- block layer request merging for the NVMeVirt namespace ----
+# empty: leave the kernel default (0 = merging allowed); 2: echo 2 > /sys/block/<dev>/queue/nomerges after insmod,
+# so the device sees exactly the fio bs (adjacent sequential requests are not merged into larger ones)
+NOMERGES="${NOMERGES:-}"
 
 # Expected NVMeVirt logical capacity: (12 GiB - 1 MiB) * 100 / 107 (OP 7 %), with some slack
 DEV_MIN_BYTES=$(( 11 * 1024**3 ))
@@ -49,10 +55,13 @@ to_bytes() {   # 4k -> 4096, 1m -> 1048576
 #   base     requested configuration + GC statistics logging (observational only; does not change timing)
 #   wbuffix  base + write buffer holds whole mapping units (fixes over-release when bs < mapping unit)
 #   plain    requested configuration without GC statistics (used to check that GC_STATS has no effect)
+#   merge    wbuffix + write-buffer merge: writes smaller than the mapping unit are collected in one open
+#            mapping unit per partition and written to flash once it is full (or replaced)
 variant_make_args() {
 	case "$1" in
 	base) echo "GC_STATS=1" ;;
 	wbuffix) echo "GC_STATS=1 WBUF_FIX=1" ;;
+	merge) echo "GC_STATS=1 WBUF_FIX=1 WBUF_MERGE=1" ;;
 	plain) echo "" ;;
 	*) die "unknown VARIANT '$1'" ;;
 	esac

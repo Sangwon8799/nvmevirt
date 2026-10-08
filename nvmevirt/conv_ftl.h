@@ -4,6 +4,7 @@
 #define _NVMEVIRT_CONV_FTL_H
 
 #include <linux/types.h>
+#include <linux/bitmap.h>
 #include "pqueue/pqueue.h"
 #include "ssd_config.h"
 #include "ssd.h"
@@ -72,6 +73,17 @@ struct conv_ftl {
 	uint64_t ksc_host_pgs; /* mapping-unit pages written by host commands */
 	uint64_t ksc_gc_pgs; /* mapping-unit pages copied by GC */
 	uint64_t ksc_gc_cnt; /* victim lines cleaned */
+#endif
+#if KSC_WBUF_MERGE
+	/* KSC2026 write-buffer merge (only touched by the dispatcher thread): one open mapping unit per
+	 * partition collects host writes smaller than the mapping unit until it is full or replaced */
+	uint64_t ksc_open_lpn; /* global lpn of the open mapping unit, INVALID_LPN if none */
+	DECLARE_BITMAP(ksc_open_mask, MAPPING_UNIT / LBA_SIZE); /* sectors of the open unit written so far */
+	uint64_t ksc_mg_open; /* units opened by a partial write */
+	uint64_t ksc_mg_merge; /* writes that joined the open unit */
+	uint64_t ksc_mg_full; /* open units written to flash because they became full */
+	uint64_t ksc_mg_evict; /* open units written to flash partially filled (replaced by another unit) */
+	uint64_t ksc_mg_direct; /* whole-unit writes that did not touch the open unit */
 #endif
 };
 

@@ -1,0 +1,23 @@
+; KSC2026 NVMeVirt mapping-unit experiment — fresh-device sequential write.
+; Template: run_experiment.sh replaces @VARS@ and saves the concrete job file as <run dir>/job.fio
+[global]
+filename=@DEV@
+ioengine=libaio
+direct=1
+rw=write
+; time_based: after the last block of the device fio wraps around to offset 0 and keeps writing sequentially
+bs=@BS@
+iodepth=@IODEPTH@
+numjobs=1
+time_based=1
+runtime=@RUNTIME@
+ramp_time=@RAMP@
+group_reporting=1
+percentile_list=50:90:95:99:99.9:99.99
+; time series (averaged over @LOG_MSEC@ ms) to see the pre-GC and post-GC parts of the run
+write_bw_log=@LOG_PREFIX@
+write_iops_log=@LOG_PREFIX@
+write_lat_log=@LOG_PREFIX@
+log_avg_msec=@LOG_MSEC@
+
+[seqwrite]

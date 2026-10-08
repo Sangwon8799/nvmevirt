@@ -1,3 +1,4 @@
 # KSC2026 NVMeVirt mapping-unit experiment — remove after the experiment:
 #   sudo rm /etc/sudoers.d/nvmevirt-exp
-dccearth ALL=(root) NOPASSWD: /usr/sbin/insmod, /usr/sbin/rmmod, /usr/bin/fio, /usr/bin/dmesg, /usr/sbin/nvme, /usr/bin/cat /proc/iomem, /usr/bin/tee /dev/kmsg, /usr/bin/tee /proc/sys/vm/drop_caches, /usr/bin/chown -R dccearth\:dccearth /home/dccearth/jsw/KSC2026/nvmevirt/exp/*
+# (chown path = <clone>/exp/*; the nomerges rule names the NVMeVirt namespace of this server, nvme1n1)
+dccearth ALL=(root) NOPASSWD: /usr/sbin/insmod, /usr/sbin/rmmod, /usr/bin/fio, /usr/bin/dmesg, /usr/sbin/nvme, /usr/bin/cat /proc/iomem, /usr/bin/tee /dev/kmsg, /usr/bin/tee /proc/sys/vm/drop_caches, /usr/bin/tee /sys/block/nvme1n1/queue/nomerges, /usr/bin/chown -R dccearth\:dccearth /home/dccearth/jsw/nvmevirt/exp/*

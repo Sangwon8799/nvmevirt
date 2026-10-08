@@ -399,6 +399,15 @@ void conv_init_namespace(struct nvmev_ns *ns, uint32_t id, uint64_t size, void *
 		conv_ftls[i].ksc_gc_pgs = 0;
 		conv_ftls[i].ksc_gc_cnt = 0;
 #endif
+#if KSC_WBUF_MERGE
+		conv_ftls[i].ksc_open_lpn = INVALID_LPN;
+		bitmap_zero(conv_ftls[i].ksc_open_mask, MAPPING_UNIT / LBA_SIZE);
+		conv_ftls[i].ksc_mg_open = 0;
+		conv_ftls[i].ksc_mg_merge = 0;
+		conv_ftls[i].ksc_mg_full = 0;
+		conv_ftls[i].ksc_mg_evict = 0;
+		conv_ftls[i].ksc_mg_direct = 0;
+#endif
 	}
 
 	/* PCIe, Write buffer are shared by all instances*/
@@ -423,6 +432,10 @@ void conv_init_namespace(struct nvmev_ns *ns, uint32_t id, uint64_t size, void *
 	NVMEV_INFO("FTL physical space: %lld, logical space: %lld (physical/logical * 100 = %d)\n",
 		   size, ns->size, cpp.pba_pcent);
 	NVMEV_INFO("KSC2026: WBUF_FIX=%d GC_STATS=%d\n", KSC_WBUF_FIX, KSC_GC_STATS);
+#if KSC_WBUF_MERGE
+	NVMEV_INFO("KSC2026: WBUF_MERGE=1 (one open mapping unit per partition merges writes smaller than %u B)\n",
+		   MAPPING_UNIT);
+#endif
 
 	return;
 }
@@ -448,6 +461,14 @@ void conv_remove_namespace(struct nvmev_ns *ns)
 		NVMEV_INFO("KSC2026: stats part=%u host_pgs=%llu gc_pgs=%llu gc_cnt=%llu free_lines=%u\n", i,
 			   conv_ftls[i].ksc_host_pgs, conv_ftls[i].ksc_gc_pgs, conv_ftls[i].ksc_gc_cnt,
 			   conv_ftls[i].lm.free_line_cnt);
+	}
+#endif
+#if KSC_WBUF_MERGE
+	for (i = 0; i < nr_parts; i++) {
+		NVMEV_INFO("KSC2026: merge part=%u open=%llu merge=%llu full=%llu evict=%llu direct=%llu still_open=%d\n",
+			   i, conv_ftls[i].ksc_mg_open, conv_ftls[i].ksc_mg_merge, conv_ftls[i].ksc_mg_full,
+			   conv_ftls[i].ksc_mg_evict, conv_ftls[i].ksc_mg_direct,
+			   conv_ftls[i].ksc_open_lpn != INVALID_LPN);
 	}
 #endif
 
@@ -950,6 +971,164 @@ static bool conv_read(struct nvmev_ns *ns, struct nvmev_request *req, struct nvm
 	return true;
 }
 
+#if KSC_WBUF_MERGE
+#if !KSC_WBUF_FIX
+#error "WBUF_MERGE=1 needs WBUF_FIX=1 (whole mapping units in the write buffer)"
+#endif
+/* KSC2026: write one mapping unit (global lpn) of host data to flash. Same steps as the body of the
+ * upstream conv_write() loop below; returns the program completion time, or 0 when the wordline is
+ * not full yet (nothing programmed). */
+static uint64_t ksc_write_lpn(struct conv_ftl *conv_ftls, uint32_t nr_parts, uint64_t lpn,
+			      struct nand_cmd *swr, uint32_t sq_id, struct buffer *wbuf)
+{
+	struct conv_ftl *conv_ftl = &conv_ftls[lpn % nr_parts];
+	struct ssdparams *spp = &conv_ftl->ssd->sp;
+	uint64_t local_lpn = lpn / nr_parts;
+	uint64_t nsecs_completed = 0;
+	struct ppa ppa;
+
+	ppa = get_maptbl_ent(conv_ftl, local_lpn);
+	if (mapped_ppa(&ppa)) {
+		mark_page_invalid(conv_ftl, &ppa);
+		set_rmap_ent(conv_ftl, INVALID_LPN, &ppa);
+	}
+
+	ppa = get_new_page(conv_ftl, USER_IO);
+	set_maptbl_ent(conv_ftl, local_lpn, &ppa);
+	set_rmap_ent(conv_ftl, local_lpn, &ppa);
+
+	mark_page_valid(conv_ftl, &ppa);
+#if KSC_GC_STATS
+	conv_ftl->ksc_host_pgs++;
+#endif
+
+	advance_write_pointer(conv_ftl, USER_IO);
+
+	if (last_pg_in_wordline(conv_ftl, &ppa)) {
+		swr->ppa = &ppa;
+		nsecs_completed = ssd_advance_nand(conv_ftl->ssd, swr);
+		schedule_internal_operation(sq_id, nsecs_completed, wbuf,
+					    spp->pgs_per_oneshotpg * spp->pgsz);
+	}
+
+	consume_write_credit(conv_ftl);
+	check_and_refill_write_credit(conv_ftl);
+
+	return nsecs_completed;
+}
+
+/* KSC2026 write path with write-buffer merge. Each partition has one open mapping unit:
+ *  - a write that covers only part of a mapping unit opens it (taking one mapping unit of write
+ *    buffer) or, if it is that partition's open unit already, joins it without taking buffer space;
+ *  - the open unit is written to flash when every sector of it has been written, or when another
+ *    partial write needs the partition's slot (then it is written partially filled; like the rest of
+ *    this model, the read of the old data that a real SSD would merge in is not modelled);
+ *  - a write that covers a whole mapping unit is written as in upstream (joining the open unit if
+ *    it is that unit, which completes it).
+ * As in upstream conv_write(), FUA (or write_early_completion == 0) waits only for the programs this
+ * command starts; neither FUA nor FLUSH forces an open unit (or a partly filled wordline) to flash.
+ * The controller reports no volatile write cache (VWC = 0), so the kernel sends neither of them. */
+static bool ksc_conv_write_merge(struct nvmev_ns *ns, struct nvmev_request *req,
+				 struct nvmev_result *ret)
+{
+	struct conv_ftl *conv_ftls = (struct conv_ftl *)ns->ftls;
+	struct ssdparams *spp = &conv_ftls[0].ssd->sp;
+	struct buffer *wbuf = conv_ftls[0].ssd->write_buffer;
+	struct nvme_command *cmd = req->cmd;
+	uint64_t lba = cmd->rw.slba;
+	uint64_t nr_lba = (cmd->rw.length + 1);
+	uint64_t secs_per_pg = spp->secs_per_pg;
+	uint64_t start_lpn = lba / secs_per_pg;
+	uint64_t end_lpn = (lba + nr_lba - 1) / secs_per_pg;
+	uint32_t nr_parts = ns->nr_parts;
+	uint64_t sim_open[SSD_PARTITIONS];
+	uint64_t lpn, wbuf_bytes = 0;
+	uint64_t nsecs_latest, nsecs_xfer_completed;
+	uint32_t i;
+
+	struct nand_cmd swr = {
+		.type = USER_IO,
+		.cmd = NAND_WRITE,
+		.interleave_pci_dma = false,
+		.xfer_size = spp->pgsz * spp->pgs_per_oneshotpg,
+	};
+
+	NVMEV_ASSERT(nr_parts <= SSD_PARTITIONS);
+	NVMEV_ASSERT(secs_per_pg == MAPPING_UNIT / LBA_SIZE);
+	if ((end_lpn / nr_parts) >= spp->tt_pgs) {
+		NVMEV_ERROR("%s: lpn passed FTL range (start_lpn=%lld > tt_pgs=%ld)\n", __func__,
+			    start_lpn, spp->tt_pgs);
+		return false;
+	}
+
+	/* write buffer: one mapping unit for every unit this command opens or writes directly; replay
+	 * the slot decisions of the loop below so that the amount matches exactly */
+	for (i = 0; i < nr_parts; i++)
+		sim_open[i] = conv_ftls[i].ksc_open_lpn;
+	for (lpn = start_lpn; lpn <= end_lpn; lpn++) {
+		uint64_t s = (lpn == start_lpn) ? lba % secs_per_pg : 0;
+		uint64_t e = (lpn == end_lpn) ? (lba + nr_lba - 1) % secs_per_pg : secs_per_pg - 1;
+		uint32_t p = lpn % nr_parts;
+
+		if (sim_open[p] == lpn)
+			continue;
+		wbuf_bytes += spp->pgsz;
+		if (!(s == 0 && e == secs_per_pg - 1))
+			sim_open[p] = lpn;
+	}
+	if (wbuf_bytes && buffer_allocate(wbuf, wbuf_bytes) < wbuf_bytes)
+		return false;
+
+	nsecs_latest = ssd_advance_write_buffer(conv_ftls[0].ssd, req->nsecs_start, LBA_TO_BYTE(nr_lba));
+	nsecs_xfer_completed = nsecs_latest;
+	swr.stime = nsecs_latest;
+
+	for (lpn = start_lpn; lpn <= end_lpn; lpn++) {
+		uint64_t s = (lpn == start_lpn) ? lba % secs_per_pg : 0;
+		uint64_t e = (lpn == end_lpn) ? (lba + nr_lba - 1) % secs_per_pg : secs_per_pg - 1;
+		struct conv_ftl *f = &conv_ftls[lpn % nr_parts];
+		uint64_t done = 0;
+
+		if (f->ksc_open_lpn == lpn) {
+			bitmap_set(f->ksc_open_mask, s, e - s + 1);
+			f->ksc_mg_merge++;
+			if (bitmap_full(f->ksc_open_mask, secs_per_pg)) {
+				f->ksc_open_lpn = INVALID_LPN;
+				f->ksc_mg_full++;
+				done = ksc_write_lpn(conv_ftls, nr_parts, lpn, &swr, req->sq_id, wbuf);
+			}
+		} else if (s == 0 && e == secs_per_pg - 1) {
+			f->ksc_mg_direct++;
+			done = ksc_write_lpn(conv_ftls, nr_parts, lpn, &swr, req->sq_id, wbuf);
+		} else {
+			if (f->ksc_open_lpn != INVALID_LPN) {
+				uint64_t old = f->ksc_open_lpn;
+
+				f->ksc_open_lpn = INVALID_LPN;
+				f->ksc_mg_evict++;
+				done = ksc_write_lpn(conv_ftls, nr_parts, old, &swr, req->sq_id, wbuf);
+			}
+			f->ksc_open_lpn = lpn;
+			bitmap_zero(f->ksc_open_mask, secs_per_pg);
+			bitmap_set(f->ksc_open_mask, s, e - s + 1);
+			f->ksc_mg_open++;
+		}
+		nsecs_latest = max(done, nsecs_latest);
+	}
+
+	if ((cmd->rw.control & NVME_RW_FUA) || (spp->write_early_completion == 0)) {
+		/* Wait all flash operations */
+		ret->nsecs_target = nsecs_latest;
+	} else {
+		/* Early completion */
+		ret->nsecs_target = nsecs_xfer_completed;
+	}
+	ret->status = NVME_SC_SUCCESS;
+
+	return true;
+}
+#endif
+
 static bool conv_write(struct nvmev_ns *ns, struct nvmev_request *req, struct nvmev_result *ret)
 {
 	struct conv_ftl *conv_ftls = (struct conv_ftl *)ns->ftls;
@@ -1090,8 +1269,13 @@ bool conv_proc_nvme_io_cmd(struct nvmev_ns *ns, struct nvmev_request *req, struc
 
 	switch (cmd->common.opcode) {
 	case nvme_cmd_write:
+#if KSC_WBUF_MERGE
+		if (!ksc_conv_write_merge(ns, req, ret))
+			return false;
+#else
 		if (!conv_write(ns, req, ret))
 			return false;
+#endif
 		break;
 	case nvme_cmd_read:
 		if (!conv_read(ns, req, ret))
