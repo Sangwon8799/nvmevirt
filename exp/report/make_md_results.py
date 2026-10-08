@@ -29,8 +29,8 @@ METRICS = ["bw_MiBps", "iops", "clat_mean_us", "clat_p50_us", "clat_p99_us", "cl
            # recorded from the sequential-write experiment on (block layer) / merge variant only (WBUF_MERGE counters)
            "blk_wr_ios", "blk_wr_merges", "blk_avg_req_KiB",
            "mg_open", "mg_merge", "mg_full", "mg_evict", "mg_direct", "mg_still_open"]
-# variant pairs compared as (new - old) / old: base -> wbuffix (first design), wbuffix -> merge (sequential experiment)
-VARIANT_PAIRS = [("base", "wbuffix"), ("wbuffix", "merge")]
+# variant pairs compared as (new - old) / old: wbuffix -> merge (sequential experiment)
+VARIANT_PAIRS = [("wbuffix", "merge")]
 
 
 def kst(utc_str):

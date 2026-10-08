@@ -1,2 +1,0 @@
-variant,map,bs,rep,fio_exit,fio_json_error,runtime_s,bw_MiBps,iops,written_GiB,chmodel_msgs,t_gc_s,t_queue_full_warn_s,t_nvme_timeout_s,t_reset_s,t_disable_s,t_first_io_error_s
-base,32k,16k,1,1,5,146.507,114.359375,7319.261196,16.361892700195312,10038918,5.641,24.968,55.087,85.294,146.736,146.76

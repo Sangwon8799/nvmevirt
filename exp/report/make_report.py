@@ -26,8 +26,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from docx_helpers import Report  # noqa: E402
 
 SIZES = ["4k", "8k", "16k", "32k", "64k", "128k"]
-VARIANTS = ["base", "wbuffix"]
-VNAME = {"base": "base (요청 설정 그대로)", "wbuffix": "wbuffix (쓰기 버퍼 수정)"}
+BASE_REMOVED = os.environ.get("KSC_BASE_REMOVED", "23:38")   # KST: when the results of the unfixed model (base) were removed
 UPSTREAM = "61c90f7758cbd9545b4a4727e89377bf88eab060"
 
 
@@ -246,8 +245,8 @@ R.title("NVMeVirt FTL 매핑 단위 실험 기록서", "KSC 2026 · FTL 매핑 �
 R.table(["항목", "내용"], [
     ["주 데이터셋", f"{EXP} — 매핑 4K·16K·32K × bs 4K·16K·32K × 3 회 × 페이지 캐시 drop/no-drop, wbuffix 모델 "
      f"({' + '.join(f'{v} {n}회' for v, n in n_pri.items())})"],
-    ["보조 데이터셋", (f"{SUP['name']} — 첫 설계(매핑 4–128K × bs 4–128K × 3 회 × base·wbuffix) 중 설계 변경 전까지 측정한 부분 "
-                    f"({' + '.join(f'{v} {n}회' for v, n in n_sup.items())}, FAILED {len(SUP['failed'])}회)") if SUP else "–"],
+    ["보조 데이터셋", (f"{SUP['name']} — 첫 설계(매핑 4–128K × bs 4–128K × 3 회) 중 설계 변경 전까지 측정한 부분 "
+                    f"({' + '.join(f'{v} {n}회' for v, n in n_sup.items())})") if SUP else "–"],
     *([["추가 실험 (순차 쓰기)", f"{SEQ['name']} — 매핑 4K·16K·32K × bs 4K·16K·32K × 3 회, fio 순차 쓰기, 모델 wbuffix·merge, 페이지 캐시 그대로 "
          f"({' + '.join(f'{v} {n}회' for v, n in n_seq.items())}) — 8 절"]] if SEQ else []),
     *([["추가 실험 (랜덤 쓰기 bs 8K·64K)", f"{RBS['name']} — 매핑 4K·16K·32K × bs 8K·64K × 3 회, wbuffix, 페이지 캐시 그대로 ({n_rbs}회). "
@@ -283,7 +282,7 @@ R.table(["구분", "값"], [
     ["변수 ② fio 블록 크기(bs)", "4K, 16K, 32K"],
     ["변수 ③ OS 페이지 캐시", "nodrop: 그대로 / drop: insmod 직후 sync; echo 3 > /proc/sys/vm/drop_caches. 같은 (매핑, bs, 회차)에서 두 조건을 연달아 측정하며, 순서는 홀수 회차 nodrop→drop, 짝수 회차 drop→nodrop"],
     ["반복", "조합마다 3 회 (회차마다 rmmod → insmod 로 장치 초기화) — 9 × 2 × 3 = 54 회"],
-    ["NVMeVirt 모델", "wbuffix = 요청 설정 + 쓰기 버퍼 계산 수정 1 줄 (5.4 절; 사용자 선택). 요청 설정 그대로인 base 의 결과는 보조 데이터셋(7 절)"],
+    ["NVMeVirt 모델", "wbuffix = 요청 설정 + 쓰기 버퍼 계산 수정 1 줄 (5.4 절; 사용자 선택)"],
     ["NVMeVirt 모드", "Conventional SSD (SAMSUNG_970PRO 묶음), 블록 2 MiB (BLKS_PER_PLN = 384), flash page 32 KiB"],
     ["저장 용량", "예약 메모리 12 GiB (물리 주소 12–24 GiB), 호스트에 보이는 용량 11.21 GiB (OP 7 %)"],
     ["NVMeVirt CPU", "3 개: cpu3 = 디스패처, cpu4·cpu5 = I/O 워커 (isolcpus=3-5)"],
@@ -294,10 +293,10 @@ R.h("1.3 실험 설계 변경 경위", 2)
 R.table(["시각 (KST)", "내용"], [
     ["13:4x", "첫 지시: 매핑 4·8·16·32·64·128K, 64K 이상은 flash page = 매핑 단위, BLK 2 MiB, 3 회 반복, 60 s, ramp_time 0 등. bs 는 연구 계획에 따라 4–128K 로 정함"],
     ["13:49–15:22", "NVMeVirt 코드 감사(에이전트 51 개): 매핑 단위보다 작은 쓰기에서 쓰기 버퍼가 과다 반환되는 결함 발견(5.4 절)"],
-    ["14:20–14:46", "첫 설계 6 × 6 × 3 × {base, wbuffix} 시작 → base 매핑 32K·bs 16K 에서 가상 장치 멈춤(5.6 절)으로 스크립트 중단"],
-    ["14:49–15:51", "실패 회차를 기록하고 계속하도록 고친 뒤 wbuffix 부터 재개 (wbuffix 53 회 완료)"],
+    ["14:20–14:46", "첫 설계 6 × 6 × 3 시작. 당시에는 쓰기 버퍼 계산을 고치지 않은 원본 모델(base)을 먼저 돌렸다. 이 모델은 bs < 매핑 단위 조합에서 5.4 절의 결함 때문에 측정이 유효하지 않다"],
+    ["14:49–15:51", "스크립트가 실패한 회차를 기록하고 계속하도록 고친 뒤, 쓰기 버퍼 계산을 고친 모델(wbuffix)로 실행 (53 회 완료)"],
     ["15:5x", "선배 요청: 매핑·bs 를 4K·16K·32K 로 줄이고, drop_caches 사용 여부에 따른 차이를 확인 → 15:51:23 회차 경계에서 중단"],
-    ["15:5x", "모델 선택: base·wbuffix 차이를 설명한 뒤 사용자가 wbuffix 만 선택, drop/no-drop 은 회차마다 교대로 측정하기로 함"],
+    ["15:5x", "모델 선택: 사용자가 쓰기 버퍼 계산을 고친 wbuffix 만 쓰기로 함. drop/no-drop 은 회차마다 교대로 측정하기로 함"],
     ["16:00:35–", "최종 설계(주 데이터셋) 실행 (17:03:57 완료)"],
     *([["19:53", "사용자 요청: 순차 쓰기도 같은 3 × 3 으로 측정. NVMeVirt 가 매핑 단위보다 작은 쓰기를 쓰기 버퍼에서 합치지 않는 한계(5.5 절)를 설명했고, "
         "사용자가 '원래 모델(wbuffix)과 병합 모델(merge) 둘 다 측정', '페이지 캐시 nodrop 만'을 골랐다"],
@@ -306,6 +305,7 @@ R.table(["시각 (KST)", "내용"], [
        ["20:23:24–21:26:45", "순차 쓰기 실험 실행 (8 절)"]] if SEQ else []),
     *([["22:08", "사용자 요청: 랜덤 쓰기에 8K·64K 도 측정. 사용자가 'bs 만 추가(매핑은 4K·16K·32K 그대로)', '새 조합만 측정하고 기존 bs 4K·16K·32K 값은 주 데이터셋 nodrop 값을 재사용'을 골랐다"],
        ["22:11:48–22:32:55", f"랜덤 쓰기 bs 8K·64K 실험 실행 ({RBS_N} 절)"]] if RBS else []),
+    ["23:33", f"사용자 요청: 원본 모델(base)로 잰 결과는 보려던 실험이 아니므로 문서와 저장소에서 뺌. 원자료(첫 설계의 base 회차와 스모크 테스트)와 그 수치·표·그림을 {BASE_REMOVED} 부터 최신 상태에서 지웠다 ({POST_N} 절)"],
 ], widths=[2.8, 14.2], size=8.5, caption="설계 변경 경위")
 if FINDINGS:
     R.h("1.4 결과 요약", 2)
@@ -428,18 +428,18 @@ R.table(["경로", "내용"], [
     ["exp/analyze.py", "결과 집계(CSV), drop/no-drop 쌍 비교, 그림"],
     ["exp/plot.py", "그래프 도구 (bs/map/heatmap/ts/compare/all)"],
     ["exp/run_all.sh", "최종 설계: wbuffix 모듈 → 3×3×3×{nodrop, drop} → 분석"],
-    ["exp/run_all_6x6.sh", "첫 설계: 빌드 → base 6×6×3 → wbuffix 6×6×3 → 분석 (보조 데이터셋에 사용)"],
+    ["exp/run_all_6x6.sh", "첫 설계: 빌드 → wbuffix 6×6×3 → 분석 (보조 데이터셋에 사용)"],
     ["exp/run_all_seq.sh", "순차 쓰기: 3×3×3 × {wbuffix, merge}, nomerges=2 → 분석"],
     ["exp/make_gallery.py", "한 실험의 모든 그림을 HTML 한 파일로 모음"],
     ["exp/run_all_rand_bs.sh", "랜덤 쓰기 bs 8K·64K: 매핑 3 × bs 2 × 3 회 → 분석 → link_runs.py 로 합친 보기 → 분석"],
     ["exp/link_runs.py", "여러 데이터셋의 회차 폴더를 상대 심볼릭 링크로 모은 보기(view) 데이터셋을 만듦"],
     ["exp/report/", "이 문서·인계 기록 생성기 (make_report.py, docx_helpers.py, make_md_results.py, findings_ko.txt, findings_seq_ko.txt, findings_randbs_ko.txt, make_handoff.sh), 감사 결과, sudoers 사본, 이 문서(.docx)"],
     [f"exp/results/{EXP}/", "주 데이터셋 (wbuffix_nodrop/, wbuffix_drop/, env_before·env_after, analysis/)"],
-    [f"exp/results/{SUP['name'] if SUP else 'main_*'}/", "보조 데이터셋 (base/, wbuffix/, env_before·env_after_stop, analysis/)"],
+    [f"exp/results/{SUP['name'] if SUP else 'main_*'}/", "보조 데이터셋 (wbuffix/, env_before·env_after_stop, analysis/)"],
     *([[f"exp/results/{SEQ['name']}/", "순차 쓰기 실험 (wbuffix/, merge/, env_before·env_after, analysis/)"]] if SEQ else []),
     *([[f"exp/results/{RBS['name']}/", "랜덤 쓰기 bs 8K·64K (wbuffix/, env_before·env_after, analysis/)"]] if RBS else []),
     *([[f"exp/results/{RV['name']}/", "합친 보기: wbuffix/ 아래 회차는 주 데이터셋 wbuffix_nodrop/ 과 " + (RBS['name'] if RBS else '') + "/wbuffix/ 로 가는 링크 (SOURCES.txt), analysis/·plots/"]] if RV else []),
-    ["exp/results/pre_*/", "사전 점검 (스모크 테스트, GC_STATS 영향, 페이지 캐시 drop 시험, 순차 쓰기 점검 pre_seq_*·pre_rand_merge_check)"],
+    ["exp/results/pre_*/", "사전 점검 (GC_STATS 영향 pre_gcstats_ab, 페이지 캐시 drop 시험 pre_cache_test, 순차 쓰기 점검 pre_seq_*·pre_rand_merge_check)"],
     ["EXPERIMENT_LOG_FOR_CLAUDE.md", "다른 Claude 에게 넘기는 상세 기록(모든 지시·결정·수치)"],
 ], widths=[5.4, 11.6], size=8, caption="저장소 구성")
 R.h("3.3 실행 권한 (sudoers)", 2)
@@ -467,16 +467,16 @@ R.table(["파일", "항목", "원본 값", "실험 값", "이유"], [
     ["ssd_config.h", "BLKS_PER_PLN", "8192", "384", "블록 2 MiB: 12 GiB ÷ 4 파티션 ÷ (2 ch × 2 LUN × 1 plane) ÷ 384"],
     ["ssd_config.h", "FLASH_PAGE_SIZE", "KB(32)", "32 KiB (매핑 ≤ 32K)\n= 매핑 단위 (64K, 128K)", "FLASH_PAGE_SIZE % pgsz == 0 assert 통과"],
     ["ssd.c", "적재 로그", "–", "'KSC2026: mapping unit=…' 1 줄", "회차마다 매핑 단위 적용 확인"],
-    ["conv_ftl.c", "적재 로그", "–", "'KSC2026: WBUF_FIX=… GC_STATS=…' 1 줄 (#if 밖, 항상 출력)", "회차마다 빌드 변형(base/wbuffix) 확인"],
-    ["conv_ftl.c/.h", "GC_STATS (선택)", "–", "base·wbuffix 모두 켬", "첫 GC 시각, 호스트/GC 페이지 수 기록 (관찰만, 영향 없음 — 5.3 절)"],
-    ["conv_ftl.c", "WBUF_FIX (선택)", "–", "wbuffix 만 켬", "쓰기 버퍼 과다 반환 수정 (5.4 절)"],
+    ["conv_ftl.c", "적재 로그", "–", "'KSC2026: WBUF_FIX=… GC_STATS=…' 1 줄 (#if 밖, 항상 출력)", "회차마다 빌드 스위치 확인"],
+    ["conv_ftl.c/.h", "GC_STATS (선택)", "–", "모든 측정 빌드에 켬", "첫 GC 시각, 호스트/GC 페이지 수 기록 (관찰만, 영향 없음 — 5.3 절)"],
+    ["conv_ftl.c", "WBUF_FIX (선택)", "–", "모든 측정 빌드에 켬 (wbuffix, merge)", "쓰기 버퍼 과다 반환 수정 (5.4 절)"],
     *([["conv_ftl.c/.h, Kbuild", "WBUF_MERGE (선택)", "–", "merge 만 켬 (순차 쓰기 실험)", "매핑 단위보다 작은 쓰기를 쓰기 버퍼에서 병합 (8.2 절)"]] if SEQ else []),
 ], widths=[2.2, 2.6, 3.2, 3.8, 5.2], size=8, caption="NVMeVirt 수정 사항")
 R.p("빌드 명령 (매핑 단위 하나):")
 R.code("""cd nvmevirt
 make clean
-make MAPPING_UNIT=16384 GC_STATS=1              # base 변형
-make MAPPING_UNIT=16384 GC_STATS=1 WBUF_FIX=1   # wbuffix 변형
+make MAPPING_UNIT=16384 GC_STATS=1 WBUF_FIX=1   # wbuffix 변형 (모든 랜덤·순차 쓰기 측정)
+make MAPPING_UNIT=4096 GC_STATS=1               # base 변형: 원본 쓰기 버퍼 계산. 측정에 쓰지 않는다 (5.3 절의 계측 영향 확인에만 사용)
 make MAPPING_UNIT=16384 GC_STATS=1 WBUF_FIX=1 WBUF_MERGE=1   # merge 변형 (순차 쓰기 실험, 커밋 66446ea 부터)
 # exp/build_modules.sh <변형> 이 6 개 매핑 단위를 차례로 빌드해 exp/modules/<변형>/ 에 보관한다
 # 빌드된 .ko 에는 소스의 절대 경로가 들어가므로, SHA-256 비교는 같은 경로에서 빌드한 경우에만 의미가 있다 (원본 값: 4.2 절)""")
@@ -536,7 +536,7 @@ R.p("memmap_start/size 는 GRUB 의 memmap=12G$12G 와 같은 영역이다. NVMe
 R.h("3.9 fio 작업 파일", 2)
 R.p("틀(exp/jobs/randwrite.fio.in)의 @값@ 을 회차마다 채워 회차 폴더에 job.fio 로 저장한다. 아래는 틀과 실제 예(매핑 4K, bs 4K, 1 회차)이다.")
 R.code(read(EXPD / "jobs" / "randwrite.fio.in"))
-R.code(read(EXP_DIR / "wbuffix_nodrop" / "map4k_bs4k_r1" / "job.fio") or read(EXP_DIR / "base" / "map4k_bs4k_r1" / "job.fio") or "(job.fio 없음)")
+R.code(read(EXP_DIR / "wbuffix_nodrop" / "map4k_bs4k_r1" / "job.fio") or "(job.fio 없음)")
 R.bullets([
     "filename 은 회차마다 모델명 CSL_Virt 로 찾은 장치다. 크기(11–12 GiB)·파티션 없음·마운트 안 됨·루트 디스크 아님을 확인한 뒤에만 쓴다.",
     "size 를 주지 않아 장치 전체(12,040,984,064 B)에 랜덤 쓰기를 한다. randrepeat=1(기본값)이라 회차·조합마다 같은 난수 순서를 쓴다.",
@@ -590,16 +590,16 @@ if RBS:
 R.table(["데이터셋 · 변형", "완료 회차", "순서", "run.log 첫 시각", "마지막 시각"], rows42,
         widths=[2.8, 1.6, 6.6, 3.0, 3.0], size=8, caption="실행 순서와 시각 (KST)")
 R.p("반복을 바깥 루프에 둬서 시간에 따른 서버 상태 변화가 특정 조합에 몰리지 않게 했다. 회차 하나는 적재·대기·측정·내림을 합쳐 약 70 초 걸린다.")
-R.p("보조 데이터셋 경과: 당시의 exp/run_all.sh(커밋 5769378; 지금의 run_all_6x6.sh 와 주석 한 줄만 다른 같은 내용, 빌드 → base → wbuffix)로 14:20:28 에 시작했으나 "
-    "base 21 번째 회차(매핑 32K·bs 16K)에서 가상 장치가 멈춰(5.6 절) 당시 스크립트가 실험을 중단했다(14:46:57). 실패 회차를 FAILED 로 남기고 계속하도록 고친 뒤"
-    "(커밋 2a462a3 → push 전 949ae38 로 다시 만듦, " + POST_N + " 절) `bash run_experiment.sh main_20261008 wbuffix` 로 wbuffix 를 먼저 재개했고(run.log 첫 줄 14:49:14), "
-    "15:51:23 에 설계 변경으로 회차 경계에서 멈췄다. 모듈은 14:20 에 한 번 빌드한 것을 끝까지(주 데이터셋 포함) 그대로 썼다(SHA-256 확인).", size=9.5)
+R.p("보조 데이터셋 경과: 첫 설계는 14:20:28 에 시작했다(모듈 빌드 14:20:28–14:21:02). 쓰기 버퍼 계산을 고친 모델(wbuffix)의 회차는 "
+    "`bash run_experiment.sh main_20261008 wbuffix` 로 14:49:14 에 시작했고(run.log 첫 줄; 스크립트 커밋 2a462a3 → push 전 949ae38 로 다시 만듦, " + POST_N + " 절), "
+    "15:51:23 에 설계 변경으로 회차 경계에서 멈췄다. 모듈은 14:20 에 한 번 빌드한 것을 끝까지(주 데이터셋 포함) 그대로 썼다(SHA-256 확인). "
+    "14:21–14:47 에는 원본 모델(base)을 돌렸는데, 그 결과는 사용자 요청으로 뺐다(" + POST_N + " 절).", size=9.5)
 _sums = dict((ln.split()[1], ln.split()[0]) for ln in read(EXP_DIR / (PRI["variants"][0] if PRI["variants"] else "") / "modules_SHA256SUMS").splitlines() if len(ln.split()) == 2)
 if _sums:
     R.p("주 데이터셋에 쓴 wbuffix 모듈은 커밋 5769378 상태의 /home/dccearth/jsw/KSC2026/nvmevirt/nvmevirt 에서 make MAPPING_UNIT=<바이트> GC_STATS=1 WBUF_FIX=1 로 빌드했다"
         "(2026-10-08 14:20:45–14:21:02 KST, gcc 13.3.0, 커널 헤더 6.8.0-142). 쓴 모듈의 SHA-256: "
         + "; ".join(f"{k} {v}" for k, v in _sums.items() if any(f"map{m}.ko" in k for m in PRI["sizes"]))
-        + ". 6 개 단위 전체와 base 값은 결과 폴더의 modules_SHA256SUMS 와 회차별 meta.txt 의 module 줄에 있다(.ko 는 git 에 넣지 않았다).", size=9)
+        + ". 6 개 단위 전체는 결과 폴더의 modules_SHA256SUMS 와 회차별 meta.txt 의 module 줄에 있다(.ko 는 git 에 넣지 않았다).", size=9)
 R.h("4.3 재현 명령", 2)
 _supname = SUP["name"] if SUP else "main_20261008"
 R.code(f"""git clone https://github.com/Sangwon8799/nvmevirt.git nvmevirt && cd nvmevirt   # 공개 저장소 (SSH 키 불필요)
@@ -613,12 +613,11 @@ bash build_modules.sh wbuffix   # make MAPPING_UNIT=<바이트> GC_STATS=1 WBUF_
 sed -e "s|/home/dccearth/jsw/nvmevirt/exp/\\*|$(cd .. && pwd)/exp/*|" -e "s|dccearth|$(id -un)|g" report/nvmevirt-exp.sudoers > /tmp/nvmevirt-exp.sudoers   # 장치 이름이 nvme1n1 이 아니면 nomerges 경로도 바꾼다
 sudo visudo -cf /tmp/nvmevirt-exp.sudoers && sudo install -m 0440 -o root -g root /tmp/nvmevirt-exp.sudoers /etc/sudoers.d/nvmevirt-exp
 tmux new -s ksc2026 'bash run_all.sh {EXP} 2>&1 | tee -a results/run_all_{EXP}.log'   # 주 데이터셋 (약 65 분)
-tmux new -s ksc6x6 'bash run_all_6x6.sh {_supname} 2>&1 | tee -a results/run_all_{_supname}.log'   # (선택) 첫 설계 6×6×3×{{base,wbuffix}} (약 4.3 시간 + base 실패 회차)
-# 사전 점검 (5.2·5.3·5.7 절; 당시에는 대기 시간을 줄여 실행. 폴더 이름은 실험 후 pre_* 로 바꿈)
-bash build_modules.sh base && MAPS=4k bash build_modules.sh plain
-MAPS=128k BSS=4k REPS=1 RUNTIME=10 SETTLE_SEC=2 bash run_experiment.sh pre_smoke_test base                                   # 5.2
+tmux new -s ksc6x6 'bash run_all_6x6.sh {_supname} 2>&1 | tee -a results/run_all_{_supname}.log'   # (선택) 첫 설계 6×6×3, wbuffix (약 2.1 시간)
+# 사전 점검 (5.3·5.6 절; 당시에는 대기 시간을 줄여 실행. 폴더 이름은 실험 후 pre_* 로 바꿈)
+MAPS=4k bash build_modules.sh base && MAPS=4k bash build_modules.sh plain   # 5.3 전용: 원본 쓰기 버퍼 계산 + GC_STATS 켬/끔 (bs = 매핑 단위에서만 쓴다)
 for v in plain base; do MAPS=4k BSS=4k REPS=3 RUNTIME=20 SETTLE_SEC=3 bash run_experiment.sh pre_gcstats_ab $v; done         # 5.3
-MAPS="4k 16k" BSS=4k REPS=2 RUNTIME=8 SETTLE_SEC=2 CACHE_MODES="nodrop drop" bash run_experiment.sh pre_cache_test wbuffix   # 5.7
+MAPS="4k 16k" BSS=4k REPS=2 RUNTIME=8 SETTLE_SEC=2 CACHE_MODES="nodrop drop" bash run_experiment.sh pre_cache_test wbuffix   # 5.6
 ./.venv/bin/python plot.py all --exp results/{EXP}    # 그래프
 """ + (f"""# 순차 쓰기 실험 (8 절): wbuffix 모듈(위에서 빌드) + merge 모듈, 3×3×3×2 = 54 회 (약 64 분)
 MAPS="4k 16k 32k" bash build_modules.sh merge
@@ -634,7 +633,7 @@ unset REPS RUNTIME CACHE_MODES
 tmux new -s ksc2026rbs 'bash run_all_rand_bs.sh {RBS['name']} {EXP} {RV['name'] if RV else ''} 2>&1 | tee -a results/run_all_{RBS['name']}.log'
 ./.venv/bin/python plot.py all --exp results/{RV['name'] if RV else ''}
 """ if RBS else "") + f"""./.venv/bin/python report/make_report.py results/{EXP} --supp results/{_supname}""" + (f" --seq results/{SEQ['name']}" if SEQ else "") + (f" --rbs results/{RBS['name']} --rview results/{RV['name']}" if RBS and RV else "") + """   # 이 문서 (선택 단계를 건너뛰었으면 해당 인자 생략)""")
-R.p("위 sed 는 3.3 절 규칙의 chown 경로와 사용자 이름을 바꾼다. 5.2 절 스모크 테스트는 당시 매핑 4K·128K × bs 4K·128K 로도 돌렸지만 남은 결과는 128K/4K 1 회뿐이다(5.2 절).", size=9)
+R.p("위 sed 는 3.3 절 규칙의 chown 경로와 사용자 이름을 바꾼다. `MAPS=4k bash build_modules.sh base` 는 modules/base/SHA256SUMS 를 4K 한 줄로 다시 쓴다.", size=9)
 R.h("4.4 결과 파일", 2)
 R.table(["파일 (회차 폴더 exp/results/<EXP>/<변형>_<nodrop|drop>/map<단위>_bs<크기>_r<회>/ — CACHE_MODES=nodrop 단독이면 <변형>/map…/)", "내용"], [
     ["fio.json", "fio 결과 (JSON) — BW, IOPS, clat/slat/lat 통계, 백분위수"],
@@ -688,24 +687,11 @@ nvme nvme1: 1/0/0 default/read/poll queues""")
 R.p("매핑 단위 6 개 모두 init 단계의 assert 를 통과하고 블록은 정확히 2 MiB 가 된다(블록 원시 크기 2,096,982 B 가 oneshot page 단위로 올림되어 2,097,152 B). "
     "64K·128K 는 FLASH_PAGE_SIZE 를 그대로 32 KiB 로 두면 ssd.c:98 의 assert 로 적재가 실패한다(사용자가 지적한 대로 flash page 를 매핑 단위와 같게 함).")
 R.h("5.2 스모크 테스트", 2)
-smoke = []
-for v in ("base", "wbuffix"):
-    for mp in ("4k", "128k"):
-        for bs in ("4k", "128k"):
-            d = EXPD / "results" / "pre_smoke_test" / v / f"map{mp}_bs{bs}_r1"
-            if (d / "fio.json").exists():
-                w = json.loads(read(d / "fio.json"))["jobs"][0]["write"]
-                cm = re.search(r"chmodel_msgs:\s*(\S+)", read(d / "meta.txt"))
-                smoke.append([v, mp.upper(), bs.upper(), f"{w['bw'] / 1024:.1f}", f"{w['iops']:,.0f}", f"{w['clat_ns']['mean'] / 1e3:.1f}", f"{int(cm.group(1)):,}" if cm and cm.group(1).isdigit() else "–"])
-if smoke:
-    R.table(["변형", "매핑", "bs", "MiB/s", "IOPS", "clat 평균 µs", "채널 모델 오류"], smoke,
-            widths=[2.2, 1.6, 1.6, 2.2, 2.6, 2.6, 3.2], size=8.5, caption="스모크 테스트 (10 s, 1 회, insmod 후 대기 2 s)", align_right_from=3)
-else:
-    R.p("스모크 테스트(매핑 4K·128K × bs 4K·128K, 10 s)로 회차 절차·결과 파일·커널 로그 수집을 점검했다.")
-R.p("10 초짜리 짧은 실행으로 회차 절차가 끝까지 도는지 확인했다. 이 과정에서 두 가지를 고쳤다: "
+R.p("본 실험 전에 10 초짜리 짧은 실행(매핑 4K·128K × bs 4K·128K)으로 회차 절차·결과 파일·커널 로그 수집이 끝까지 도는지 확인했다. 이 과정에서 두 가지를 고쳤다: "
     "(1) dmesg 시각과 /proc/uptime 의 차이 때문에 시각으로 로그를 자르던 방법이 실패해 커널 로그 표지(/dev/kmsg) 방식으로 바꿨고, "
-    "(2) base 의 매핑 128K·bs 4K 에서 NVMeVirt 가 10 초에 약 186 만 줄(표의 회차; 결과를 남기지 않은 앞선 회차는 1,665,207 줄)의 '[chmodel_request] Need to increase array size' 오류를 찍어 "
-    "256 KiB 커널 링 버퍼를 덮어써서, 커널 로그를 실시간으로 따라가며 그 줄은 개수만 세도록 했다.", size=9.5)
+    "(2) NVMeVirt 의 '[chmodel_request] Need to increase array size' 오류가 한꺼번에 많이 찍히면 256 KiB 커널 링 버퍼가 덮어써질 수 있어, "
+    "커널 로그를 실시간으로 따라가며 그 줄은 개수만 세도록 했다(모든 본 실험 회차에서 이 수는 0 이다). "
+    "스모크 테스트는 대부분 쓰기 버퍼 계산을 고치지 않은 원본 모델로 돌렸고, 3 차에는 wbuffix 도 함께 돌렸다. 원본 모델로 잰 측정값과 결과 폴더는 남기지 않았다.", size=9.5)
 R.h("5.3 GC_STATS 계측의 영향 확인", 2)
 ab = []
 for v in ("plain", "base"):
@@ -718,8 +704,9 @@ if ab:
     R.table(["빌드", "회", "MiB/s", "IOPS", "clat 평균 µs"], ab, widths=[5.0, 1.5, 3.0, 3.5, 3.0], size=8.5,
             caption="GC_STATS 계측 유무 비교 (매핑 4K, bs 4K, 20 s, 3 회, insmod 후 대기 3 s)", align_right_from=2)
 R.p("GC 통계(첫 GC 시각, 호스트/GC 페이지 수)를 남기는 계측은 디스패처 스레드에서 정수 증가 몇 번과 첫 GC 때 printk 1 줄만 더한다. "
-    "요청 수가 가장 많아 디스패처의 요청당 작업이 결과에 가장 잘 드러나는 4K/4K 에서 계측을 끈 빌드와 켠 빌드를 20 초씩 3 회 비교했다. 평균 차이(+0.31 %, 계측을 켠 빌드가 오히려 빠름)가 반복 간 범위(끈 빌드 0.30 %, 켠 빌드 0.23 %)와 같은 수준이어서 계측 비용이 드러나지 않음을 확인한 뒤 본 실험의 두 변형 모두에 켰다.")
-R.h("5.4 발견 1 — 매핑 단위보다 작은 쓰기에서 쓰기 버퍼가 과다 반환된다 (base)", 2)
+    "요청 수가 가장 많아 디스패처의 요청당 작업이 결과에 가장 잘 드러나는 4K/4K 에서 계측을 끈 빌드와 켠 빌드를 20 초씩 3 회 비교했다. 평균 차이(+0.31 %, 계측을 켠 빌드가 오히려 빠름)가 반복 간 범위(끈 빌드 0.30 %, 켠 빌드 0.23 %)와 같은 수준이어서 계측 비용이 드러나지 않음을 확인한 뒤 모든 측정 빌드에 켰다. "
+    "이 비교의 두 빌드(plain·base)는 원본 쓰기 버퍼 계산이다. 4K/4K 는 bs = 매핑 단위라 할당량이 wbuffix 와 같으므로(5.4 절) 이 결과는 wbuffix 에도 그대로 적용된다.")
+R.h("5.4 발견 — 원본 코드는 매핑 단위보다 작은 쓰기에서 쓰기 버퍼를 과다 반환한다", 2)
 R.p("NVMeVirt conventional SSD 의 conv_write() 는 요청 크기만큼 쓰기 버퍼를 할당하고(buffer_allocate(wbuf, LBA_TO_BYTE(nr_lba))), "
     "flash page(wordline)가 다 차서 프로그램될 때 'oneshot page 크기'만큼 반환한다(schedule_internal_operation(…, pgs_per_oneshotpg × pgsz)). "
     "bs ≥ 매핑 단위이면 둘이 같지만, bs < 매핑 단위이면 4 KiB 쓰기 하나가 매핑 단위 페이지 하나를 통째로 차지하므로 할당(bs)보다 반환(매핑 단위)이 많다. "
@@ -728,12 +715,11 @@ R.bullets([
     "그 결과 버퍼의 남은 양이 끝없이 늘어 쓰기 버퍼가 호스트를 붙잡는 역할(back-pressure)을 못 한다. 쓰기 조기 완료(WRITE_EARLY_COMPLETION=1)라 NAND·GC 지연이 호스트에 전달되는 통로는 이 버퍼뿐이다.",
     "NAND 작업이 실제 시간보다 계속 앞서 쌓이고, 채널 모델의 시간 창(96K × 4 µs ≈ 393 ms)을 넘으면 NVMeVirt 가 채널 전송 시간을 0 으로 처리하고 요청마다 "
     "'[chmodel_request] Need to increase array size' 를 printk 한다(rate limit 없음). 콘솔 로그 레벨 4 라 이 오류는 tty0 콘솔과 systemd-journald 에도 기록된다.",
-    "즉 base 의 bs < 매핑 단위 15 개 조합은 타이밍 모델이 정상 범위를 벗어난 상태에서 잰 값이다(5.2 절: 128K/4K 에서 10 초에 약 186 만 줄). "
-    "채널 시간이 빠지는 쪽(빨라짐)과 printk 부담(느려짐)이 섞여 있어 해석하기 어렵다. 각 회차의 오류 줄 수는 meta.txt 의 chmodel_msgs 와 부록 D 에 있다.",
+    "따라서 원본 계산으로는 bs < 매핑 단위인 조합의 타이밍 모델이 정상 범위를 벗어난다. 5.3 절의 계측 영향 확인(bs = 매핑 단위, plain·base)을 뺀 이 문서의 모든 결과는 아래 수정을 적용한 모델로 쟀다.",
     "코드 감사 에이전트 세 개(쓰기 경로·버퍼, 초기화·기하, GC·타이밍 렌즈)가 모두 독립적으로 같은 결론을 냈고(부록 E), 반박을 시도한 검증 6 회가 모두 핵심을 확인했다(세 건은 세부 수치·범위만 정정).",
 ])
 R.p("수정(WBUF_FIX=1, wbuffix 변형): 할당량을 실제로 프로그램될 매핑 단위 페이지 수에 맞춘다. PCIe·펌웨어 전송 시간 계산에는 원래대로 요청 크기를 쓴다. "
-    "bs ≥ 매핑 단위인 조합에서는 할당량이 원본과 같아서 결과가 바뀌지 않는다(실측으로도 확인 — 7 절).")
+    "bs ≥ 매핑 단위인 조합에서는 할당량이 원본과 같다.")
 R.code("""#if KSC_WBUF_FIX
 \t/* KSC2026: a write occupies whole mapping units in the write buffer; this is also what
 \t * schedule_internal_operation() releases once the flash page is programmed */
@@ -754,41 +740,20 @@ R.table(["특성", "내용", "영향"], [
     ["지우기 지연 0", "tBERS = 0 (기본값).", "GC 비용이 실제보다 작다 (모든 조합에 같게 적용)."],
     ["매핑 표 = 호스트 메모리 배열", "DRAM 캐시(DFTL) 모델이 없다.", "매핑 표 크기 감소 효과는 성능에 나타나지 않는다 — 3.5 절의 L2P 크기로 따로 보고."],
     ["활성 I/O 워커 1 개", "I/O 큐가 1 개라 cpu4 워커만 일한다.", "논문에는 '디스패처 1 + 워커 2 (활성 1)' 로 적는 것이 정확하다."],
-    ["GC 이전 처리량의 한계", "bs ≥ 매핑 단위이면 GC 전 처리량은 NAND 프로그램 한계(16 die 합 2,233 MiB/s @32K page, 64K 3,805, 128K 5,871) 또는 PCIe 한계(3,357 MiB/s)에 가깝다(4K/4K 실측 약 2,005 MiB/s = NAND 한계의 90 %). "
-     "base 의 bs < 매핑 단위(매핑 ≤ 32K)는 GC 전에는 NAND 한계 × bs/매핑 수준(8K/4K 약 1,116 MiB/s)에 머물고, GC 이후에는 5.4 절의 문제로 에뮬레이터 산물이 된다.",
+    ["GC 이전 처리량의 한계", "bs ≥ 매핑 단위이면 GC 전 처리량은 NAND 프로그램 한계(16 die 합 2,233 MiB/s @32K page, 64K 3,805, 128K 5,871) 또는 PCIe 한계(3,357 MiB/s)에 가깝다(4K/4K 실측 2,001 MiB/s = NAND 한계의 90 %). "
+     "bs < 매핑 단위이면 GC 전 처리량은 그 한계 × bs/매핑 수준이다(6.1 절의 GC 이전 구간 표).",
      "GC 전 구간은 NAND 모델을, GC 후 구간은 GC 모델을 반영한다 — 6 절의 GC 전/후 표로 나눠 본다."],
     ["fio randommap 주기 현상", "fio 기본값(norandommap=0)은 한 바퀴(11.21 GiB) 동안 같은 블록을 다시 쓰지 않는다. 첫 바퀴에는 무효 페이지가 없어 GC 가 시작되는 순간(둘째 바퀴 약 0.66 GiB 지점) 희생 line 에 유효 페이지가 거의 가득해 대역폭이 급락하고, "
      "둘째 바퀴가 진행될수록 회복하다가 끝 무렵 첫 바퀴의 line 이 모두 무효가 되며 치솟은 뒤 셋째 바퀴에서 다시 떨어진다.",
      "60 s 평균에 이 주기가 섞인다. 시계열(6.3 절)을 함께 봐야 한다. GC 구간은 정상 상태가 아니다."],
     ["GC 시작 시각 차이", "포맷 직후 60 s 라 조합마다 GC 이전 구간 비율이 다르다.", "60 s 평균과 함께 GC 전/후 BW, 시계열을 같이 본다."],
     ["randrepeat=1", "모든 회차가 같은 난수 순서를 쓴다.", "3 회 반복은 에뮬레이터 타이밍 편차만 담는다."],
-    ["작은 쓰기 병합 없음", "매핑 단위보다 작은 쓰기는 명령마다 매핑 단위 페이지 하나를 새로 쓴다. 같은 단위로 이어서 오는 쓰기도 쓰기 버퍼에서 합치지 않는다(원본 동작, base·wbuffix 모두).",
+    ["작은 쓰기 병합 없음", "매핑 단위보다 작은 쓰기는 명령마다 매핑 단위 페이지 하나를 새로 쓴다. 같은 단위로 이어서 오는 쓰기도 쓰기 버퍼에서 합치지 않는다(원본 동작이며 wbuffix 도 같다).",
      "랜덤 쓰기에서는 실제 SSD 도 단위를 새로 써야 하므로 영향이 작다(RMW 읽기만 빠짐). 순차 쓰기에서는 결과를 좌우한다 — 8 절에서 병합 모델(merge)과 함께 본다."],
     ["블록 계층 병합", "커널 기본(mq-deadline, nomerges=0)에서는 인접한 요청을 합친다.", "랜덤 쓰기는 합칠 요청이 거의 없다(15 s 동안 fio 쓰기 1,144,511 개 중 1 개, 8.3 절" + (f"; bs 8K·64K 회차는 요청의 0.054 % 이하, {RBS_N}.1 절" if RBS else "") + "). 순차 쓰기는 nomerges=2 로 끄고 측정했다."],
 ], widths=[3.2, 7.6, 6.2], size=8, caption="해석 시 주의할 모델 특성")
 
-R.h("5.6 발견 2 — base 에서 가상 장치가 멈추는 조합", 2)
-FAILED_RUNS = (SUP or PRI)["failed"]
-R.p("요청 설정 그대로인 base 의 bs < 매핑 단위 조합에서는 쓰기 버퍼가 호스트를 붙잡지 못해 NAND 작업 대기열이 계속 늘어난다. NVMeVirt 의 I/O 워커 작업 큐"
-    "(워커당 16,384 항목)가 차면 io.c:302 의 WARN_ON_ONCE('IO queue is almost full')가 찍히고 이후 명령이 처리되지 않아, 리눅스 nvme 드라이버의 "
-    "I/O 시간 초과(30 s) → 중단(abort) → 컨트롤러 리셋 → 장치 비활성화 → I/O 오류로 이어진다. 그런 회차는 FAILED 로 표시해 평균에서 빼고 아래에 따로 적었다. "
-    "rmmod 는 정상 처리되었고 다음 회차의 insmod 도 정상이었다.")
-if FAILED_RUNS:
-    R.table(["변형", "매핑", "bs", "회", "fio\n종료", "fio\n오류", "실행\n시간 s", "큐 포화\n경고 s", "nvme\n시간초과 s", "리셋 s", "비활성 s", "채널모델\n오류 줄"],
-            [[r["variant"], r["map"].upper(), r["bs"].upper(), str(int(r["rep"])), (str(int(r["fio_exit"])) if r.get("fio_exit") not in ("", None) else "–"), (f"{int(r['fio_json_error'])} (EIO)" if r.get("fio_json_error") not in ("", None) and int(r["fio_json_error"]) == 5 else str(r.get("fio_json_error", "–"))),
-              fnum(r.get("runtime_s"), 1), fnum(r.get("t_queue_full_warn_s"), 1), fnum(r.get("t_nvme_timeout_s"), 1), fnum(r.get("t_reset_s"), 1),
-              fnum(r.get("t_disable_s"), 1), fnum(r.get("chmodel_msgs"), 0)] for r in FAILED_RUNS],
-            widths=[1.4, 1.1, 1.1, 0.7, 1.1, 1.1, 1.4, 1.5, 1.6, 1.3, 1.4, 2.2], size=7, caption="실패(FAILED) 회차 — 시각은 fio 시작 기준 초", align_right_from=3)
-R.code("""# base map32k_bs16k_r1 의 kernel.log (괄호 = fio 시작 기준; 이 회차는 14:44:22 KST 시작)
-[62511.194665] NVMeVirt: KSC2026: first GC part=1 victim line=12 vpc=86 ipc=170 free_lines=2 host_pgs=97280      (+5.6 s)
-[62530.521783] WARNING: CPU: 3 PID: 30089 at …/nvmevirt/io.c:302 __allocate_work_queue_entry+0x8a/0xb0 [nvmev]  (+25.0 s)
-[62560.640166] nvme nvme1: I/O tag 192 (80c0) opcode 0x1 (I/O Cmd) QID 1 timeout, aborting req_op:WRITE(1) size:16384  (+55.1 s)
-[62590.847614] nvme nvme1: I/O tag 192 (80c0) opcode 0x1 (I/O Cmd) QID 1 timeout, reset controller                    (+85.3 s)
-[62652.289426] nvme nvme1: I/O tag 28 (301c) QID 0 timeout, disable controller                                        (+146.7 s)
-[62652.306429] nvme nvme1: Disabling device after reset failure: -5
-[62652.313386] I/O error, dev nvme1n1, sector 6011360 op 0x1:(WRITE) flags 0x8800 phys_seg 1 prio class 2
-fio: io_u error on file /dev/nvme1n1: Input/output error: write offset=…, buflen=16384   → fio error 5 (EIO), 146.5 s""")
-R.h("5.7 페이지 캐시 drop 사전 시험", 2)
+R.h("5.6 페이지 캐시 drop 사전 시험", 2)
 pc = []
 for cmode in ("nodrop", "drop"):
     for mp in ("4k", "16k"):
@@ -805,7 +770,7 @@ if pc:
     R.table(["조건", "매핑", "bs", "회", "MiB/s", "clat 평균 µs", "Cached 전 (MiB)", "Cached 후 (MiB)"], pc,
             widths=[1.8, 1.5, 1.2, 1.0, 2.4, 2.6, 3.2, 3.3], size=8.5, caption="페이지 캐시 drop 사전 시험 (wbuffix, 8 s, 2 회, insmod 후 대기 2 s, 15:57–15:59 KST)", align_right_from=3)
 R.p("본 실험 전에 drop 절차가 동작하는지 확인했다. 시험 직전 서버의 페이지 캐시는 약 10 GB(Cached 10,227,884 kB)였고 drop 후 약 240 MiB 로 줄었다. "
-    "그 전 base 회차들이 쏟아낸 수천만 줄의 커널 오류 로그가 journald 파일로 디스크에 쓰이며 쌓인 것으로 보인다. 8 초 시험에서 drop/no-drop 차이는 조합별 평균으로 4K/4K −0.12 %, 16K/4K −0.005 % 였고, 회차별로는 최대 0.17 %(4K/4K 1 회차: 1553.2 → 1550.6 MiB/s)였다.", size=9.5)
+    "그 전 실험들의 커널 로그가 journald 파일로 디스크에 쓰이며 쌓인 것으로 보인다. 8 초 시험에서 drop/no-drop 차이는 조합별 평균으로 4K/4K −0.12 %, 16K/4K −0.005 % 였고, 회차별로는 최대 0.17 %(4K/4K 1 회차: 1553.2 → 1550.6 MiB/s)였다.", size=9.5)
 
 # ============================================================================ 6
 R.h("6. 결과 — 주 데이터셋 (" + EXP + ")")
@@ -875,32 +840,21 @@ else:
 # ============================================================================ 7
 if SUP:
     R.h("7. 보조 데이터셋 — 첫 설계 (" + SUP["name"] + ", 부분)")
-    R.p("첫 설계(매핑 4–128K × bs 4–128K × 3 회 × base·wbuffix)는 설계 변경으로 15:51:23 KST 에 멈췄다. 완료한 회차는 base " + str(n_sup.get("base", 0)) +
-        " 회(+ FAILED " + str(len(SUP["failed"])) + " 회), wbuffix " + str(n_sup.get("wbuffix", 0)) + " 회다. 주 데이터셋과 같은 모듈 바이너리·절차이며 페이지 캐시는 그대로(nodrop)였다. "
-        "칸의 (n=…) 는 완료 회차 수다.", size=9.5)
+    R.p("첫 설계(매핑 4–128K × bs 4–128K × 3 회)는 설계 변경으로 15:51:23 KST 에 멈췄다. 완료한 회차는 wbuffix " + str(n_sup.get("wbuffix", 0)) +
+        " 회다(반복 1 의 36 조합 전부와 반복 2 의 17 조합). 주 데이터셋과 같은 모듈 바이너리·절차이며 페이지 캐시는 그대로(nodrop)였다. "
+        "칸의 (n=…) 는 완료 회차 수다. 64K·128K 는 flash page 도 함께 커져 NAND 성능이 달라진다(5.5 절). "
+        "당시 먼저 돌린 원본 모델(base)의 결과는 bs < 매핑 단위 조합이 5.4 절의 결함 때문에 유효한 측정이 아니고 보려던 실험도 아니어서, 사용자 요청으로 모두 뺐다(" + POST_N + " 절).", size=9.5)
     lt = lambda mp, bs: kib(bs) < kib(mp)  # noqa: E731
     hdr7 = ["매핑 \\ bs"] + [x.upper() for x in SUP["sizes"]]
     W7 = [2.0] + [round(15.0 / len(SUP["sizes"]), 2)] * len(SUP["sizes"])
     for v in SUP["variants"]:
         R.table(hdr7, matrix_rows(v, "bw_MiBps", 1, True, lt, SUP), widths=W7, size=7.5, caption=f"쓰기 대역폭 MiB/s — 보조 · {v} (* bs < 매핑)",
                 align_right_from=1, bold_first_col=True)
-    rows7 = []
-    for mp in SUP["sizes"]:
-        for bs in SUP["sizes"]:
-            a, b = agg("base", mp, bs, SUP), agg("wbuffix", mp, bs, SUP)
-            if not a or not b:
-                continue
-            d = (b["bw_MiBps_mean"] - a["bw_MiBps_mean"]) / a["bw_MiBps_mean"] * 100 if a["bw_MiBps_mean"] else float("nan")
-            rows7.append([mp.upper(), bs.upper(), "예" if lt(mp, bs) else "", fnum(a["bw_MiBps_mean"]), fnum(b["bw_MiBps_mean"]), f"{d:+.1f} %",
-                          fnum(a.get("chmodel_msgs_mean", 0), 0), fnum(b.get("chmodel_msgs_mean", 0), 0)])
-    if rows7:
-        R.table(["매핑", "bs", "bs<매핑", "base MiB/s", "wbuffix MiB/s", "차이", "base 채널모델\n오류 줄", "wbuffix\n오류 줄"], rows7,
-                widths=[1.5, 1.5, 1.5, 2.3, 2.5, 1.8, 3.0, 2.4], size=7.5, caption="보조 데이터셋 base / wbuffix 비교 (둘 다 완료한 조합)", align_right_from=3)
-    R.p("bs ≥ 매핑 단위 조합에서는 두 변형의 차이가 반복 편차 수준이고(같은 코드 경로), bs < 매핑 단위 조합에서만 base 가 채널 모델 오류를 수백만 줄 내며 다른 값을 낸다(5.4 절). "
-        "매핑 32K·bs 16K 의 base 는 장치가 멈췄다(5.6 절).", size=9.5)
-    for fig, cap in (("fig_timeseries_wbuffix.png", "보조 · wbuffix 시계열 (6 × 6)"), ("fig_variant_compare.png", "보조 · base / wbuffix 대역폭 비교")):
+        R.table(hdr7, matrix_rows(v, "waf_total", 2, False, lt, SUP), widths=W7, size=7.5, caption=f"전체 쓰기 증폭 WAF_total — 보조 · {v} (* bs < 매핑)",
+                align_right_from=1, bold_first_col=True)
+    for fig, cap in (("fig_timeseries_wbuffix.png", "보조 · wbuffix 시계열 (6 × 6)"), ("fig_bw_heatmap_wbuffix.png", "보조 · wbuffix 평균 대역폭")):
         if (SUP["an"] / fig).exists():
-            R.figure(SUP["an"] / fig, cap, 17.0)
+            R.figure(SUP["an"] / fig, cap, 17.0 if "timeseries" in fig else 13.0)
 
 # ============================================================================ 8 (sequential write)
 def _merge_fn_src():
@@ -950,7 +904,7 @@ if SEQ:
         "매핑 단위 전체를 덮는 쓰기는 원본(wbuffix)과 똑같이 바로 쓴다. 따라서 bs ≥ 매핑 단위이면 두 모델의 동작이 같다.",
         "버퍼 장부: 쓰는 페이지마다 매핑 단위 하나가 정확히 한 번 할당되어 반납과 맞는다. 계속 붙잡히는 양은 파티션당 열린 단위 1 개와 덜 찬 wordline 으로 128 KiB 이하다(버퍼 1 MiB).",
         "한계: 파티션마다 열린 단위가 1 개뿐이다(실제 SSD 는 버퍼 전체를 여러 단위에 쓸 수 있다). 하나의 순차 흐름에는 충분하다. FUA·FLUSH 는 원본처럼 열린 단위를 강제로 쓰지 않는다(이 장치는 VWC=0 이라 커널이 보내지 않음).",
-        "WBUF_MERGE=0 빌드(base·wbuffix)는 이 변경 전과 같은 기계어다(디스어셈블리 비교로 확인).",
+        "WBUF_MERGE=0 인 빌드(wbuffix 등)는 이 변경 전과 같은 기계어다(디스어셈블리 비교로 확인).",
     ])
     R.p("코드 검토: 실행 전에 에이전트 4 개가 관점 하나씩(쓰기 버퍼 장부, FTL 상태, 실험에 맞는 모델 동작, 커널 안전성) 독립적으로 읽고, 지적마다 반박 검증 1 개를 두었다(20:01–20:13 KST). "
         "고칠 결함은 없었다. 장부 로직은 Python 으로 옮겨 무작위 명령 약 180 만 개(매핑 단위 3 종 × 시드 30 × 명령 2 만)로 퍼징했다(위반 없음). 지적 1 건(FUA/FLUSH 가 열린 단위를 내보내지 않음)은 원본과 같은 단순화로 판정되어 주석만 보강했다. "
@@ -1128,6 +1082,9 @@ R.table(["항목", "실험 전", "실험 중", "실험 후"], [
     *([["블록 장치 nomerges", "0 (커널 기본)", "순차 쓰기 회차마다 insmod 직후 2", "장치가 rmmod 로 사라져 설정도 없어짐"]] if SEQ else []),
     ["CPU governor / 터보", "powersave / 켬", "변경 없음", "변경 없음"],
     ["NVMeVirt 저장소 위치", "–", "/home/dccearth/jsw/KSC2026/nvmevirt", "/home/dccearth/jsw/nvmevirt 로 이동 (사용자 지시)"],
+    ["원본 모델(base)로 잰 결과", "–", "첫 설계에서 21 회(14:21–14:47), 스모크 테스트 1 회",
+     f"23:33 사용자 요청으로 {BASE_REMOVED} 부터 문서와 저장소 최신 상태에서 뺌: 원자료 폴더, 그 수치·표·그림, 감사 원본 JSON. 이전 커밋과 태그 ksc2026-final·ksc2026-v2 에는 남아 있다. "
+     "GC_STATS 영향 확인(5.3 절, bs = 매핑 단위)의 6 회는 남겼다"],
     ["이전 실험 폴더 /home/dccearth/jsw/exp", "있음 (이전 iodepth 시험 등)", "사용 안 함", "삭제 (사용자 지시; 수치는 인계 기록에 보존)"],
     ["NVMeVirt 소스·결과·문서", f"원본 {UPSTREAM[:7]}", f"{HEAD[:7]} (3.4 절)" + (f", 순차 쓰기 {SEQ_HEAD[:7]}" if SEQ else "") + (f", 랜덤 bs 8K·64K {RBS_HEAD[:7]}" if RBS else ""),
      (f"GitHub main 과 태그 {PUSH_TAG} 로 push (결과·문서·생성기 포함)" if PUSH_TAG else f"push 예정 (작성 시점 origin/main = {git('rev-parse', '--short', 'origin/main') or '–'})")],
@@ -1137,7 +1094,7 @@ R.p("커밋 재작성(모두 첫 push 전, 코드·스크립트는 그대로이�
     "① 16:04 KST, 커밋 1d6cd03 에 인계 기록 파일의 한 줄(sudo 비밀번호와 서버 IP 앞부분 문자열)이 들어가 있어 그 줄만 고쳐 a93ef76 으로 다시 만들었다. "
     "② 18:3x KST, 인계 기록 머리말에 들어간 사용자의 Claude 계정 이메일을 빼려고 2a462a3 → 949ae38, a93ef76 → e598e75 로 다시 만들었다. "
     "따라서 원자료에 적힌 커밋은 다음과 같이 읽는다: 주 데이터셋 처음 4 회차(map4k_bs4k_r1·map4k_bs16k_r1 의 nodrop·drop)의 meta.txt 와 wbuffix_*/git_head.txt·env_before 의 1d6cd03, "
-    "나머지 50 회차의 a93ef76 = e598e75 / 보조 데이터셋 wbuffix 53 회차의 2a462a3 = 949ae38 / base 21 회차의 5769378 은 그대로.", size=9)
+    "나머지 50 회차의 a93ef76 = e598e75 / 보조 데이터셋 wbuffix 53 회차의 2a462a3 = 949ae38.", size=9)
 R.code("""# 실험 후 정리 (서버) — 실제로 실행한 명령
 lsmod | grep nvmev || echo "nvmev not loaded"
 sudo rm /etc/sudoers.d/nvmevirt-exp      # """ + POST_N + """ 절 표의 시각 (18:33)
@@ -1161,7 +1118,8 @@ R.p("부록의 스크립트는 문서를 만든 시점의 작업 트리 내용�
     + ((" 이어서 랜덤 bs 8K·64K 실험용으로 run_all_rand_bs.sh·link_runs.py 를 더하고, analyze.py·plot.py 가 매핑 단위(행)와 bs(열)를 따로 다루게 했으며, "
         "collect_env.sh 가 같은 폴더의 옛 스냅샷을 지우고 새로 쓰게 했다(git diff " + SEQ_HEAD[:7] + " " + RBS_HEAD[:7] + " -- exp). 랜덤 bs 8K·64K 회차는 " + RBS_HEAD[:7]
         + " 의 스크립트로 실행했다(run_experiment.sh·common.sh 는 " + SEQ_HEAD[:7] + " 와 같다). 그 뒤의 커밋에서는 주석, run_all*.sh 의 모듈 확인 방식(.ko 파일 존재 검사), "
-        "link_runs.py 의 오류 처리, make_gallery.py 만 고쳤고 측정 절차는 같다.") if RBS and SEQ else ""), size=9)
+        "link_runs.py 의 오류 처리, make_gallery.py 를 고쳤다. 마지막으로 원본 모델(base) 결과를 빼면서(" + POST_N + " 절) run_experiment.sh·build_modules.sh 의 "
+        "기본 변형을 base 에서 wbuffix 로 바꾸고 run_all_6x6.sh 에서 base 빌드·실행 단계를 뺐다. run_all*.sh 와 4.3 절의 명령은 모두 변형을 인자로 주므로 측정 절차는 같다.") if RBS and SEQ else ""), size=9)
 R.p("이 문서와 인계 기록을 만드는 exp/report/ 의 make_report.py · docx_helpers.py · make_md_results.py · findings_ko.txt · findings_seq_ko.txt · findings_randbs_ko.txt · make_handoff.sh 는 "
     + (f"태그 {PUSH_TAG} 의 커밋에 있다" if PUSH_TAG else "작업 트리에 있다(커밋 예정)") + "(분량상 생략).", size=9)
 R.page_break()
@@ -1171,7 +1129,7 @@ R.p(f"원본 {UPSTREAM[:7]} 의 파일을 그대로 nvmevirt/ 로 옮긴 커밋(
 R.code(git("diff", MOVE, HEAD, "--", "nvmevirt"))
 if SEQ and SEQ_HEAD and SEQ_HEAD != HEAD:
     R.h("B-2. 순차 쓰기 실험에서 더한 변경 (쓰기 버퍼 병합 모델, " + HEAD[:7] + " → " + SEQ_HEAD[:7] + ")", 2)
-    R.p(f"git diff {HEAD[:7]} {SEQ_HEAD[:7]} -- nvmevirt. WBUF_MERGE=0 인 빌드(base·wbuffix)는 이 변경 전과 같은 코드가 된다(8.2 절).", size=9)
+    R.p(f"git diff {HEAD[:7]} {SEQ_HEAD[:7]} -- nvmevirt. WBUF_MERGE=0 인 빌드(wbuffix 등)는 이 변경 전과 같은 코드가 된다(8.2 절).", size=9)
     R.code(git("diff", HEAD, SEQ_HEAD, "--", "nvmevirt"))
 R.page_break()
 R.h("부록 C. 실험 전 환경 스냅샷 (env_before)")

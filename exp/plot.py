@@ -7,12 +7,12 @@ usage (from exp/, with ./.venv/bin/python):
   python plot.py map     --metric iops --logy           # metric vs mapping unit, one line per bs
   python plot.py heatmap --metric waf_total --variant wbuffix
   python plot.py ts      --maps 128k --bss 4k,128k      # 0.5 s time series (bw|iops|clat|lat), dashed = first GC
-  python plot.py compare --metric bw_MiBps              # base vs wbuffix, one panel per mapping unit
+  python plot.py compare --metric bw_MiBps              # variants compared (e.g. wbuffix vs merge), one panel per mapping unit
   python plot.py all                                    # standard set -> results/<EXP>/plots/
 
 common options:
   --exp results/main_20261008   experiment directory (default: newest results/main_*)
-  --variant base,wbuffix        variants to include
+  --variant wbuffix,merge       variants to include
   --maps 4k,8k  --bss 4k,128k   restrict mapping units / block sizes
   --reps 1,2,3                  repetitions (ts)
   --logy                        logarithmic y axis

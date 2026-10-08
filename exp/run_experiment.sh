@@ -17,7 +17,7 @@ set -euo pipefail
 source "$(dirname "$0")/common.sh"
 
 EXP="${1:?usage: bash run_experiment.sh <EXP_NAME> [VARIANT]}"
-VARIANT="${2:-base}"
+VARIANT="${2:-wbuffix}"
 ONLY_BS_LT_MAP="${ONLY_BS_LT_MAP:-0}"
 OUT="$EXP_DIR/results/$EXP"
 read -r -a CM_LIST <<< "$CACHE_MODES"
@@ -122,7 +122,7 @@ run_one() {   # $1 = mapping unit, $2 = bs, $3 = repetition, $4 = cache mode (no
 
 	unload_nvmev                     # rmmod: make sure no previous FTL state is left
 	# Follow the kernel log for the whole run: NVMeVirt's '[chmodel_request] Need to increase array size'
-	# error flood (bs < mapping unit, base variant) can overwrite the 256 KiB ring buffer. Those lines are
+	# error flood (bs < mapping unit without WBUF_FIX) can overwrite the 256 KiB ring buffer. Those lines are
 	# counted on the fly (first 20 kept) so kernel.log stays small.
 	sudo -n dmesg -W 2>&1 > >(awk -v cnt="$rdir/chmodel_msgs.txt" '
 		/\[chmodel_request\]/ { n++; if (n <= 20) print; next }

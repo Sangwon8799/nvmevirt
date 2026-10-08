@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # Build nvmev.ko once per FTL mapping unit:
 #   exp/modules/<VARIANT>/nvmev_map<MAP>.ko  (+ build_map<MAP>.log, SHA256SUMS, build_info.txt)
-# usage: bash build_modules.sh [VARIANT]      (VARIANT: base | wbuffix | merge | plain, see common.sh)
+# usage: bash build_modules.sh [VARIANT]      (VARIANT: wbuffix (default) | merge | base | plain, see common.sh)
 set -euo pipefail
 source "$(dirname "$0")/common.sh"
 
-VARIANT="${1:-base}"
+VARIANT="${1:-wbuffix}"
 OUT="$EXP_DIR/modules/$VARIANT"
 EXTRA_MAKE_ARGS="$(variant_make_args "$VARIANT")"
 read -r -a MAP_LIST <<< "$MAPS"

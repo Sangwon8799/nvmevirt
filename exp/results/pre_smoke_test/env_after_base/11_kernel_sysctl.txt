@@ -1,6 +1,0 @@
-$ sysctl kernel.dmesg_restrict kernel.kptr_restrict kernel.numa_balancing vm.swappiness
-kernel.dmesg_restrict = 1
-kernel.kptr_restrict = 1
-kernel.numa_balancing = 0
-vm.swappiness = 60
-

@@ -1,9 +1,0 @@
-[2026-10-08 05:15:12] experiment=smoke_test variant=base maps=[128k] bss=[4k] reps=1 only_bs_lt_map=0
-[2026-10-08 05:15:12] fio: libaio randwrite iodepth=32 runtime=10s ramp_time=0s log=500ms; insmod memmap_start=12G memmap_size=12G cpus=3,4,5
-[2026-10-08 05:15:12] 1 runs, about 0 min
-environment snapshot -> /home/dccearth/jsw/KSC2026/nvmevirt/exp/results/smoke_test/env_before
-[2026-10-08 05:15:12] === [1/1] variant=base map=128k bs=4k rep=1 ===
-[2026-10-08 05:15:29] NOTE: 1859673 channel-model overflow messages (first 20 in kernel.log)
-    -> 101.6 MiB/s, 26006 IOPS, clat mean 1227.9 us
-environment snapshot -> /home/dccearth/jsw/KSC2026/nvmevirt/exp/results/smoke_test/env_after_base
-[2026-10-08 05:15:29] finished: /home/dccearth/jsw/KSC2026/nvmevirt/exp/results/smoke_test/base

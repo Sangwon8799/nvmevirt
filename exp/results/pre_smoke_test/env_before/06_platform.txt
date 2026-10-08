@@ -1,8 +1,0 @@
-$ grep -H . /sys/class/dmi/id/sys_vendor /sys/class/dmi/id/product_name /sys/class/dmi/id/board_vendor /sys/class/dmi/id/board_name /sys/class/dmi/id/bios_version /sys/class/dmi/id/bios_date
-/sys/class/dmi/id/sys_vendor:Micro-Star International Co., Ltd.
-/sys/class/dmi/id/product_name:MS-7E01
-/sys/class/dmi/id/board_vendor:Micro-Star International Co., Ltd.
-/sys/class/dmi/id/board_name:MAG B760M MORTAR (MS-7E01)
-/sys/class/dmi/id/bios_version:M.30
-/sys/class/dmi/id/bios_date:05/16/2023
-

@@ -52,9 +52,11 @@ to_bytes() {   # 4k -> 4096, 1m -> 1048576
 }
 
 # Build variants -> extra make arguments (all variants: conventional SSD, BLKS_PER_PLN 384, MAPPING_UNIT per module)
-#   base     requested configuration + GC statistics logging (observational only; does not change timing)
-#   wbuffix  base + write buffer holds whole mapping units (fixes over-release when bs < mapping unit)
-#   plain    requested configuration without GC statistics (used to check that GC_STATS has no effect)
+#   wbuffix  the model used for every result: write buffer holds whole mapping units (WBUF_FIX=1) + GC statistics
+#            logging (observational only; does not change timing)
+#   base     upstream write-buffer accounting + GC statistics. It over-releases the write buffer when bs < mapping
+#            unit, so it is NOT used for results; kept only for the GC_STATS check at bs = mapping unit (pre_gcstats_ab)
+#   plain    upstream write-buffer accounting without GC statistics (the other half of that check)
 #   merge    wbuffix + write-buffer merge: writes smaller than the mapping unit are collected in one open
 #            mapping unit per partition and written to flash once it is full (or replaced)
 variant_make_args() {
