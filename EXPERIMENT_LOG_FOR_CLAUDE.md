@@ -61,7 +61,7 @@
 ## 0. 현재 상태 요약 (STATUS)
 
 - 묶음을 받았다면 먼저 server_state/state.txt 로 묶음 시점의 진행률을 확인한다. 이 절은 최종 갱신 시점의 요약이다.
-- **원본 모델(base) 결과 삭제 (23:33 KST 사용자 요청)**: 쓰기 버퍼 계산을 고치지 않은 원본 모델(base)로 잰 결과는 사용자가 보려던 실험이 아니어서, 문서와 저장소 최신 상태에서 뺐다(1.24·10.6 절). 이 파일과 docx 의 모든 결과는 wbuffix(순차 쓰기는 merge 도) 모델의 것이다. 예외는 사용자 선택으로 남긴 GC_STATS 계측 영향 확인 6 회(pre_gcstats_ab 의 plain·base, 매핑 4K·bs 4K; 7 절, docx 5.3 절)뿐이다. 이전 커밋과 태그 ksc2026-final·ksc2026-v2 에는 base 결과가 남아 있으나 쓰지 않는다.
+- **원본 모델(base) 결과 삭제 (23:33 KST 사용자 요청)**: 쓰기 버퍼 계산을 고치지 않은 원본 모델(base)로 잰 결과는 사용자가 보려던 실험이 아니어서, 문서와 저장소 최신 상태에서 뺐다(1.24·10.6 절). 이 파일과 docx 의 모든 결과는 wbuffix(순차 쓰기는 merge 도) 모델의 것이다. 예외는 사용자 선택으로 남긴 GC_STATS 계측 영향 확인 6 회(pre_gcstats_ab 의 plain·base, 매핑 4K·bs 4K; 7 절, docx 5.3 절)뿐이다. 이전 커밋과 태그 ksc2026-final·ksc2026-v2 에는 base 결과가 남아 있으나 쓰지 않는다. base 를 뺀 상태는 커밋 5c0a241 = 태그 **ksc2026-v3** 이고, 10-09 09:27 KST 에 GitHub 에 push 했다(10.6 절 끝).
 - **추가 실험 2 — 랜덤 쓰기 bs 8K·64K (randbs_20261008 + 합친 보기 rand3x5_20261008; 22:08 KST 사용자 요청, 22:11 KST 시작)**. 지시는 1.20–1.23 절, 설계는 6.7 절, 해석은 8.8 절, 진행은 10.5 절, 수치는 11.4·11.5 절에 있다.
   - 설계: 매핑 4K·16K·32K × fio bs 8K·64K × 3 회 = 18 회, wbuffix, randwrite, nodrop, 블록 계층 커널 기본값(주 데이터셋과 같은 설정·같은 모듈 파일).
   - bs 4K·16K·32K 는 다시 재지 않고 주 데이터셋 nodrop 회차를 쓴다(사용자 선택). exp/link_runs.py 가 두 데이터셋의 회차를 results/rand3x5_20261008/wbuffix/ 에 상대 심볼릭 링크로 모으고(SOURCES.txt), analyze.py·plot.py 는 이 보기를 매핑 3 × bs 5 데이터셋처럼 읽는다.
@@ -1056,7 +1056,13 @@ dccearth ALL=(root) NOPASSWD: /usr/sbin/insmod, /usr/sbin/rmmod, /usr/bin/fio, /
 - 23:5x–익일(10-09) 00:2x KST 검증 워크플로(9.4 절)와 그 지적 26 건 반영.
 - 10-09 00:25 KST 최종 docx 생성(89 쪽; `KSC_PUSH_TAG=ksc2026-v3 … KSC_BASE_REMOVED=23:38`). 렌더링한 PDF 본문에서 base 실측 숫자·「장치 멈춤」·「5.7 절」이 0 건임을 확인했다. 같은 파일을 /home/dccearth/jsw/KSC2026/산출물/ 에 덮어썼다(00:25:51, cmp 로 동일 확인).
 - 10-09 00:26 KST 커밋 5c0a241(「exp: remove the results of the unfixed model (base) at the user's request」; 삭제 378 개 파일, 수정 40 개)과 주석 태그 ksc2026-v3(→ 5c0a241). 커밋 뒤 `git ls-files` 에 main_20261008/base/, pre_smoke_test/, audit_result.json, base 그림, failed_runs.csv 가 0 개임을 확인했다.
-- 이 시점에 forwarded ssh-agent 소켓이 없어 push 하지 못했다. **GitHub 에는 아직 975d408(= base 결과가 든 상태)이 main 이다.** push 결과는 이 항목 아래 줄에 적는다(줄이 없으면 아직 push 전이다). docx 의 「태그 ksc2026-v3 로 push」 문구는 push 뒤에 사실이 된다.
+- 10-09 00:26 KST 시점에는 forwarded ssh-agent 소켓이 없어 push 하지 못했다. 같은 시각에 push 전 상태를 담은 묶음 ksc2026_handoff_20261009_0026_v3_nobase.tgz 를 만들었다(다음 묶음이 대체한다). Claude 는 접속을 기다렸고(06:26 KST 재시도도 agent 가 없어 실패), 사용자는 밤사이 접속하지 않았다.
+- **10-09 09:27 KST GitHub push 성공.** 사용자가 09:26 에 `ssh -A` 로 접속했고(09:26:59 메시지 「접속했어」), Claude 가 그 agent 소켓으로 `git push origin main ksc2026-v3` 를 실행했다(`975d408..a0b18d7 main -> main`, `[new tag] ksc2026-v3`).
+  - 확인(`git ls-remote https://github.com/Sangwon8799/nvmevirt.git`): refs/heads/main = a0b18d7, 태그 ksc2026-v3(태그 객체 1b16e30) → 5c0a241, ksc2026-v2 → c9dfb23, ksc2026-final → c742c67.
+  - 따라서 GitHub 의 main 과 태그 ksc2026-v3 에는 base 결과가 없다. 이전 태그 두 개와 그 사이 커밋에는 남아 있다(사용자 선택).
+  - 그 뒤 main 에는 이 파일만 고친 커밋(push 결과·최종 묶음 기록)이 하나 더 올라간다. docx 4.3 절의 `git checkout ksc2026-v3` 는 5c0a241 이다.
+- 10-09 09:2x KST 최종 인계 묶음(라벨 v3_final)을 이 파일과 같은 내용으로 만들었다. 묶음 이름과 시각은 묶음의 README_FIRST.txt 첫 줄에 있다.
+- ~/jsw/handoff/ 의 예전 묶음 두 개(ksc2026_handoff_20261008_1836_final.tgz, …_2324_v2_final.tgz)에는 base 결과가 들어 있다. 지울지는 사용자에게 물어 둔 상태다(답을 받으면 여기에 적는다).
 
 ---------------------------------------------------------------------------------------------------
 
@@ -6063,3 +6069,4 @@ wbuffix 32k 64k r3 | 5.973 | 2130 2125 2115 2124 2120 1609 147 150 167 182 190 1
 - 23:22 push 1 차 시도 실패(agent 없음) → 23:24 사용자 재접속 뒤 push 성공(main, 태그 ksc2026-v2 = c9dfb23). 최종 인계 묶음 v2_final.
 - 23:33 사용자 요청으로 원본 모델(base) 결과를 문서와 저장소 최신 상태에서 뺐다(1.24, 10.6): 원자료 2 곳, 감사 원본 JSON, 문서의 base 수치·표·그림. 기본 빌드 변형을 wbuffix 로 바꿨다.
 - 10-09 00:2x base 삭제 검증(9.4)과 반영, 최종 docx(89 쪽), 커밋 5c0a241, 태그 ksc2026-v3(로컬; push 는 agent 가 없어 대기).
+- 10-09 09:27 사용자 재접속 뒤 push 성공(main = a0b18d7, 태그 ksc2026-v3 = 5c0a241). 최종 인계 묶음 v3_final.
