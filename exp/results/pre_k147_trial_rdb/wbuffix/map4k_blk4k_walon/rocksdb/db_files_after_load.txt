@@ -1,0 +1,10 @@
+total 115488
+-rw-r--r-- 1 dccearth dccearth 51962039 1792859118 000008.log
+-rw-r--r-- 1 dccearth dccearth 66202324 1792859117 000009.sst
+-rw-rw-r-- 1 dccearth dccearth       26 1792859118 CF_NAMES
+-rw-r--r-- 1 dccearth dccearth       16 1792859117 CURRENT
+-rw-r--r-- 1 dccearth dccearth       36 1792859117 IDENTITY
+-rw-r--r-- 1 dccearth dccearth        0 1792859117 LOCK
+-rw-r--r-- 1 dccearth dccearth    56306 1792859118 LOG
+-rw-r--r-- 1 dccearth dccearth      339 1792859118 MANIFEST-000005
+-rw-r--r-- 1 dccearth dccearth    14703 1792859117 OPTIONS-000007

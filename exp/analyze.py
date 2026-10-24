@@ -494,13 +494,20 @@ def main():
     if failed:
         write_csv(out / "failed_runs.csv", failed)
     for v in sorted({r["variant"] for r in rows}):
+        # run length and repetitions from the data (60 s x 3 reps on kernel 142, 120 s x 1 rep on kernel 147)
+        vrows = [r for r in rows if r["variant"] == v]
+        secs = round(statistics.fmean(r["runtime_s"] for r in vrows))
+        ns = sorted({a["n"] for a in agg if a["variant"] == v})
+        stat = f"mean ± std, n={ns[0]}" if ns != [1] else "single run"
+        if len(ns) > 1:
+            stat = f"mean ± std, n={ns[0]}–{ns[-1]}"
         line_vs_bs(agg, v, "bw_MiBps", "write bandwidth (MiB/s)",
-                   f"{WORKLOAD} bandwidth, 60 s from a fresh device ({v}; mean ± std, n=3)",
+                   f"{WORKLOAD} bandwidth, {secs} s from a fresh device ({v}; {stat})",
                    out / f"fig_bw_vs_bs_{v}.png")
         line_vs_bs(agg, v, "clat_mean_us", "mean completion latency (µs)",
-                   f"Mean completion latency ({v}; mean ± std, n=3)", out / f"fig_clat_mean_vs_bs_{v}.png", logy=True)
+                   f"Mean completion latency ({v}; {stat})", out / f"fig_clat_mean_vs_bs_{v}.png", logy=True)
         line_vs_bs(agg, v, "clat_p99_us", "p99 completion latency (µs)",
-                   f"p99 completion latency ({v}; mean ± std, n=3)", out / f"fig_clat_p99_vs_bs_{v}.png", logy=True)
+                   f"p99 completion latency ({v}; {stat})", out / f"fig_clat_p99_vs_bs_{v}.png", logy=True)
         line_vs_bs(agg, v, "bw_last20s_MiBps", "write bandwidth, last 20 s (MiB/s)",
                    f"Bandwidth in the last 20 s of the run ({v})", out / f"fig_bw_last20s_vs_bs_{v}.png")
         heatmap(agg, v, "bw_MiBps", "MiB/s", f"Mean write bandwidth, MiB/s ({v})", out / f"fig_bw_heatmap_{v}.png")

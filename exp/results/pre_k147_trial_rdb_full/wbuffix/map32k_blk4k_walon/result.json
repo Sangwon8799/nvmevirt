@@ -1,0 +1,127 @@
+{
+ "run": "map32k_blk4k_walon",
+ "variant": "wbuffix",
+ "map_unit": "32k",
+ "map_unit_bytes": 32768,
+ "block_size": "4k",
+ "block_size_bytes": 4096,
+ "wal": "on",
+ "recordcount": 3000000,
+ "threads": 1,
+ "tps_ops_s": 5856.483410268802,
+ "run_runtime_s": 60.007,
+ "read": {
+  "ops": 175904,
+  "avg_us": 166.32704770784065,
+  "min_us": 0,
+  "max_us": 19887,
+  "p50_us": 114,
+  "p90_us": 332,
+  "p95_us": 423,
+  "p99_us": 632,
+  "p99.9_us": 6847,
+  "p99.99_us": 9279,
+  "return": {
+   "OK": 175904
+  }
+ },
+ "update": {
+  "ops": 175526,
+  "avg_us": 171.6509406013924,
+  "min_us": 3,
+  "max_us": 11687,
+  "p50_us": 118,
+  "p90_us": 337,
+  "p95_us": 428,
+  "p99_us": 641,
+  "p99.9_us": 6839,
+  "p99.99_us": 9335,
+  "return": {
+   "OK": 175526
+  }
+ },
+ "load": {
+  "tps_ops_s": 240867.12163789643,
+  "runtime_s": 12.455,
+  "wall_s": 12.531,
+  "insert": {
+   "ops": 3000000,
+   "avg_us": 3.4153853333333335,
+   "min_us": 2,
+   "max_us": 1584,
+   "p50_us": 3,
+   "p90_us": 4,
+   "p95_us": 4,
+   "p99_us": 5,
+   "p99.9_us": 7,
+   "p99.99_us": 107,
+   "return": {
+    "OK": 3000000
+   }
+  }
+ },
+ "other_sections": [
+  "CLEANUP",
+  "TOTAL_GC_TIME"
+ ],
+ "block_layer": {
+  "load": {
+   "seconds": 12.538,
+   "read_bytes": 6672690176,
+   "read_ios": 28866,
+   "write_bytes": 13702107136,
+   "write_ios": 59187,
+   "write_merges": 2448,
+   "read_avg_req_KiB": 225.7430541121042,
+   "write_avg_req_KiB": 226.0794431209556,
+   "read_MiB_s": 507.5429288712314,
+   "write_MiB_s": 1042.2194653254107,
+   "flush_ios": 0
+  },
+  "run": {
+   "seconds": 60.079,
+   "read_bytes": 8779686400,
+   "read_ios": 501704,
+   "write_bytes": 6713708544,
+   "write_ios": 28260,
+   "write_merges": 1083,
+   "read_avg_req_KiB": 17.089583698754645,
+   "write_avg_req_KiB": 232.00127388535032,
+   "read_MiB_s": 139.36585871571182,
+   "write_MiB_s": 106.57120468466519,
+   "flush_ios": 0
+  },
+  "load_and_run_write_bytes": 20415815680,
+  "mkfs_write_bytes": 259971072,
+  "session_write_bytes": 20684027904
+ },
+ "ftl": {
+  "host_pgs": 654528,
+  "gc_pgs": 32348,
+  "gc_cnt": 1161,
+  "partitions": 4,
+  "nand_write_bytes": 22507552768,
+  "waf_gc": 1.0494218734721814,
+  "first_gc_phase": "load",
+  "first_gc_s_after_phase_start": 10.879,
+  "load_s_kernel": 12.534,
+  "run_s_kernel": 60.074,
+  "waf_session": 1.0881610135348616
+ },
+ "rocksdb_log_last_dump": {
+  "cumulative_writes": "0 writes, 0 keys, 0 commit groups, 0.0 writes per commit group, ingest: 0.00 GB, 0.00 MB/s",
+  "cumulative_wal": "0 writes, 0 syncs, 0.00 writes per sync, written: 0.00 GB, 0.00 MB/s",
+  "cumulative_compaction": "0.08 GB write, 356.89 MB/s write, 0.00 GB read, 0.00 MB/s read, 0.1 seconds",
+  "uptime": "0.2 total, 0.2 interval",
+  "rocksdb_version": "11.8.1"
+ },
+ "db_bytes_after_load": 3532101857,
+ "db_bytes_after_run": 3673301821,
+ "fs_used_after_run": 3673427968,
+ "status_lines": 61,
+ "chmodel_msgs": "0",
+ "kernel_warn": "0",
+ "start": "2026-10-24T16:26:24+00:00",
+ "end": "2026-10-24T16:27:39+00:00",
+ "wal_file_bytes_after_run": 8121208
+}

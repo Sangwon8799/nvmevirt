@@ -1,0 +1,9 @@
+[2026-10-24 16:24:50] experiment=pre_k147_trial_rdb variant=wbuffix maps=[4k] blocks=[4k] wals=[off on] records=100000 run=20s threads=1
+[2026-10-24 16:24:50] insmod memmap_start=12G memmap_size=12G cpus=3,4,5; YCSB on cpus 0-2; 2 runs
+environment snapshot -> /home/dccearth/jsw/nvmevirt/exp/results/pre_k147_trial_rdb/env_before
+[2026-10-24 16:24:50] === [1/2] variant=wbuffix map=4k block_size=4k wal=off ===
+[2026-10-24 16:25:15]     -> TPS 15360.6 ops/s | READ avg 63.0 p99 226 us | UPDATE avg 64.9 p99 229 us | load 0.532 s
+[2026-10-24 16:25:15] === [2/2] variant=wbuffix map=4k block_size=4k wal=on ===
+[2026-10-24 16:25:40]     -> TPS 14702.2 ops/s | READ avg 64.5 p99 227 us | UPDATE avg 68.5 p99 232 us | load 0.647 s
+environment snapshot -> /home/dccearth/jsw/nvmevirt/exp/results/pre_k147_trial_rdb/env_after_wbuffix
+[2026-10-24 16:25:41] finished: /home/dccearth/jsw/nvmevirt/exp/results/pre_k147_trial_rdb/wbuffix

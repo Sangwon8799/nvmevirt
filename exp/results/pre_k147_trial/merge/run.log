@@ -1,0 +1,9 @@
+[2026-10-24 16:24:25] experiment=pre_k147_trial variant=merge maps=[8k] bss=[4k] reps=1 cache_modes=[nodrop] only_bs_lt_map=0
+[2026-10-24 16:24:25] fio: libaio seqwrite iodepth=32 runtime=10s ramp_time=0s log=500ms; insmod memmap_start=12G memmap_size=12G cpus=3,4,5
+[2026-10-24 16:24:25] block layer: nomerges=2
+[2026-10-24 16:24:25] 1 runs, about 0 min
+environment snapshot -> /home/dccearth/jsw/nvmevirt/exp/results/pre_k147_trial/env_before
+[2026-10-24 16:24:25] === [1/1] variant=merge cache=nodrop map=8k bs=4k rep=1 ===
+    -> 2114.8 MiB/s, 541377 IOPS, clat mean 58.2 us
+environment snapshot -> /home/dccearth/jsw/nvmevirt/exp/results/pre_k147_trial/env_after_merge
+[2026-10-24 16:24:45] finished: /home/dccearth/jsw/nvmevirt/exp/results/pre_k147_trial/merge

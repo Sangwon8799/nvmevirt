@@ -1,0 +1,34 @@
+$ git -C /home/dccearth/jsw/nvmevirt rev-parse HEAD
+2a14d5cf2c4a32d4269210be9e87d7d4edc3bddb
+
+$ git -C /home/dccearth/jsw/nvmevirt log --oneline -15
+2a14d5c exp: official YCSB patch for RocksDB 11.8.1 (WAL switch); sudoers template with mkfs/mount for the NVMeVirt device
+becebf1 exp: NVMeVirt modules rebuilt for kernel 6.8.0-147
+bc31375 log: the two older hand-over bundles (with base results) were deleted at the user's request
+53edc2e log: record the push (main, tag ksc2026-v3 = 5c0a241) and the final hand-over bundle
+a0b18d7 log: record commit 5c0a241 / tag ksc2026-v3 (base results removed) and the pending push
+5c0a241 exp: remove the results of the unfixed model (base) at the user's request
+975d408 log: record the push (main, tag ksc2026-v2 = c9dfb23) and the final hand-over bundle
+2f5902f log: record commit c9dfb23 / tag ksc2026-v2 and the pending GitHub push
+c9dfb23 exp: final record for the sequential-write and random-write bs 8k/64k experiments
+403a6ae exp: random-write bs 8k/64k results; verification fixes for the sequential-write record
+a86fc87 exp: sequential-write results; random-write bs 8k/64k scripts
+66446ea exp: sequential-write experiment and write-buffer merge model
+cd1fe2b log: record the push (main = tag ksc2026-final = c742c67) and the final hand-over bundle
+c742c67 exp: results, analysis and experiment record (KSC2026 final)
+e598e75 exp: final 3x3 design with OS page-cache comparison
+
+$ git -C /home/dccearth/jsw/nvmevirt status --porcelain
+ M exp/analyze.py
+ M exp/plot.py
+?? exp/results/pre_k147_trial/
+?? exp/results/pre_k147_trial_rdb/
+?? exp/rocksdb/
+?? exp/run_rocksdb_ycsb.sh
+
+$ git -C /home/dccearth/jsw/nvmevirt remote -v
+origin	git@github.com:Sangwon8799/nvmevirt.git (fetch)
+origin	git@github.com:Sangwon8799/nvmevirt.git (push)
+upstream	https://github.com/snu-csl/nvmevirt.git (fetch)
+upstream	https://github.com/snu-csl/nvmevirt.git (push)
+

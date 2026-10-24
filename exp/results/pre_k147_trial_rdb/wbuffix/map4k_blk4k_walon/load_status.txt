@@ -1,0 +1,11 @@
+Command line: -load -db site.ycsb.db.rocksdb.RocksDBClient -P /home/dccearth/jsw/ycsb-dist/ycsb-rocksdb-binding-0.18.0-SNAPSHOT/workloads/workloada -p recordcount=100000 -p rocksdb.dir=/mnt/jsw_nvmevirt/db -p rocksdb.optionsfile=/home/dccearth/jsw/nvmevirt/exp/results/pre_k147_trial_rdb/wbuffix/map4k_blk4k_walon/rocksdb_options.ini -p rocksdb.disablewal=false -p rocksdb.sync=false -p measurementtype=hdrhistogram -p hdrhistogram.percentiles=50,90,95,99,99.9,99.99 -threads 1 -s -p status.interval=1
+YCSB Client 0.18.0-SNAPSHOT
+
+Loading workload...
+Starting test.
+[Thread-2] INFO site.ycsb.db.rocksdb.RocksDBClient - RocksDB data dir: /mnt/jsw_nvmevirt/db
+[Thread-2] INFO site.ycsb.db.rocksdb.RocksDBClient - RocksDB options file: /home/dccearth/jsw/nvmevirt/exp/results/pre_k147_trial_rdb/wbuffix/map4k_blk4k_walon/rocksdb_options.ini
+2026-10-24 16:25:17:535 0 sec: 0 operations; est completion in 0 second 
+[Thread-2] INFO site.ycsb.db.rocksdb.RocksDBClient - RocksDB write options: disableWAL=false sync=false
+DBWrapper: report latency for each error is false and specific error codes to track for latency are: []
+2026-10-24 16:25:18:086 0 sec: 100000 operations; 175438.6 current ops/sec; [CLEANUP: Count=1, Max=1676, Min=1676, Avg=1676, 50=1676, 90=1676, 99=1676, 99.9=1676, 99.99=1676] [INSERT: Count=100000, Max=1155, Min=2, Avg=3.82, 50=4, 90=5, 99=7, 99.9=15, 99.99=130] 

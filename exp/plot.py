@@ -32,8 +32,8 @@ import analyze as A  # noqa: E402  (collect / aggregate / palette)
 SIZES = list(A.SIZES)   # narrowed in main() to the sizes present in the results
 MAPS, BSS = list(SIZES), list(SIZES)   # mapping units / fio bs present (they differ in a combined view)
 METRICS = {
-    "bw_MiBps": "write bandwidth, 60 s mean (MiB/s)",
-    "iops": "IOPS, 60 s mean",
+    "bw_MiBps": "write bandwidth, run mean (MiB/s)",
+    "iops": "IOPS, run mean",
     "clat_mean_us": "mean completion latency (us)",
     "clat_p50_us": "p50 completion latency (us)",
     "clat_p99_us": "p99 completion latency (us)",
@@ -47,7 +47,7 @@ METRICS = {
     "waf_gc": "WAF (GC only, mapping-unit pages)",
     "waf_total": "WAF total (NAND bytes / host bytes)",
     "gc_cnt": "GC victim lines (all partitions)",
-    "written_GiB": "host data written in 60 s (GiB)",
+    "written_GiB": "host data written in the run (GiB)",
     "fill_ratio": "host bytes written / device size",
     "chmodel_msgs": "NVMeVirt channel-model overflow messages",
 }
