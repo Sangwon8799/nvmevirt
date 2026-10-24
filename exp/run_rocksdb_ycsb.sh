@@ -20,6 +20,9 @@
 #   result.json          parsed summary (exp/rocksdb/ycsb_parse.py)
 # Privileged steps use 'sudo -n' and must match /etc/sudoers.d/nvmevirt-exp exactly (exp/report/nvmevirt-exp.sudoers).
 set -euo pipefail
+# the whole body is one { ... } block: bash parses it before running, so editing this file during a run
+# cannot change the running instance
+{
 source "$(dirname "$0")/common.sh"
 
 EXP="${1:?usage: bash run_rocksdb_ycsb.sh <EXP_NAME>}"
@@ -337,3 +340,5 @@ done
 unload_nvmev
 bash "$EXP_DIR/collect_env.sh" "$OUT/env_after_$VARIANT"
 log "finished: $VOUT"
+exit 0
+}
