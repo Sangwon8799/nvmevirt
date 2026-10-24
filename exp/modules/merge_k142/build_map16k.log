@@ -1,0 +1,30 @@
+make: Entering directory '/home/dccearth/jsw/nvmevirt/nvmevirt'
+make -C /lib/modules/6.8.0-142-generic/build M=/home/dccearth/jsw/nvmevirt/nvmevirt clean
+make[1]: Entering directory '/usr/src/linux-headers-6.8.0-142-generic'
+  CLEAN   /home/dccearth/jsw/nvmevirt/nvmevirt/Module.symvers
+make[1]: Leaving directory '/usr/src/linux-headers-6.8.0-142-generic'
+rm -f cscope.out tags nvmev.S
+make: Leaving directory '/home/dccearth/jsw/nvmevirt/nvmevirt'
+make: Entering directory '/home/dccearth/jsw/nvmevirt/nvmevirt'
+make -C /lib/modules/6.8.0-142-generic/build M=/home/dccearth/jsw/nvmevirt/nvmevirt modules
+make[1]: Entering directory '/usr/src/linux-headers-6.8.0-142-generic'
+warning: the compiler differs from the one used to build the kernel
+  The kernel was built by: x86_64-linux-gnu-gcc-13 (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+  You are using:           gcc-13 (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+  CC [M]  /home/dccearth/jsw/nvmevirt/nvmevirt/main.o
+  CC [M]  /home/dccearth/jsw/nvmevirt/nvmevirt/pci.o
+  CC [M]  /home/dccearth/jsw/nvmevirt/nvmevirt/admin.o
+  CC [M]  /home/dccearth/jsw/nvmevirt/nvmevirt/io.o
+  CC [M]  /home/dccearth/jsw/nvmevirt/nvmevirt/dma.o
+  CC [M]  /home/dccearth/jsw/nvmevirt/nvmevirt/ssd.o
+  CC [M]  /home/dccearth/jsw/nvmevirt/nvmevirt/conv_ftl.o
+  CC [M]  /home/dccearth/jsw/nvmevirt/nvmevirt/pqueue/pqueue.o
+  CC [M]  /home/dccearth/jsw/nvmevirt/nvmevirt/channel_model.o
+  LD [M]  /home/dccearth/jsw/nvmevirt/nvmevirt/nvmev.o
+  MODPOST /home/dccearth/jsw/nvmevirt/nvmevirt/Module.symvers
+  CC [M]  /home/dccearth/jsw/nvmevirt/nvmevirt/nvmev.mod.o
+  LD [M]  /home/dccearth/jsw/nvmevirt/nvmevirt/nvmev.ko
+  BTF [M] /home/dccearth/jsw/nvmevirt/nvmevirt/nvmev.ko
+Skipping BTF generation for /home/dccearth/jsw/nvmevirt/nvmevirt/nvmev.ko due to unavailability of vmlinux
+make[1]: Leaving directory '/usr/src/linux-headers-6.8.0-142-generic'
+make: Leaving directory '/home/dccearth/jsw/nvmevirt/nvmevirt'
