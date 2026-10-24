@@ -1,4 +1,15 @@
-# KSC2026 NVMeVirt mapping-unit experiment — remove after the experiment:
-#   sudo rm /etc/sudoers.d/nvmevirt-exp
-# (chown path = <clone>/exp/*; the nomerges rule names the NVMeVirt namespace of this server, nvme1n1)
-dccearth ALL=(root) NOPASSWD: /usr/sbin/insmod, /usr/sbin/rmmod, /usr/bin/fio, /usr/bin/dmesg, /usr/sbin/nvme, /usr/bin/cat /proc/iomem, /usr/bin/tee /dev/kmsg, /usr/bin/tee /proc/sys/vm/drop_caches, /usr/bin/tee /sys/block/nvme1n1/queue/nomerges, /usr/bin/chown -R dccearth\:dccearth /home/dccearth/jsw/nvmevirt/exp/*
+# KSC2026 NVMeVirt experiments — passwordless commands for the user dccearth, installed only while experiments run.
+# Install:  sudo install -m 0440 -o root -g root exp/report/nvmevirt-exp.sudoers /etc/sudoers.d/nvmevirt-exp
+#           sudo mkdir -p /mnt/jsw_nvmevirt          (mount point of the NVMeVirt device for RocksDB)
+# Remove:   sudo rm /etc/sudoers.d/nvmevirt-exp
+# The mkfs, mount, umount and mount-point chown rules accept exactly one command line each, so they can only touch
+# /dev/nvme1n1 (the NVMeVirt namespace; the scripts check its model CSL_Virt before use) and /mnt/jsw_nvmevirt.
+# The nomerges rule names the NVMeVirt namespace of this server, nvme1n1. The results chown path is <clone>/exp/*.
+dccearth ALL=(root) NOPASSWD: /usr/sbin/insmod, /usr/sbin/rmmod, /usr/bin/fio, /usr/bin/dmesg, /usr/sbin/nvme, \
+    /usr/bin/cat /proc/iomem, /usr/bin/tee /dev/kmsg, /usr/bin/tee /proc/sys/vm/drop_caches, \
+    /usr/bin/tee /sys/block/nvme1n1/queue/nomerges, \
+    /usr/bin/chown -R dccearth\:dccearth /home/dccearth/jsw/nvmevirt/exp/*, \
+    /usr/sbin/mkfs.ext4 -F -m 0 -E lazy_itable_init=0\,lazy_journal_init=0 /dev/nvme1n1, \
+    /usr/bin/mount -o noatime /dev/nvme1n1 /mnt/jsw_nvmevirt, \
+    /usr/bin/umount /mnt/jsw_nvmevirt, \
+    /usr/bin/chown dccearth\:dccearth /mnt/jsw_nvmevirt
