@@ -62,7 +62,9 @@ def parse_summary(path):
 
 
 def parse_status(path):
-    """YCSB -s status lines (one per status.interval): elapsed s, total ops, current ops/s, per-op Avg/99 (us)."""
+    """YCSB -s status lines (one per status.interval): elapsed s, total ops, current ops/s, per-op Avg/99 (us).
+    YCSB's StatusThread prints one more line after its loop ends, over the few ms up to client cleanup; that last
+    row is flagged final_partial=True and must be left out of any per-second average (it is kept as raw data)."""
     rows = []
     if not path.exists():
         return rows
@@ -77,6 +79,8 @@ def parse_status(path):
                 if k in kv:
                     r[f"{op.lower()}_{k.lower()}"] = num(kv[k])
         rows.append(r)
+    if rows:
+        rows[-1]["final_partial"] = True
     return rows
 
 
@@ -167,6 +171,72 @@ def ftl_stats(rdir, map_bytes):
     return out
 
 
+def rocksdb_events(log):
+    """Totals from the EVENT_LOG_v1 records of one RocksDB LOG file (one DB open: the run phase or the load phase).
+    sst_write = all new SST files (flush + compaction outputs), split by the job that created them."""
+    out = {"flush_jobs": 0, "compaction_jobs": 0, "flush_write_bytes": 0, "compaction_write_bytes": 0,
+           "compaction_read_bytes": 0, "sst_write_bytes": 0, "stall_msgs": 0, "stop_msgs": 0}
+    if not log.exists():
+        return {}
+    flush_jobs, comp_jobs, created = set(), set(), []
+    for line in log.read_text(errors="replace").splitlines():
+        if "Stalling writes" in line:
+            out["stall_msgs"] += 1
+        elif "Stopping writes" in line:
+            out["stop_msgs"] += 1
+        i = line.find("EVENT_LOG_v1 {")
+        if i < 0:
+            continue
+        try:
+            ev = json.loads(line[i + len("EVENT_LOG_v1 "):])
+        except ValueError:
+            continue
+        e, job = ev.get("event"), ev.get("job")
+        if e == "flush_started":
+            flush_jobs.add(job)
+        elif e == "compaction_started":
+            comp_jobs.add(job)
+            out["compaction_read_bytes"] += int(ev.get("input_data_size", 0))
+        elif e == "table_file_creation":
+            created.append((job, int(ev.get("file_size", 0))))
+    for job, size in created:
+        out["sst_write_bytes"] += size
+        if job in flush_jobs:
+            out["flush_write_bytes"] += size
+        elif job in comp_jobs:
+            out["compaction_write_bytes"] += size
+    out["flush_jobs"], out["compaction_jobs"] = len(flush_jobs), len(comp_jobs)
+    return out
+
+
+def cpu_phases(path):
+    """CPU 0-2 busy share and CPU pressure (PSI 'some') between before_run and after_run (cpu_phases.txt)."""
+    if not path.exists():
+        return {}
+    snaps, cur = {}, None
+    for line in path.read_text().splitlines():
+        f = line.split()
+        if line.startswith("== "):
+            cur = f[1]
+            snaps[cur] = {"t": float(f[2]), "busy": 0, "total": 0}
+        elif cur and f and re.match(r"^cpu[0-2]$", f[0]):
+            v = [int(x) for x in f[1:]]
+            snaps[cur]["total"] += sum(v[:8])            # user nice system idle iowait irq softirq steal
+            snaps[cur]["busy"] += sum(v[:8]) - v[3] - v[4]
+        elif cur and f and f[0] == "some":
+            m = re.search(r"total=(\d+)", line)
+            if m:
+                snaps[cur]["psi_some_us"] = int(m.group(1))
+    out = {}
+    for ph in ("load", "run"):
+        a, b = snaps.get(f"before_{ph}"), snaps.get(f"after_{ph}")
+        if a and b and b["total"] > a["total"]:
+            out[f"{ph}_cpu0_2_busy_pct"] = 100 * (b["busy"] - a["busy"]) / (b["total"] - a["total"])
+            if "psi_some_us" in a and "psi_some_us" in b and b["t"] > a["t"]:
+                out[f"{ph}_cpu_psi_some_pct"] = 100 * (b["psi_some_us"] - a["psi_some_us"]) / 1e6 / (b["t"] - a["t"])
+    return out
+
+
 def rocksdb_log(rdir):
     """Last periodic stats dump in the run-phase LOG (stats_dump_period_sec=60): cumulative since the DB was opened."""
     log = rdir / "rocksdb" / "LOG"
@@ -225,6 +295,9 @@ def parse_run(rdir):
         "block_layer": blk_phases(rdir / "blkstat_phases.txt"),
         "ftl": ftl_stats(rdir, map_b),
         "rocksdb_log_last_dump": rocksdb_log(rdir),
+        "rocksdb_run_events": rocksdb_events(rdir / "rocksdb" / "LOG"),
+        "rocksdb_load_events": rocksdb_events(max((rdir / "rocksdb").glob("LOG.old.*"), default=rdir / "rocksdb" / "none")),
+        "cpu": cpu_phases(rdir / "cpu_phases.txt"),
         "db_bytes_after_load": int(meta["db_after_load"].split()[0]) if "db_after_load" in meta else None,
         "db_bytes_after_run": int(meta["db_after_run"].split()[0]) if "db_after_run" in meta else None,
         "fs_used_after_run": int(meta["df_after_run"].split()[0]) if "df_after_run" in meta else None,
@@ -240,6 +313,9 @@ def parse_run(rdir):
             if len(f) >= 7 and f[-1].endswith(".log"):
                 wal_files += int(f[4])
         res["wal_file_bytes_after_run"] = wal_files
+    for op in ("read", "update"):
+        n, t = res[op].get("ops"), res["run_runtime_s"]
+        res[op]["tps_ops_s"] = n / t if n is not None and t else None
     host = res["block_layer"].get("session_write_bytes")
     if host and res["ftl"].get("nand_write_bytes"):   # NAND bytes / host bytes for the whole session (mkfs + load + run)
         res["ftl"]["waf_session"] = res["ftl"]["nand_write_bytes"] / host

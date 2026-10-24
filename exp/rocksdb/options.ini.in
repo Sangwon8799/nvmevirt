@@ -10,7 +10,9 @@
   create_if_missing=true
   create_missing_column_families=true
   # data reads and flush/compaction writes bypass the page cache (host RAM 11.45 GiB > device 11.2 GiB);
-  # the WAL is still written through the page cache (RocksDB default), without fsync per write (rocksdb.sync=false)
+  # the WAL is still written through the page cache (RocksDB default), without fsync per write (rocksdb.sync=false);
+  # RocksDB does fsync the closed WAL files before each memtable flush, because the DB has 2 column families
+  # (default + usertable; db_impl_compaction_flush.cc needs_to_sync_closed_wals)
   use_direct_reads=true
   use_direct_io_for_flush_and_compaction=true
   max_background_jobs=2

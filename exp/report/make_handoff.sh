@@ -64,8 +64,9 @@ if [[ ! "$n_hist" =~ ^[0-9]+$ ]] || (( n_hist > 0 )); then
 	exit 1
 fi
 
-# --- the log (entry point)
+# --- the logs (entry points): the 2026-10-08 fio record and, from 2026-10-25, the kernel-147 + RocksDB record
 cp "$REPO/EXPERIMENT_LOG_FOR_CLAUDE.md" "$B/"
+if [[ -f "$REPO/EXPERIMENT_LOG_K147_ROCKSDB.md" ]]; then cp "$REPO/EXPERIMENT_LOG_K147_ROCKSDB.md" "$B/"; fi
 
 # --- repository working tree (what is on disk now, committed or not) + full history
 rsync -a --exclude .git --exclude upstream_tmp --exclude 'exp/.venv' --exclude '*.ko' --exclude '*.o' \
@@ -133,7 +134,9 @@ fi
 
 cat > "$B/README_FIRST.txt" << EOF
 KSC2026 NVMeVirt 매핑 단위 실험 — 인계 묶음 $NAME (만든 시각 $(TZ=Asia/Seoul date "+%F %T") KST)
-1. EXPERIMENT_LOG_FOR_CLAUDE.md 를 처음부터 끝까지 읽는다. 모든 지시·결정·측정·결과가 들어 있다.
+0. 최신 작업(2026-10-24~25: 커널 6.8.0-147 fio 재측정 + RocksDB/YCSB-A 32 회)은 EXPERIMENT_LOG_K147_ROCKSDB.md 에 있다(있으면 먼저 읽는다).
+   선배 전달용 .csv/.json 복사본: repo/exp/results/share_k147_20261025/ (README.md 참고). 실험에 쓴 스크립트 목록은 그 기록의 §9.
+1. EXPERIMENT_LOG_FOR_CLAUDE.md 를 처음부터 끝까지 읽는다. 2026-10-08~09 fio 실험의 모든 지시·결정·측정·결과가 들어 있다.
    그 안의 「묶음 경로」는 이 폴더 기준이다(repo/…, materials/…, deliverables/…, server_state/…).
 2. 실험 상태와 진행률(이 묶음을 만든 시점): server_state/state.txt
 3. 코드·결과: repo/ (실험 서버의 저장소 작업 트리. exp/results/ 에 모든 원자료가 있다)

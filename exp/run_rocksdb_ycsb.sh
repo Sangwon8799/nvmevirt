@@ -153,9 +153,19 @@ fail_run() {   # $1 = run dir, $2 = reason: keep everything, mark FAILED, clean 
 	echo "$2" > "$rdir/FAILED"
 	log "FAILED: $2 — kept as $rdir/FAILED, continuing"
 	stop_bg
+	if mountpoint -q "$MNT"; then   # keep RocksDB's LOG / OPTIONS: the next run's mkfs wipes them
+		cp "$MNT"/db/LOG* "$MNT"/db/OPTIONS-* "$rdir/rocksdb/" 2> /dev/null || true
+		ls -l --time-style=+%s "$MNT/db" > "$rdir/rocksdb/db_files_at_fail.txt" 2> /dev/null || true
+	fi
 	umount_if_mounted || true
 	unload_nvmev || true
 	sudo -n chown -R "$ME:$ME" "$rdir" 2> /dev/null || true
+}
+
+cpustat() {   # label: CPU 0-2 counters (/proc/stat) and CPU pressure (PSI) — shows other load on the YCSB/RocksDB CPUs
+	echo "== $1 $EPOCHREALTIME"
+	grep -E '^cpu[0-2] ' /proc/stat
+	cat /proc/pressure/cpu 2> /dev/null || true
 }
 
 # ------------------------------------------------------------------ one run
@@ -164,7 +174,7 @@ run_one() {   # $1 = mapping unit, $2 = RocksDB block size, $3 = off | on
 	rdir="$VOUT/map${map}_blk${blk}_wal${wal}"
 	if [[ -f "$rdir/DONE" ]]; then log "skip (already done): $(basename "$rdir")"; return 0; fi
 	if [[ -f "$rdir/FAILED" ]]; then log "skip (failed earlier, see FAILED): $(basename "$rdir")"; return 0; fi
-	rm -rf "$rdir"
+	if [[ -e "$rdir" ]]; then mv "$rdir" "$rdir.aborted.$(date +%s)"; fi   # interrupted earlier: keep it aside
 	mkdir -p "$rdir/rocksdb"
 	tag="$(basename "$rdir")"
 	if [[ "$wal" == off ]]; then dis=true; else dis=false; fi
@@ -218,13 +228,18 @@ run_one() {   # $1 = mapping unit, $2 = RocksDB block size, $3 = off | on
 		echo "start:        $(date -Is)"
 	} > "$rdir/meta.txt"
 
-	# block-layer counters once per second for the whole load + run
+	# once per second for the whole load + run: block-layer counters and the CPU 0-2 lines of /proc/stat
 	( d="/sys/block/${DEV#/dev/}/stat"
-	  while :; do read -r -a s < "$d"; echo "$EPOCHREALTIME ${s[*]}"; sleep 1; done ) > "$rdir/blkstat_1s.txt" &
+	  while :; do
+		read -r -a s < "$d"; echo "$EPOCHREALTIME ${s[*]}" >&3
+		while read -r l; do if [[ "$l" == cpu[0-2]\ * ]]; then echo "$EPOCHREALTIME $l" >&4; fi; done < /proc/stat
+		sleep 1
+	  done ) 3> "$rdir/blkstat_1s.txt" 4> "$rdir/cpu_1s.txt" &
 	SAMPLER_PID=$!
 
 	# ---- load
 	blkstat before_load >> "$rdir/blkstat_phases.txt"
+	cpustat before_load > "$rdir/cpu_phases.txt"
 	kmark "$tag load-start"
 	t0=$EPOCHREALTIME
 	rc=0
@@ -234,6 +249,7 @@ run_one() {   # $1 = mapping unit, $2 = RocksDB block size, $3 = off | on
 	t1=$EPOCHREALTIME
 	kmark "$tag load-end"
 	blkstat after_load >> "$rdir/blkstat_phases.txt"
+	cpustat after_load >> "$rdir/cpu_phases.txt"
 	{
 		echo "load_exit:    $rc"
 		echo "load_wall_s:  $(python3 -c "print(round($t1 - $t0, 3))")"
@@ -245,6 +261,7 @@ run_one() {   # $1 = mapping unit, $2 = RocksDB block size, $3 = off | on
 
 	# ---- run
 	blkstat before_run >> "$rdir/blkstat_phases.txt"
+	cpustat before_run >> "$rdir/cpu_phases.txt"
 	echo "mem_before_run: $(meminfo_line)" >> "$rdir/meta.txt"
 	kmark "$tag run-start"
 	t0=$EPOCHREALTIME
@@ -255,6 +272,7 @@ run_one() {   # $1 = mapping unit, $2 = RocksDB block size, $3 = off | on
 	t1=$EPOCHREALTIME
 	kmark "$tag run-end"
 	blkstat after_run >> "$rdir/blkstat_phases.txt"
+	cpustat after_run >> "$rdir/cpu_phases.txt"
 	{
 		echo "run_exit:     $rc"
 		echo "run_wall_s:   $(python3 -c "print(round($t1 - $t0, 3))")"
@@ -290,8 +308,8 @@ run_one() {   # $1 = mapping unit, $2 = RocksDB block size, $3 = off | on
 		log "FAILED: result check (see parse_check.txt), continuing"
 		return 0
 	fi
-	log "    -> $(tail -1 "$rdir/parse_check.txt")"
 	touch "$rdir/DONE"
+	log "    -> $(tail -1 "$rdir/parse_check.txt")"
 }
 
 # ------------------------------------------------------------------ preflight
@@ -300,6 +318,12 @@ command -v taskset > /dev/null || die "taskset not found"
 ls "$YCSB_HOME"/lib/rocksdbjni-11.8.1.jar > /dev/null 2>&1 || die "YCSB package with rocksdbjni 11.8.1 not found in $YCSB_HOME"
 [[ -f "$OPT_TEMPLATE" && -f "$PARSER" ]] || die "missing $OPT_TEMPLATE or $PARSER"
 [[ -d "$MNT" ]] || die "$MNT does not exist (sudo mkdir -p $MNT)"
+# one instance at a time, and never while the fio driver (run_experiment.sh) is using NVMeVirt: a second instance
+# would rmmod the module under it. Checked before the EXIT trap is set, so a refused start cleans up nothing.
+exec 9> "$EXP_DIR/results/.rocksdb_ycsb.lock"
+flock -n 9 || die "another run_rocksdb_ycsb.sh is running"
+for _ in $(seq 30); do pgrep -u "$ME" -f '^bash run_experiment\.sh' > /dev/null || break; sleep 1; done
+if pgrep -u "$ME" -f '^bash run_experiment\.sh' > /dev/null; then die "run_experiment.sh (fio) is running on NVMeVirt — refusing"; fi
 ! mountpoint -q "$MNT" || die "$MNT is mounted — unmount it first"
 # the sudoers rule must allow umount of $MNT without a password: expect umount's own 'not mounted' message
 pre="$(sudo -n /usr/bin/umount "$MNT" 2>&1 || true)"
@@ -318,7 +342,19 @@ N_RUNS=$(( ${#MAP_LIST[@]} * ${#BLK_LIST[@]} * ${#WAL_LIST[@]} ))
 RUN_IDX=0
 mkdir -p "$VOUT"
 exec > >(tee -a "$VOUT/run.log") 2>&1
-trap 'stop_bg; pkill -u "$ME" -f "site.ycsb.Client" 2> /dev/null || true; umount_if_mounted 2> /dev/null || true; sudo -n chown -R "$ME:$ME" "$OUT" 2> /dev/null || true' EXIT
+# on exit (normal end, die or kill): stop YCSB and wait until it is gone (an open DB keeps the mount busy), then
+# umount and unload. Stop the experiment with 'kill <pid of this script>' rather than Ctrl-C: timeout puts YCSB in
+# its own process group, so Ctrl-C does not reach it.
+trap 'stop_bg
+	if pgrep -u "$ME" -f site.ycsb.Client > /dev/null; then
+		pkill -u "$ME" -f site.ycsb.Client 2> /dev/null || true
+		for _ in $(seq 120); do pgrep -u "$ME" -f site.ycsb.Client > /dev/null || break; sleep 1; done
+		pkill -KILL -u "$ME" -f site.ycsb.Client 2> /dev/null || true
+		sleep 2
+	fi
+	umount_if_mounted 2> /dev/null || true
+	( unload_nvmev ) 2> /dev/null || true
+	sudo -n chown -R "$ME:$ME" "$OUT" 2> /dev/null || true' EXIT
 
 log "experiment=$EXP variant=$VARIANT maps=[$RDB_MAPS] blocks=[$RDB_BLOCKS] wals=[$RDB_WALS] records=$RECORDS run=${RUN_SEC}s threads=$THREADS"
 log "insmod memmap_start=$MEMMAP_START memmap_size=$MEMMAP_SIZE cpus=$CPUS; YCSB on cpus $CPU_LIST; $N_RUNS runs"

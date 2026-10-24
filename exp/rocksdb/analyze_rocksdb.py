@@ -52,7 +52,8 @@ def flat(res, rdir):
         for k in ("avg_us", "p50_us", "p90_us", "p95_us", "p99_us", "p99.9_us", "p99.99_us", "min_us", "max_us"):
             r[f"{op}_{k}"] = d.get(k)
         r[f"{op}_not_ok"] = sum(v for k, v in d.get("return", {}).items() if k != "OK")
-    status = P.parse_status(rdir / "run_status.txt")
+        r[f"{op}_tps_ops_s"] = d.get("tps_ops_s")   # this operation's completions / run time (read + update = tps_ops_s)
+    status = [x for x in P.parse_status(rdir / "run_status.txt") if not x.get("final_partial")]
     end = status[-1]["t_s"] if status else 0
     r["tps_first60s"] = window_mean(status, 0, 60)
     r["tps_last60s"] = window_mean(status, end - 60, end)
@@ -77,11 +78,19 @@ def flat(res, rdir):
               "ftl_nand_write_bytes": f.get("nand_write_bytes"), "ftl_waf_gc": f.get("waf_gc"),
               "ftl_waf_session": f.get("waf_session"), "first_gc_phase": f.get("first_gc_phase"),
               "first_gc_s_after_phase_start": f.get("first_gc_s_after_phase_start")})
-    lg = res.get("rocksdb_log_last_dump", {})
+    for ph in ("load", "run"):   # from the EVENT_LOG_v1 records of that phase's LOG (complete up to DB close)
+        ev = res.get(f"rocksdb_{ph}_events", {})
+        for k in ("flush_write_bytes", "compaction_write_bytes", "compaction_read_bytes", "sst_write_bytes",
+                  "flush_jobs", "compaction_jobs", "stall_msgs", "stop_msgs"):
+            r[f"rocksdb_{ph}_{k}"] = ev.get(k)
+    lg = res.get("rocksdb_log_last_dump", {})   # periodic stats dump: covers only up to the last dump before close
     m = GB_RE.search(lg.get("cumulative_compaction", ""))
-    r["rocksdb_run_compaction_write_GB"] = float(m.group(1)) if m else None
-    r["rocksdb_run_compaction_read_GB"] = float(m.group(2)) if m else None
-    r["rocksdb_log_uptime"] = lg.get("uptime")
+    r["rocksdb_run_compaction_write_GB_at_last_dump"] = float(m.group(1)) if m else None
+    r["rocksdb_run_compaction_read_GB_at_last_dump"] = float(m.group(2)) if m else None
+    u = re.match(r"([\d.]+) total", lg.get("uptime", ""))
+    r["rocksdb_last_dump_uptime_s"] = float(u.group(1)) if u else None
+    for k, v in res.get("cpu", {}).items():
+        r[k] = v
     r["chmodel_msgs"], r["kernel_warn"] = res.get("chmodel_msgs"), res.get("kernel_warn")
     r["start_utc"], r["end_utc"] = res.get("start"), res.get("end")
     return r
@@ -157,7 +166,9 @@ def tps_vs_block(rows, path):
         ax.set_title(f"WAL {w}", color=A.INK, fontsize=10, loc="left")
     axes[0][0].set_ylabel("YCSB-A throughput (ops/s)", color=A.INK2)
     axes[0][-1].legend(frameon=False, fontsize=8, labelcolor=A.INK2)
-    fig.suptitle("YCSB-A throughput, 600 s run phase (single run each)", color=A.INK, fontsize=11, x=0.01, ha="left")
+    rt = sorted({round(r["run_runtime_s"]) for r in rows if r.get("run_runtime_s")})
+    fig.suptitle(f"YCSB-A throughput, {'/'.join(map(str, rt))} s run phase (single run each)", color=A.INK, fontsize=11,
+                 x=0.01, ha="left")
     fig.tight_layout()
     fig.savefig(path, dpi=200)
     plt.close(fig)
@@ -169,13 +180,14 @@ def tps_timeseries(exp_dir, rows, path, smooth=10):
     fig, axes = plt.subplots(len(maps), len(blks), figsize=(2.9 * len(blks) + 1, 2.0 * len(maps) + 0.8),
                              facecolor=A.SURFACE, sharex=True, sharey=True, squeeze=False)
     for r in rows:
-        st = P.parse_status(exp_dir / r["variant"] / r["run"] / "run_status.txt")
+        st = [x for x in P.parse_status(exp_dir / r["variant"] / r["run"] / "run_status.txt") if not x.get("final_partial")]
         if not st:
             continue
         t = np.array([x["t_s"] for x in st], dtype=float)
         v = np.array([x["ops_per_s"] for x in st], dtype=float)
-        if len(v) >= smooth:
-            v = np.convolve(v, np.ones(smooth) / smooth, mode="same")
+        if len(v) >= smooth:   # moving average, normalised at the edges (no zero padding)
+            k = np.ones(smooth) / smooth
+            v = np.convolve(v, k, mode="same") / np.convolve(np.ones_like(v), k, mode="same")
         ax = axes[maps.index(r["map_unit"])][blks.index(r["block_size"])]
         ax.plot(t, v, linewidth=1.2, color=A.SERIES[0 if r["wal"] == "off" else 1], label=f"WAL {r['wal']}")
     for i, mp in enumerate(maps):

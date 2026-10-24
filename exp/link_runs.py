@@ -3,8 +3,9 @@
 
 usage: python3 link_runs.py results/<VIEW> <run-dir parent> [<run-dir parent> ...] [--variant NAME]
 
-Every <parent>/map<M>_bs<B>_r<R>/ that has a DONE marker is linked as results/<VIEW>/<NAME>/map<M>_bs<B>_r<R>
-(NAME defaults to wbuffix). analyze.py, plot.py and make_md_results.py then treat the view like any data set.
+Every <parent>/map<M>_bs<B>_r<R>/ that has a DONE or FAILED marker is linked as results/<VIEW>/<NAME>/map<M>_bs<B>_r<R>
+(NAME defaults to wbuffix). analyze.py, plot.py and make_md_results.py then treat the view like any data set
+(analyze.py uses DONE runs for the tables and lists FAILED runs in analysis/failed_runs.csv).
 The same run name must not come from two parents; nothing is linked when that happens. SOURCES.txt in the view
 lists every link that exists under the view (all variants), so it stays complete when the tool is called again.
 """
@@ -32,13 +33,13 @@ for parent in map(lambda a: Path(a).resolve(), args[1:]):
     if not parent.is_dir():
         sys.exit(f"{parent} is not a directory")
     for run in sorted(parent.iterdir()):
-        if not RUN_RE.match(run.name) or not (run / "DONE").exists():
+        if not RUN_RE.match(run.name) or not ((run / "DONE").exists() or (run / "FAILED").exists()):
             continue
         if run.name in seen and seen[run.name] != run:
             sys.exit(f"{run.name} comes from both {seen[run.name]} and {run} — nothing linked")
         seen[run.name] = run
 if not seen:
-    sys.exit("no finished runs (map*_bs*_r* with DONE) under the given directories")
+    sys.exit("no finished runs (map*_bs*_r* with DONE or FAILED) under the given directories")
 for run_name, run in seen.items():
     link, rel = dst / run_name, os.path.relpath(run, dst)
     if link.is_symlink():
@@ -58,7 +59,7 @@ for run_name, run in seen.items():
 lines = []
 for link in sorted(p for p in view.glob("*/map*_bs*_r*") if p.is_symlink()):
     target = (link.parent / os.readlink(link)).resolve()
-    note = "" if (target / "DONE").exists() else "   (WARNING: target has no DONE marker)"
+    note = "" if (target / "DONE").exists() else ("   (FAILED run)" if (target / "FAILED").exists() else "   (WARNING: target has no DONE marker)")
     lines.append(f"{link.parent.name}/{link.name} -> {os.path.relpath(target, view)}{note}")
 (view / "SOURCES.txt").write_text("# combined view made by exp/link_runs.py (relative symlinks)\n" + "\n".join(lines) + "\n")
 print(f"{view}: {len(seen)} runs linked into {name}/")
