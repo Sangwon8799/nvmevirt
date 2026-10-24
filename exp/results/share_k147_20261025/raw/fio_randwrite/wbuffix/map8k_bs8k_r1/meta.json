@@ -1,0 +1,21 @@
+{
+ "variant": "wbuffix",
+ "workload": "randwrite (rw=randwrite)",
+ "cache_mode": "nodrop",
+ "map_unit": "8k (8192 B)",
+ "bs": "8k (8192 B)",
+ "rep": "1",
+ "device": "/dev/nvme1n1  size=12040984064 B  model=CSL_Virt_MN_01",
+ "module": "2df4660733245305060de0444898b06b2a691be403a6938923b8147540f7f4ae  nvmev_map8k.ko",
+ "insmod": "insmod nvmev_map8k.ko memmap_start=12G memmap_size=12G cpus=3,4,5",
+ "fio": "fio --output-format=json --output=fio.json job.fio",
+ "blk_queue": "nomerges=0 scheduler=none [mq-deadline] max_sectors_kb=256 write_cache=write through",
+ "loadavg": "3.02 3.26 3.42 4/241 27876",
+ "git_head": "3fe1c6d6f17d9fc63ad0e2202ae54313e579a0a5",
+ "start": "2026-10-24T17:52:23+00:00",
+ "end": "2026-10-24T17:54:32+00:00",
+ "blk_writes": "ios=5049625 merges=1963 sectors=80825408   (block layer, /sys/block/<dev>/stat during fio)",
+ "fio_exit": "0",
+ "chmodel_msgs": "0   (NVMeVirt '[chmodel_request]' errors seen by dmesg -W: NAND backlog beyond the channel-model window)",
+ "kernel_warn": "0   (kernel.log lines matching WARNING|almost full|timeout|reset|Oops|BUG|I/O error|Disk read failed, excluding chmodel/KSC2026 lines)"
+}

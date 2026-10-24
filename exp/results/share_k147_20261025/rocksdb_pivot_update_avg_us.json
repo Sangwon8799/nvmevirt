@@ -1,0 +1,46 @@
+[
+ {
+  "map_unit_KiB": 4,
+  "wal_off_block_4KiB": 161.58069311085384,
+  "wal_off_block_8KiB": 166.30227319974833,
+  "wal_off_block_16KiB": 191.72421962078084,
+  "wal_off_block_32KiB": 209.34901418001348,
+  "wal_on_block_4KiB": 167.5425458365058,
+  "wal_on_block_8KiB": 166.15203088700943,
+  "wal_on_block_16KiB": 191.59506592317854,
+  "wal_on_block_32KiB": 204.91812636645156
+ },
+ {
+  "map_unit_KiB": 8,
+  "wal_off_block_4KiB": 174.56592477903902,
+  "wal_off_block_8KiB": 177.8243971448096,
+  "wal_off_block_16KiB": 200.29957419868413,
+  "wal_off_block_32KiB": 218.28950747781116,
+  "wal_on_block_4KiB": 176.52612370206967,
+  "wal_on_block_8KiB": 177.3079866671523,
+  "wal_on_block_16KiB": 198.47008998250908,
+  "wal_on_block_32KiB": 213.54385447269064
+ },
+ {
+  "map_unit_KiB": 16,
+  "wal_off_block_4KiB": 197.32528022885904,
+  "wal_off_block_8KiB": 197.86234608940075,
+  "wal_off_block_16KiB": 223.37805291950428,
+  "wal_off_block_32KiB": 230.905016451796,
+  "wal_on_block_4KiB": 197.77853809347582,
+  "wal_on_block_8KiB": 197.40131162810778,
+  "wal_on_block_16KiB": 219.6562666187489,
+  "wal_on_block_32KiB": 227.59511833056067
+ },
+ {
+  "map_unit_KiB": 32,
+  "wal_off_block_4KiB": 235.97606500799853,
+  "wal_off_block_8KiB": 237.72004628001787,
+  "wal_off_block_16KiB": 258.1425037318823,
+  "wal_off_block_32KiB": 266.40241264817917,
+  "wal_on_block_4KiB": 235.37746208956062,
+  "wal_on_block_8KiB": 232.06129989497214,
+  "wal_on_block_16KiB": 247.92961919576794,
+  "wal_on_block_32KiB": 257.22538037431616
+ }
+]

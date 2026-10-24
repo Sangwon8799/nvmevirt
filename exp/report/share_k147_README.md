@@ -30,7 +30,8 @@
 
 | 파일 | 내용 |
 |---|---|
-| `rocksdb_ycsba_results.csv/.json` | 32 회 전체 표. 한 줄 = 한 회차 |
+| **`rocksdb_ycsba_table.csv/.json`** | **요청하신 값만 모은 표**(32 줄): 매핑 단위, block_size, WAL, TPS, READ·UPDATE p99·평균 지연, READ·UPDATE 초당 처리 수. 반올림 값 |
+| `rocksdb_ycsba_results.csv/.json` | 32 회 전체 표(반올림 없음, 열 약 100 개). 한 줄 = 한 회차 |
 | `rocksdb_pivot_tps_ops_s.csv/.json` | TPS 표. 행 = 매핑 단위, 열 = WAL × block_size |
 | `rocksdb_pivot_read_p99_us.csv/.json` | READ p99 지연(µs) 표 |
 | `rocksdb_pivot_update_p99_us.csv/.json` | UPDATE p99 지연(µs) 표 |

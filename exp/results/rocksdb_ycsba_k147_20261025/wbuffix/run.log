@@ -1,0 +1,69 @@
+[2026-10-24 18:05:30] experiment=rocksdb_ycsba_k147_20261025 variant=wbuffix maps=[4k 8k 16k 32k] blocks=[4k 8k 16k 32k] wals=[off on] records=3000000 run=600s threads=1
+[2026-10-24 18:05:30] insmod memmap_start=12G memmap_size=12G cpus=3,4,5; YCSB on cpus 0-2; 32 runs
+environment snapshot -> /home/dccearth/jsw/nvmevirt/exp/results/rocksdb_ycsba_k147_20261025/env_before
+[2026-10-24 18:05:30] === [1/32] variant=wbuffix map=4k block_size=4k wal=off ===
+[2026-10-24 18:15:43]     -> TPS 6198.4 ops/s | READ avg 159.5 p99 511 us | UPDATE avg 161.6 p99 513 us | load 8.34 s
+[2026-10-24 18:15:43] === [2/32] variant=wbuffix map=4k block_size=4k wal=on ===
+[2026-10-24 18:26:00]     -> TPS 6005.0 ops/s | READ avg 163.8 p99 521 us | UPDATE avg 167.5 p99 525 us | load 12.679 s
+[2026-10-24 18:26:00] === [3/32] variant=wbuffix map=4k block_size=8k wal=off ===
+[2026-10-24 18:36:15]     -> TPS 6019.3 ops/s | READ avg 164.4 p99 515 us | UPDATE avg 166.3 p99 517 us | load 9.649 s
+[2026-10-24 18:36:15] === [4/32] variant=wbuffix map=4k block_size=8k wal=on ===
+[2026-10-24 18:46:32]     -> TPS 6048.4 ops/s | READ avg 162.8 p99 515 us | UPDATE avg 166.2 p99 519 us | load 12.517 s
+[2026-10-24 18:46:32] === [5/32] variant=wbuffix map=4k block_size=16k wal=off ===
+[2026-10-24 18:56:46]     -> TPS 5212.8 ops/s | READ avg 190.3 p99 543 us | UPDATE avg 191.7 p99 545 us | load 9.406 s
+[2026-10-24 18:56:46] === [6/32] variant=wbuffix map=4k block_size=16k wal=on ===
+[2026-10-24 19:07:03]     -> TPS 5252.1 ops/s | READ avg 187.5 p99 538 us | UPDATE avg 191.6 p99 542 us | load 12.515 s
+[2026-10-24 19:07:03] === [7/32] variant=wbuffix map=4k block_size=32k wal=off ===
+[2026-10-24 19:17:17]     -> TPS 4780.3 ops/s | READ avg 207.4 p99 591 us | UPDATE avg 209.3 p99 593 us | load 9.221 s
+[2026-10-24 19:17:17] === [8/32] variant=wbuffix map=4k block_size=32k wal=on ===
+[2026-10-24 19:27:34]     -> TPS 4901.1 ops/s | READ avg 201.4 p99 587 us | UPDATE avg 204.9 p99 591 us | load 12.368 s
+[2026-10-24 19:27:34] === [9/32] variant=wbuffix map=8k block_size=4k wal=off ===
+[2026-10-24 19:37:47]     -> TPS 5730.7 ops/s | READ avg 172.8 p99 553 us | UPDATE avg 174.6 p99 555 us | load 8.345 s
+[2026-10-24 19:37:47] === [10/32] variant=wbuffix map=8k block_size=4k wal=on ===
+[2026-10-24 19:48:04]     -> TPS 5692.5 ops/s | READ avg 173.1 p99 553 us | UPDATE avg 176.5 p99 556 us | load 12.594 s
+[2026-10-24 19:48:04] === [11/32] variant=wbuffix map=8k block_size=8k wal=off ===
+[2026-10-24 19:58:19]     -> TPS 5628.5 ops/s | READ avg 175.9 p99 555 us | UPDATE avg 177.8 p99 558 us | load 9.68 s
+[2026-10-24 19:58:19] === [12/32] variant=wbuffix map=8k block_size=8k wal=on ===
+[2026-10-24 20:08:36]     -> TPS 5676.0 ops/s | READ avg 173.3 p99 550 us | UPDATE avg 177.3 p99 554 us | load 12.727 s
+[2026-10-24 20:08:36] === [13/32] variant=wbuffix map=8k block_size=16k wal=off ===
+[2026-10-24 20:18:50]     -> TPS 4995.4 ops/s | READ avg 198.5 p99 570 us | UPDATE avg 200.3 p99 572 us | load 9.346 s
+[2026-10-24 20:18:50] === [14/32] variant=wbuffix map=8k block_size=16k wal=on ===
+[2026-10-24 20:29:07]     -> TPS 5066.4 ops/s | READ avg 194.5 p99 565 us | UPDATE avg 198.5 p99 569 us | load 12.638 s
+[2026-10-24 20:29:07] === [15/32] variant=wbuffix map=8k block_size=32k wal=off ===
+[2026-10-24 20:39:21]     -> TPS 4580.9 ops/s | READ avg 216.7 p99 616 us | UPDATE avg 218.3 p99 618 us | load 9.247 s
+[2026-10-24 20:39:21] === [16/32] variant=wbuffix map=8k block_size=32k wal=on ===
+[2026-10-24 20:49:39]     -> TPS 4709.3 ops/s | READ avg 209.4 p99 611 us | UPDATE avg 213.5 p99 616 us | load 12.558 s
+[2026-10-24 20:49:39] === [17/32] variant=wbuffix map=16k block_size=4k wal=off ===
+[2026-10-24 20:59:52]     -> TPS 5074.8 ops/s | READ avg 195.2 p99 627 us | UPDATE avg 197.3 p99 629 us | load 8.463 s
+[2026-10-24 20:59:52] === [18/32] variant=wbuffix map=16k block_size=4k wal=on ===
+[2026-10-24 21:10:09]     -> TPS 5085.7 ops/s | READ avg 193.7 p99 619 us | UPDATE avg 197.8 p99 624 us | load 12.559 s
+[2026-10-24 21:10:09] === [19/32] variant=wbuffix map=16k block_size=8k wal=off ===
+[2026-10-24 21:20:23]     -> TPS 5056.6 ops/s | READ avg 196.0 p99 612 us | UPDATE avg 197.9 p99 613 us | load 9.757 s
+[2026-10-24 21:20:23] === [20/32] variant=wbuffix map=16k block_size=8k wal=on ===
+[2026-10-24 21:30:41]     -> TPS 5098.1 ops/s | READ avg 193.2 p99 576 us | UPDATE avg 197.4 p99 589 us | load 12.679 s
+[2026-10-24 21:30:41] === [21/32] variant=wbuffix map=16k block_size=16k wal=off ===
+[2026-10-24 21:40:55]     -> TPS 4481.5 ops/s | READ avg 221.3 p99 630 us | UPDATE avg 223.4 p99 632 us | load 9.487 s
+[2026-10-24 21:40:55] === [22/32] variant=wbuffix map=16k block_size=16k wal=on ===
+[2026-10-24 21:51:12]     -> TPS 4580.7 ops/s | READ avg 215.2 p99 627 us | UPDATE avg 219.7 p99 631 us | load 12.426 s
+[2026-10-24 21:51:12] === [23/32] variant=wbuffix map=16k block_size=32k wal=off ===
+[2026-10-24 22:01:26]     -> TPS 4335.5 ops/s | READ avg 228.8 p99 651 us | UPDATE avg 230.9 p99 653 us | load 9.361 s
+[2026-10-24 22:01:26] === [24/32] variant=wbuffix map=16k block_size=32k wal=on ===
+[2026-10-24 22:11:43]     -> TPS 4404.8 ops/s | READ avg 224.6 p99 651 us | UPDATE avg 227.6 p99 655 us | load 12.587 s
+[2026-10-24 22:11:43] === [25/32] variant=wbuffix map=32k block_size=4k wal=off ===
+[2026-10-24 22:21:56]     -> TPS 4238.0 ops/s | READ avg 234.3 p99 754 us | UPDATE avg 236.0 p99 755 us | load 8.313 s
+[2026-10-24 22:21:56] === [26/32] variant=wbuffix map=32k block_size=4k wal=on ===
+[2026-10-24 22:32:13]     -> TPS 4266.5 ops/s | READ avg 231.6 p99 740 us | UPDATE avg 235.4 p99 743 us | load 12.418 s
+[2026-10-24 22:32:13] === [27/32] variant=wbuffix map=32k block_size=8k wal=off ===
+[2026-10-24 22:42:27]     -> TPS 4206.0 ops/s | READ avg 236.2 p99 731 us | UPDATE avg 237.7 p99 725 us | load 9.621 s
+[2026-10-24 22:42:27] === [28/32] variant=wbuffix map=32k block_size=8k wal=on ===
+[2026-10-24 22:52:45]     -> TPS 4328.1 ops/s | READ avg 228.2 p99 675 us | UPDATE avg 232.1 p99 679 us | load 12.522 s
+[2026-10-24 22:52:45] === [29/32] variant=wbuffix map=32k block_size=16k wal=off ===
+[2026-10-24 23:02:59]     -> TPS 3877.9 ops/s | READ avg 255.9 p99 738 us | UPDATE avg 258.1 p99 740 us | load 9.361 s
+[2026-10-24 23:02:59] === [30/32] variant=wbuffix map=32k block_size=16k wal=on ===
+[2026-10-24 23:13:16]     -> TPS 4049.5 ops/s | READ avg 244.2 p99 730 us | UPDATE avg 247.9 p99 733 us | load 12.643 s
+[2026-10-24 23:13:16] === [31/32] variant=wbuffix map=32k block_size=32k wal=off ===
+[2026-10-24 23:23:29]     -> TPS 3754.1 ops/s | READ avg 264.7 p99 756 us | UPDATE avg 266.4 p99 758 us | load 8.771 s
+[2026-10-24 23:23:29] === [32/32] variant=wbuffix map=32k block_size=32k wal=on ===
+[2026-10-24 23:33:47]     -> TPS 3904.3 ops/s | READ avg 253.2 p99 752 us | UPDATE avg 257.2 p99 756 us | load 12.428 s
+environment snapshot -> /home/dccearth/jsw/nvmevirt/exp/results/rocksdb_ycsba_k147_20261025/env_after_wbuffix
+[2026-10-24 23:33:47] finished: /home/dccearth/jsw/nvmevirt/exp/results/rocksdb_ycsba_k147_20261025/wbuffix

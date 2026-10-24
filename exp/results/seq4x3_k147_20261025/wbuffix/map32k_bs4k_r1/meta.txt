@@ -1,0 +1,19 @@
+variant:      wbuffix
+workload:     seqwrite (rw=write)
+cache_mode:   nodrop
+map_unit:     32k (32768 B)
+bs:           4k (4096 B)
+rep:          1
+device:       /dev/nvme1n1  size=12040984064 B  model=CSL_Virt_MN_01
+module:       7c77574adc04e30eee413a944ea81b41b170371ad6e9c001aedfb1268694b8b1  nvmev_map32k.ko
+insmod:       insmod nvmev_map32k.ko memmap_start=12G memmap_size=12G cpus=3,4,5
+fio:          fio --output-format=json --output=fio.json job.fio
+blk_queue:    nomerges=2 scheduler=none [mq-deadline] max_sectors_kb=256 write_cache=write through
+loadavg:      3.09 3.27 3.14 4/239 21341
+git_head:     3fe1c6d6f17d9fc63ad0e2202ae54313e579a0a5
+start:        2026-10-24T17:15:26+00:00
+end:          2026-10-24T17:17:34+00:00
+blk_writes:   ios=5703027 merges=0 sectors=45624216   (block layer, /sys/block/<dev>/stat during fio)
+fio_exit:     0
+chmodel_msgs: 0   (NVMeVirt '[chmodel_request]' errors seen by dmesg -W: NAND backlog beyond the channel-model window)
+kernel_warn:  0   (kernel.log lines matching WARNING|almost full|timeout|reset|Oops|BUG|I/O error|Disk read failed, excluding chmodel/KSC2026 lines)

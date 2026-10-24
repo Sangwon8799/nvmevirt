@@ -15,7 +15,7 @@ OUT = Path(sys.argv[2]) if len(sys.argv) > 2 else EXP / f"gallery_{EXP.name}.htm
 # (group title, [(file pattern relative to EXP, caption)])
 GROUPS = [
     ("1. 대역폭 — 핵심", [
-        ("plots/bs_bw_MiBps.png", "60 s 평균 쓰기 대역폭. x = fio bs, 선 = 매핑 단위, 패널 = 변형(캐시 조건), 오차막대 = 표준편차"),
+        ("plots/bs_bw_MiBps.png", "fio 실행 전체(60 s 또는 120 s) 평균 쓰기 대역폭. x = fio bs, 선 = 매핑 단위, 패널 = 변형(캐시 조건), 오차막대 = 표준편차(1 회 측정이면 없음)"),
         ("plots/heatmap_bw_MiBps.png", "매핑 단위 × bs 평균 대역폭 열지도(변형별 패널)"),
         ("plots/map_bw_MiBps.png", "같은 값을 매핑 단위 축으로: 선 = bs"),
         ("plots/compare_bw_MiBps.png", "변형 비교(주 데이터셋: drop vs nodrop, 순차: wbuffix vs merge; 변형이 하나뿐인 데이터셋은 그 변형만). 회색 = bs < 매핑 단위"),
@@ -31,7 +31,7 @@ GROUPS = [
         ("plots/bs_bw_post_gc_MiBps.png", "GC 이후 구간 평균 대역폭"),
         ("plots/map_bw_post_gc_MiBps.png", "GC 이후 대역폭, 매핑 단위 축"),
         ("plots/heatmap_bw_post_gc_MiBps.png", "GC 이후 대역폭 열지도"),
-        ("analysis/fig_bw_last20s_vs_bs_*.png", "마지막 20 s(40–60 s) 평균 대역폭 — GC 이후 정상 상태에 가까운 구간"),
+        ("analysis/fig_bw_last20s_vs_bs_*.png", "마지막 20 s 평균 대역폭 — GC 이후 정상 상태에 가까운 구간"),
     ]),
     ("3. 쓰기 증폭 (WAF)", [
         ("plots/bs_waf_total.png", "전체 쓰기 증폭 WAF_total = NAND 바이트 ÷ 호스트 바이트 (로그 축)"),
@@ -48,9 +48,16 @@ GROUPS = [
         ("plots/map_clat_p99_us.png", "p99 완료 지연, 매핑 단위 축"),
     ]),
     ("5. 시간에 따른 변화 (0.5 s 평균)", [
-        ("analysis/fig_timeseries_*.png", "조합별 대역폭 시계열 — 3 회차를 겹침, 점선 = 첫 GC"),
+        ("analysis/fig_timeseries_*.png", "조합별 대역폭 시계열 — 회차를 겹침, 점선 = 첫 GC"),
         ("plots/ts_bw_all_rep1.png", "1 회차 대역폭 시계열 — 변형을 한 그림에"),
         ("plots/ts_clat_all_rep1.png", "1 회차 완료 지연 시계열 (로그 축)"),
+    ]),
+    ("0. RocksDB / YCSB-A (rocksdb/analyze_rocksdb.py)", [
+        ("analysis/fig_tps_heatmap.png", "YCSB-A 처리량(ops/s). 행 = FTL 매핑 단위, 열 = RocksDB block_size, 왼쪽 WAL off · 오른쪽 WAL on"),
+        ("analysis/fig_tps_vs_block.png", "같은 처리량을 block_size 축으로: 선 = 매핑 단위"),
+        ("analysis/fig_read_p99_heatmap.png", "READ p99 지연(µs)"),
+        ("analysis/fig_update_p99_heatmap.png", "UPDATE p99 지연(µs)"),
+        ("analysis/fig_tps_timeseries.png", "run 600 초 동안 처리량(10 초 이동평균). 파랑 = WAL off, 주황 = WAL on"),
     ]),
     ("6. analyze.py 기본 그림 (변형별 파일)", [
         ("analysis/fig_bw_vs_bs_*.png", "대역폭 vs bs"),
@@ -65,7 +72,12 @@ TITLE = {"main3x3_20261008": "주 데이터셋 — 매핑 4K·16K·32K × bs 4K�
          "main_20261008": "보조 데이터셋 — 첫 설계 6×6 중 측정한 부분 (wbuffix 53 회)",
          "seq3x3_20261008": "순차 쓰기 추가 실험 — 매핑 4K·16K·32K × bs 4K·16K·32K × 3 회 × 모델 wbuffix / merge (쓰기 버퍼 병합)",
          "randbs_20261008": "랜덤 쓰기 bs 8K·64K 추가 실험 — 매핑 4K·16K·32K × bs 8K·64K × 3 회 (wbuffix, 페이지 캐시 그대로)",
-         "rand3x5_20261008": "랜덤 쓰기 매핑 3 × bs 5 — 주 데이터셋 nodrop(bs 4K·16K·32K) + randbs_20261008(bs 8K·64K) 를 합친 보기 (wbuffix)"}.get(EXP.name, EXP.name)
+         "rand3x5_20261008": "랜덤 쓰기 매핑 3 × bs 5 — 주 데이터셋 nodrop(bs 4K·16K·32K) + randbs_20261008(bs 8K·64K) 를 합친 보기 (wbuffix)",
+         "rand4x3_k147_20261025": "커널 147 재측정 — 랜덤 쓰기 매핑 4K·8K·16K·32K × bs 4K·16K·32K, 120 s × 1 회 (wbuffix, nodrop)",
+         "seq4x3_k147_20261025": "커널 147 재측정 — 순차 쓰기 매핑 4 × bs 3 × 모델 wbuffix / merge, 120 s × 1 회 (nomerges=2)",
+         "randbs_k147_20261025": "커널 147 재측정 — 랜덤 쓰기 매핑 4 × bs 8K·64K, 120 s × 1 회 (wbuffix)",
+         "rand4x5_k147_20261025": "커널 147 재측정 — 랜덤 쓰기 매핑 4 × bs 5 (rand4x3_k147 + randbs_k147 을 합친 보기)",
+         "rocksdb_ycsba_k147_20261025": "RocksDB 11.8.1 / YCSB-A — 매핑 4 × block_size 4 × WAL off/on, 300 만 건, run 600 초 × 1 회"}.get(EXP.name, EXP.name)
 
 
 def img(path):

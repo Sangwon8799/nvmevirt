@@ -1,0 +1,163 @@
+$ free -b
+               total        used        free      shared  buff/cache   available
+Mem:     12299939840   908644352 10297315328    12627968  1395949568 11391295488
+Swap:     8589930496           0  8589930496
+
+$ grep -E MemTotal|MemFree|MemAvailable|Hugepages|AnonHugePages /proc/meminfo
+MemTotal:       12011660 kB
+MemFree:        10055972 kB
+MemAvailable:   11124312 kB
+AnonHugePages:         0 kB
+Hugepagesize:       2048 kB
+
+$ cat /sys/kernel/mm/transparent_hugepage/enabled
+always [madvise] never
+
+$ sudo -n cat /proc/iomem
+00000000-00000fff : Reserved
+00001000-0009dfff : System RAM
+0009e000-0009efff : Reserved
+0009f000-0009ffff : System RAM
+000a0000-000fffff : Reserved
+  000a0000-000bffff : PCI Bus 0000:00
+  000e0000-000fffff : PCI Bus 0000:00
+    000f0000-000fffff : System ROM
+00100000-6ad8a017 : System RAM
+  01000000-025fffff : Kernel code
+  02600000-03419fff : Kernel rodata
+  03600000-03a5677f : Kernel data
+  03f57000-043fffff : Kernel bss
+6ad8a018-6ad97857 : System RAM
+6ad97858-6bfedfff : System RAM
+6bfee000-6bfeefff : Reserved
+6bfef000-71f90fff : System RAM
+71f91000-7433cfff : Reserved
+7433d000-74448fff : ACPI Tables
+74449000-74648fff : ACPI Non-volatile Storage
+74649000-75bfefff : Reserved
+75bff000-75bfffff : System RAM
+75c00000-79ffffff : Reserved
+7a400000-7a7fffff : Reserved
+7b000000-807fffff : Reserved
+  7c800000-807fffff : Graphics Stolen Memory
+80800000-bfffffff : PCI Bus 0000:00
+  80800000-811fffff : PCI Bus 0000:02
+  81200000-812fffff : PCI Bus 0000:03
+    81200000-8120ffff : 0000:03:00.0
+      81200000-8120ffff : r8169
+    81210000-81213fff : 0000:03:00.0
+  81300000-813fffff : PCI Bus 0000:01
+    81300000-81303fff : 0000:01:00.0
+      81300000-81303fff : nvme
+  81400000-81401fff : 0000:00:17.0
+    81400000-81401fff : ahci
+  81402000-814027ff : 0000:00:17.0
+    81402000-814027ff : ahci
+  81403000-814030ff : 0000:00:17.0
+    81403000-814030ff : ahci
+  81404000-81404fff : 0000:00:1f.5
+    81404000-81404fff : 0000:00:1f.5 0000:00:1f.5
+c0000000-cfffffff : PCI ECAM 0000 [bus 00-ff]
+e0690000-e069ffff : INTC1085:00
+  e0690000-e069ffff : INTC1085:00 INTC1085:00
+e06a0000-e06affff : INTC1085:00
+  e06a0000-e06affff : INTC1085:00 INTC1085:00
+e06b0000-e06bffff : INTC1085:00
+  e06b0000-e06bffff : INTC1085:00 INTC1085:00
+e06d0000-e06dffff : INTC1085:00
+  e06d0000-e06dffff : INTC1085:00 INTC1085:00
+e06e0000-e06effff : INTC1085:00
+  e06e0000-e06effff : INTC1085:00 INTC1085:00
+fe000000-fe010fff : Reserved
+fec00000-fec00fff : Reserved
+  fec00000-fec003ff : IOAPIC 0
+fed00000-fed00fff : Reserved
+  fed00000-fed003ff : HPET 0
+    fed00000-fed003ff : PNP0103:00
+fed20000-fed7ffff : Reserved
+  fed40000-fed44fff : MSFT0101:00
+    fed40000-fed44fff : MSFT0101:00
+fed90000-fed90fff : dmar0
+fed91000-fed91fff : dmar1
+feda0000-feda0fff : pnp 00:03
+feda1000-feda1fff : pnp 00:03
+fedc0000-fedc7fff : pnp 00:03
+fee00000-fee00fff : Reserved
+100000000-2ffffffff : System RAM
+300000000-5ffffffff : Reserved
+600000000-67f7fffff : System RAM
+67f800000-67fffffff : RAM buffer
+4000000000-7fffffffff : PCI Bus 0000:00
+  4000000000-400fffffff : 0000:00:02.0
+  4010000000-4016ffffff : 0000:00:02.0
+  4017000000-40171fffff : PCI Bus 0000:02
+  4020000000-40ffffffff : 0000:00:02.0
+  6000000000-6000ffffff : 0000:00:02.0
+  6001000000-60010fffff : 0000:00:1f.3
+  6001100000-600110ffff : 0000:00:14.0
+    6001100000-600110ffff : xhci-hcd
+  6001110000-6001117fff : 0000:00:0a.0
+    6001114000-6001114d9f : telem1
+    6001114da0-6001114edf : telem2
+    60011164d8-60011164e7 : intel_vsec.telemetry.0
+    60011164e8-60011164f7 : intel_vsec.telemetry.0
+    60011164f8-6001116507 : intel_vsec.telemetry.0
+    6001116508-6001116517 : intel_vsec.telemetry.0
+  6001120000-6001123fff : 0000:00:1f.3
+    6001120000-6001123fff : ICH HD audio
+  6001124000-6001127fff : 0000:00:14.2
+  6001128000-60011280ff : 0000:00:1f.4
+  6001129000-6001129fff : 0000:00:16.0
+    6001129000-6001129fff : mei_me
+  600112a000-600112afff : 0000:00:14.2
+  600112b000-600112bfff : 0000:00:08.0
+
+$ bash -c sudo -n dmesg | grep -iE 'e820|memmap|user-defined' | head -60
+[    0.000000] Command line: BOOT_IMAGE=/boot/vmlinuz-6.8.0-147-generic root=UUID=bb1b37f9-0806-4044-a2bf-5ff988ecb286 ro memmap=12G$12G isolcpus=3-5
+[    0.000000] BIOS-e820: [mem 0x0000000000000000-0x000000000009dfff] usable
+[    0.000000] BIOS-e820: [mem 0x000000000009e000-0x000000000009efff] reserved
+[    0.000000] BIOS-e820: [mem 0x000000000009f000-0x000000000009ffff] usable
+[    0.000000] BIOS-e820: [mem 0x00000000000a0000-0x00000000000fffff] reserved
+[    0.000000] BIOS-e820: [mem 0x0000000000100000-0x0000000071f90fff] usable
+[    0.000000] BIOS-e820: [mem 0x0000000071f91000-0x000000007433cfff] reserved
+[    0.000000] BIOS-e820: [mem 0x000000007433d000-0x0000000074448fff] ACPI data
+[    0.000000] BIOS-e820: [mem 0x0000000074449000-0x0000000074648fff] ACPI NVS
+[    0.000000] BIOS-e820: [mem 0x0000000074649000-0x0000000075bfefff] reserved
+[    0.000000] BIOS-e820: [mem 0x0000000075bff000-0x0000000075bfffff] usable
+[    0.000000] BIOS-e820: [mem 0x0000000075c00000-0x0000000079ffffff] reserved
+[    0.000000] BIOS-e820: [mem 0x000000007a400000-0x000000007a7fffff] reserved
+[    0.000000] BIOS-e820: [mem 0x000000007b000000-0x00000000807fffff] reserved
+[    0.000000] BIOS-e820: [mem 0x00000000c0000000-0x00000000cfffffff] reserved
+[    0.000000] BIOS-e820: [mem 0x00000000fe000000-0x00000000fe010fff] reserved
+[    0.000000] BIOS-e820: [mem 0x00000000fec00000-0x00000000fec00fff] reserved
+[    0.000000] BIOS-e820: [mem 0x00000000fed00000-0x00000000fed00fff] reserved
+[    0.000000] BIOS-e820: [mem 0x00000000fed20000-0x00000000fed7ffff] reserved
+[    0.000000] BIOS-e820: [mem 0x00000000fee00000-0x00000000fee00fff] reserved
+[    0.000000] BIOS-e820: [mem 0x00000000ff000000-0x00000000ffffffff] reserved
+[    0.000000] BIOS-e820: [mem 0x0000000100000000-0x000000067f7fffff] usable
+[    0.000000] e820: update [mem 0x6ad8a018-0x6ad97857] usable ==> usable
+[    0.000000] e820: update [mem 0x6ad8a018-0x6ad97857] usable ==> usable
+[    0.000000] user-defined physical RAM map:
+[    0.000000] efi: Remove mem78: MMIO range=[0xc0000000-0xcfffffff] (256MB) from e820 map
+[    0.000000] e820: remove [mem 0xc0000000-0xcfffffff] reserved
+[    0.000000] efi: Not removing mem79: MMIO range=[0xfe000000-0xfe010fff] (68KB) from e820 map
+[    0.000000] efi: Not removing mem80: MMIO range=[0xfec00000-0xfec00fff] (4KB) from e820 map
+[    0.000000] efi: Not removing mem81: MMIO range=[0xfed00000-0xfed00fff] (4KB) from e820 map
+[    0.000000] efi: Not removing mem83: MMIO range=[0xfee00000-0xfee00fff] (4KB) from e820 map
+[    0.000000] efi: Remove mem84: MMIO range=[0xff000000-0xffffffff] (16MB) from e820 map
+[    0.000000] e820: remove [mem 0xff000000-0xffffffff] reserved
+[    0.000499] e820: update [mem 0x00000000-0x00000fff] usable ==> reserved
+[    0.000501] e820: remove [mem 0x000a0000-0x000fffff] usable
+[    0.000918] e820: update [mem 0x7c000000-0xffffffff] usable ==> reserved
+[    0.009352] e820: update [mem 0x6bfee000-0x6bfeefff] usable ==> reserved
+[    0.023014] Kernel command line: BOOT_IMAGE=/boot/vmlinuz-6.8.0-147-generic root=UUID=bb1b37f9-0806-4044-a2bf-5ff988ecb286 ro memmap=12G$12G isolcpus=3-5
+[    0.097408] HugeTLB: 16380 KiB vmemmap can be freed for a 1.00 GiB page
+[    0.097408] HugeTLB: 28 KiB vmemmap can be freed for a 2.00 MiB page
+[    0.172158] PCI: Ignoring E820 reservations for host bridge windows
+[    2.243739] e820: reserve RAM buffer [mem 0x0009e000-0x0009ffff]
+[    2.243741] e820: reserve RAM buffer [mem 0x6ad8a018-0x6bffffff]
+[    2.243742] e820: reserve RAM buffer [mem 0x6bfee000-0x6bffffff]
+[    2.243742] e820: reserve RAM buffer [mem 0x71f91000-0x73ffffff]
+[    2.243743] e820: reserve RAM buffer [mem 0x75c00000-0x77ffffff]
+[    2.243743] e820: reserve RAM buffer [mem 0x67f800000-0x67fffffff]
+

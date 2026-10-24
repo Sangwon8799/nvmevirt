@@ -1,0 +1,46 @@
+[
+ {
+  "map_unit_KiB": 4,
+  "wal_off_block_4KiB": 511,
+  "wal_off_block_8KiB": 515,
+  "wal_off_block_16KiB": 543,
+  "wal_off_block_32KiB": 591,
+  "wal_on_block_4KiB": 521,
+  "wal_on_block_8KiB": 515,
+  "wal_on_block_16KiB": 538,
+  "wal_on_block_32KiB": 587
+ },
+ {
+  "map_unit_KiB": 8,
+  "wal_off_block_4KiB": 553,
+  "wal_off_block_8KiB": 555,
+  "wal_off_block_16KiB": 570,
+  "wal_off_block_32KiB": 616,
+  "wal_on_block_4KiB": 553,
+  "wal_on_block_8KiB": 550,
+  "wal_on_block_16KiB": 565,
+  "wal_on_block_32KiB": 611
+ },
+ {
+  "map_unit_KiB": 16,
+  "wal_off_block_4KiB": 627,
+  "wal_off_block_8KiB": 612,
+  "wal_off_block_16KiB": 630,
+  "wal_off_block_32KiB": 651,
+  "wal_on_block_4KiB": 619,
+  "wal_on_block_8KiB": 576,
+  "wal_on_block_16KiB": 627,
+  "wal_on_block_32KiB": 651
+ },
+ {
+  "map_unit_KiB": 32,
+  "wal_off_block_4KiB": 754,
+  "wal_off_block_8KiB": 731,
+  "wal_off_block_16KiB": 738,
+  "wal_off_block_32KiB": 756,
+  "wal_on_block_4KiB": 740,
+  "wal_on_block_8KiB": 675,
+  "wal_on_block_16KiB": 730,
+  "wal_on_block_32KiB": 752
+ }
+]

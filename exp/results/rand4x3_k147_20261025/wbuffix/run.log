@@ -1,0 +1,31 @@
+[2026-10-24 16:29:45] experiment=rand4x3_k147_20261025 variant=wbuffix maps=[4k 8k 16k 32k] bss=[4k 16k 32k] reps=1 cache_modes=[nodrop] only_bs_lt_map=0
+[2026-10-24 16:29:45] fio: libaio randwrite iodepth=32 runtime=120s ramp_time=0s log=500ms; insmod memmap_start=12G memmap_size=12G cpus=3,4,5
+[2026-10-24 16:29:45] block layer: nomerges=kernel default
+[2026-10-24 16:29:45] 12 runs, about 26 min
+environment snapshot -> /home/dccearth/jsw/nvmevirt/exp/results/rand4x3_k147_20261025/env_before
+[2026-10-24 16:29:45] === [1/12] variant=wbuffix cache=nodrop map=4k bs=4k rep=1 ===
+    -> 326.5 MiB/s, 83582 IOPS, clat mean 381.8 us
+[2026-10-24 16:31:56] === [2/12] variant=wbuffix cache=nodrop map=4k bs=16k rep=1 ===
+    -> 419.8 MiB/s, 26869 IOPS, clat mean 1189.5 us
+[2026-10-24 16:34:06] === [3/12] variant=wbuffix cache=nodrop map=4k bs=32k rep=1 ===
+    -> 421.2 MiB/s, 13478 IOPS, clat mean 2372.4 us
+[2026-10-24 16:36:17] === [4/12] variant=wbuffix cache=nodrop map=8k bs=4k rep=1 ===
+    -> 148.6 MiB/s, 38035 IOPS, clat mean 840.3 us
+[2026-10-24 16:38:27] === [5/12] variant=wbuffix cache=nodrop map=8k bs=16k rep=1 ===
+    -> 354.5 MiB/s, 22688 IOPS, clat mean 1409.0 us
+[2026-10-24 16:40:37] === [6/12] variant=wbuffix cache=nodrop map=8k bs=32k rep=1 ===
+    -> 421.2 MiB/s, 13478 IOPS, clat mean 2372.2 us
+[2026-10-24 16:42:48] === [7/12] variant=wbuffix cache=nodrop map=16k bs=4k rep=1 ===
+    -> 88.4 MiB/s, 22620 IOPS, clat mean 1413.6 us
+[2026-10-24 16:44:58] === [8/12] variant=wbuffix cache=nodrop map=16k bs=16k rep=1 ===
+    -> 330.9 MiB/s, 21177 IOPS, clat mean 1509.6 us
+[2026-10-24 16:47:09] === [9/12] variant=wbuffix cache=nodrop map=16k bs=32k rep=1 ===
+    -> 360.6 MiB/s, 11538 IOPS, clat mean 2771.5 us
+[2026-10-24 16:49:19] === [10/12] variant=wbuffix cache=nodrop map=32k bs=4k rep=1 ===
+    -> 47.3 MiB/s, 12099 IOPS, clat mean 2643.6 us
+[2026-10-24 16:51:29] === [11/12] variant=wbuffix cache=nodrop map=32k bs=16k rep=1 ===
+    -> 150.6 MiB/s, 9636 IOPS, clat mean 3319.5 us
+[2026-10-24 16:53:40] === [12/12] variant=wbuffix cache=nodrop map=32k bs=32k rep=1 ===
+    -> 336.6 MiB/s, 10770 IOPS, clat mean 2969.2 us
+environment snapshot -> /home/dccearth/jsw/nvmevirt/exp/results/rand4x3_k147_20261025/env_after_wbuffix
+[2026-10-24 16:55:50] finished: /home/dccearth/jsw/nvmevirt/exp/results/rand4x3_k147_20261025/wbuffix

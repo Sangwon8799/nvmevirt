@@ -1,0 +1,5 @@
+map_unit_KiB,wal_off_block_4KiB,wal_off_block_8KiB,wal_off_block_16KiB,wal_off_block_32KiB,wal_on_block_4KiB,wal_on_block_8KiB,wal_on_block_16KiB,wal_on_block_32KiB
+4,511,515,543,591,521,515,538,587
+8,553,555,570,616,553,550,565,611
+16,627,612,630,651,619,576,627,651
+32,754,731,738,756,740,675,730,752

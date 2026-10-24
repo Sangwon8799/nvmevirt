@@ -1,0 +1,23 @@
+Command line: -load -db site.ycsb.db.rocksdb.RocksDBClient -P /home/dccearth/jsw/ycsb-dist/ycsb-rocksdb-binding-0.18.0-SNAPSHOT/workloads/workloada -p recordcount=3000000 -p rocksdb.dir=/mnt/jsw_nvmevirt/db -p rocksdb.optionsfile=/home/dccearth/jsw/nvmevirt/exp/results/rocksdb_ycsba_k147_20261025/wbuffix/map16k_blk32k_walon/rocksdb_options.ini -p rocksdb.disablewal=false -p rocksdb.sync=false -p measurementtype=hdrhistogram -p hdrhistogram.percentiles=50,90,95,99,99.9,99.99 -threads 1 -s -p status.interval=1
+YCSB Client 0.18.0-SNAPSHOT
+
+Loading workload...
+Starting test.
+[Thread-2] INFO site.ycsb.db.rocksdb.RocksDBClient - RocksDB data dir: /mnt/jsw_nvmevirt/db
+[Thread-2] INFO site.ycsb.db.rocksdb.RocksDBClient - RocksDB options file: /home/dccearth/jsw/nvmevirt/exp/results/rocksdb_ycsba_k147_20261025/wbuffix/map16k_blk32k_walon/rocksdb_options.ini
+2026-10-24 22:01:28:087 0 sec: 0 operations; est completion in 0 second 
+[Thread-2] INFO site.ycsb.db.rocksdb.RocksDBClient - RocksDB write options: disableWAL=false sync=false
+DBWrapper: report latency for each error is false and specific error codes to track for latency are: []
+2026-10-24 22:01:29:066 1 sec: 202532 operations; 202532 current ops/sec; est completion in 14 seconds [INSERT: Count=202640, Max=2133, Min=2, Avg=3.67, 50=3, 90=5, 99=7, 99.9=14, 99.99=92] 
+2026-10-24 22:01:30:066 2 sec: 445052 operations; 242520 current ops/sec; est completion in 12 seconds [INSERT: Count=242477, Max=945, Min=2, Avg=3.41, 50=3, 90=4, 99=5, 99.9=6, 99.99=71] 
+2026-10-24 22:01:31:066 3 sec: 690010 operations; 244958 current ops/sec; est completion in 11 seconds [INSERT: Count=244957, Max=1005, Min=2, Avg=3.38, 50=3, 90=4, 99=5, 99.9=6, 99.99=41] 
+2026-10-24 22:01:32:066 4 sec: 933617 operations; 243607 current ops/sec; est completion in 9 second [INSERT: Count=243606, Max=975, Min=2, Avg=3.41, 50=3, 90=4, 99=5, 99.9=6, 99.99=70] 
+2026-10-24 22:01:33:066 5 sec: 1177036 operations; 243419 current ops/sec; est completion in 8 second [INSERT: Count=243416, Max=847, Min=2, Avg=3.4, 50=3, 90=4, 99=5, 99.9=6, 99.99=93] 
+2026-10-24 22:01:34:066 6 sec: 1421055 operations; 244019 current ops/sec; est completion in 7 second [INSERT: Count=244020, Max=1932, Min=2, Avg=3.4, 50=3, 90=4, 99=5, 99.9=6, 99.99=29] 
+2026-10-24 22:01:35:066 7 sec: 1662355 operations; 241300 current ops/sec; est completion in 6 second [INSERT: Count=241302, Max=810, Min=2, Avg=3.44, 50=3, 90=4, 99=5, 99.9=7, 99.99=77] 
+2026-10-24 22:01:36:066 8 sec: 1905609 operations; 243254 current ops/sec; est completion in 5 second [INSERT: Count=243248, Max=972, Min=2, Avg=3.41, 50=3, 90=4, 99=5, 99.9=6, 99.99=73] 
+2026-10-24 22:01:37:066 9 sec: 2149008 operations; 243399 current ops/sec; est completion in 4 second [INSERT: Count=243400, Max=1050, Min=2, Avg=3.41, 50=3, 90=4, 99=5, 99.9=6, 99.99=114] 
+2026-10-24 22:01:38:066 10 sec: 2391565 operations; 242557 current ops/sec; est completion in 3 second [INSERT: Count=242559, Max=1187, Min=2, Avg=3.42, 50=3, 90=4, 99=5, 99.9=6, 99.99=117] 
+2026-10-24 22:01:39:066 11 sec: 2636225 operations; 244660 current ops/sec; est completion in 2 second [INSERT: Count=244659, Max=1340, Min=2, Avg=3.38, 50=3, 90=4, 99=5, 99.9=6, 99.99=100] 
+2026-10-24 22:01:40:066 12 sec: 2878922 operations; 242697 current ops/sec; est completion in 1 second [INSERT: Count=242701, Max=1005, Min=2, Avg=3.42, 50=3, 90=4, 99=5, 99.9=6, 99.99=105] 
+2026-10-24 22:01:40:585 12 sec: 3000000 operations; 233290.94 current ops/sec; [CLEANUP: Count=1, Max=19983, Min=19968, Avg=19976, 50=19983, 90=19983, 99=19983, 99.9=19983, 99.99=19983] [INSERT: Count=121015, Max=763, Min=2, Avg=3.42, 50=3, 90=4, 99=5, 99.9=6, 99.99=88] 

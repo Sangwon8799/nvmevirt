@@ -90,6 +90,17 @@ def rocksdb_part():
         return 0
     rows = [{k: conv(v) for k, v in r.items()} for r in read_csv(summ)]
     write_table("rocksdb_ycsba_results", rows, RDB_FIRST)
+    # compact table for the senior: the requested values only, rounded; utf-8-sig so Excel opens it cleanly
+    compact = [{"map_unit_KB": r["map_unit_KiB"], "block_size_KB": r["block_size_KiB"], "WAL": r["wal"],
+                "TPS_ops_per_s": round(r["tps_ops_s"], 1), "READ_p99_us": r["read_p99_us"],
+                "UPDATE_p99_us": r["update_p99_us"], "READ_avg_us": round(r["read_avg_us"], 1),
+                "UPDATE_avg_us": round(r["update_avg_us"], 1), "READ_ops_per_s": round(r["read_tps_ops_s"], 1),
+                "UPDATE_ops_per_s": round(r["update_tps_ops_s"], 1)} for r in rows]
+    with (OUT / "rocksdb_ycsba_table.csv").open("w", newline="", encoding="utf-8-sig") as f:
+        w = csv.DictWriter(f, fieldnames=list(compact[0]))
+        w.writeheader()
+        w.writerows(compact)
+    (OUT / "rocksdb_ycsba_table.json").write_text(json.dumps(compact, indent=1) + "\n")
     # pivot tables: rows = mapping unit, columns = WAL x block_size
     maps = sorted({r["map_unit_KiB"] for r in rows})
     blks = sorted({r["block_size_KiB"] for r in rows})

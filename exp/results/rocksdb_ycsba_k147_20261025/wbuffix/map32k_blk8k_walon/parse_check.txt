@@ -1,0 +1,1 @@
+TPS 4328.1 ops/s | READ avg 228.2 p99 675 us | UPDATE avg 232.1 p99 679 us | load 12.522 s

@@ -1,0 +1,35 @@
+variant:      wbuffix
+workload:     YCSB workloada (read 0.5 / update 0.5, zipfian), recordcount=3000000, threads=1
+map_unit:     8k (8192 B)
+block_size:   32k (32768 B)
+wal:          on (rocksdb.disablewal=false, rocksdb.sync=false)
+run_sec:      600 (maxexecutiontime; operationcount=1000000000)
+device:       /dev/nvme1n1  size=12040984064 B  model=CSL_Virt_MN_01
+module:       2df4660733245305060de0444898b06b2a691be403a6938923b8147540f7f4ae  nvmev_map8k.ko
+insmod:       insmod nvmev_map8k.ko memmap_start=12G memmap_size=12G cpus=3,4,5
+mkfs:         mkfs.ext4 -F -m 0 -E lazy_itable_init=0,lazy_journal_init=0 /dev/nvme1n1 (mke2fs 1.47.0 (5-Feb-2023))
+mount:        /dev/nvme1n1 /mnt/jsw_nvmevirt ext4   rw,noatime
+blk_queue:    nomerges=0 scheduler=none [mq-deadline] max_sectors_kb=256 write_cache=write through logical_block_size=512
+cpus:         taskset -c 0-2 (YCSB + RocksDB); NVMeVirt cpus=3,4,5
+ycsb:         /home/dccearth/jsw/ycsb-dist/ycsb-rocksdb-binding-0.18.0-SNAPSHOT (8cd243b4 ksc2026-rocksdb-11.8.1); rocksdbjni-11.8.1.jar
+java:         openjdk version "17.0.20.1" 2026-08-18
+kernel:       6.8.0-147-generic
+loadavg:      3.69 3.96 3.98 4/241 46395
+mem:          MemFree:9822188 kB Buffers:89800 kB Cached:1303384 kB Dirty:1320 kB Writeback:0 kB 
+git_head:     3fe1c6d6f17d9fc63ad0e2202ae54313e579a0a5
+start:        2026-10-24T20:39:23+00:00
+load_cmd:     taskset -c 0-2 java -cp /home/dccearth/jsw/ycsb-dist/ycsb-rocksdb-binding-0.18.0-SNAPSHOT/lib/* site.ycsb.Client -load -db site.ycsb.db.rocksdb.RocksDBClient -P /home/dccearth/jsw/ycsb-dist/ycsb-rocksdb-binding-0.18.0-SNAPSHOT/workloads/workloada -p recordcount=3000000 -p rocksdb.dir=/mnt/jsw_nvmevirt/db -p rocksdb.optionsfile=/home/dccearth/jsw/nvmevirt/exp/results/rocksdb_ycsba_k147_20261025/wbuffix/map8k_blk32k_walon/rocksdb_options.ini -p rocksdb.disablewal=false -p rocksdb.sync=false -p measurementtype=hdrhistogram -p hdrhistogram.percentiles=50,90,95,99,99.9,99.99 -threads 1 -s -p status.interval=1
+load_exit:    0
+load_wall_s:  12.558
+df_after_load: 3505745920 8220172288
+db_after_load: 3505582860 B
+mem_before_run: MemFree:9460704 kB Buffers:93612 kB Cached:1393196 kB Dirty:24200 kB Writeback:120 kB 
+run_cmd:      taskset -c 0-2 java -cp /home/dccearth/jsw/ycsb-dist/ycsb-rocksdb-binding-0.18.0-SNAPSHOT/lib/* site.ycsb.Client -t -db site.ycsb.db.rocksdb.RocksDBClient -P /home/dccearth/jsw/ycsb-dist/ycsb-rocksdb-binding-0.18.0-SNAPSHOT/workloads/workloada -p recordcount=3000000 -p rocksdb.dir=/mnt/jsw_nvmevirt/db -p rocksdb.optionsfile=/home/dccearth/jsw/nvmevirt/exp/results/rocksdb_ycsba_k147_20261025/wbuffix/map8k_blk32k_walon/rocksdb_options.ini -p rocksdb.disablewal=false -p rocksdb.sync=false -p measurementtype=hdrhistogram -p hdrhistogram.percentiles=50,90,95,99,99.9,99.99 -threads 1 -s -p status.interval=1 -p operationcount=1000000000 -p maxexecutiontime=600
+run_exit:     0
+run_wall_s:   600.071
+df_after_run: 4100481024 7625437184
+db_after_run: 4100258227 B
+mem_after_run: MemFree:9797984 kB Buffers:98716 kB Cached:1319084 kB Dirty:9312 kB Writeback:136 kB 
+chmodel_msgs: 0
+kernel_warn:  0
+end:          2026-10-24T20:49:38+00:00

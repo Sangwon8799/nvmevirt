@@ -1,0 +1,30 @@
+[2026-10-24 17:21:55] experiment=seq4x3_k147_20261025 variant=merge maps=[4k 8k 16k 32k] bss=[4k 16k 32k] reps=1 cache_modes=[nodrop] only_bs_lt_map=0
+[2026-10-24 17:21:55] fio: libaio seqwrite iodepth=32 runtime=120s ramp_time=0s log=500ms; insmod memmap_start=12G memmap_size=12G cpus=3,4,5
+[2026-10-24 17:21:55] block layer: nomerges=2
+[2026-10-24 17:21:55] 12 runs, about 26 min
+[2026-10-24 17:21:55] === [1/12] variant=merge cache=nodrop map=4k bs=4k rep=1 ===
+    -> 2076.3 MiB/s, 531527 IOPS, clat mean 59.2 us
+[2026-10-24 17:24:06] === [2/12] variant=merge cache=nodrop map=4k bs=16k rep=1 ===
+    -> 2232.7 MiB/s, 142890 IOPS, clat mean 222.5 us
+[2026-10-24 17:26:16] === [3/12] variant=merge cache=nodrop map=4k bs=32k rep=1 ===
+    -> 2232.7 MiB/s, 71446 IOPS, clat mean 446.0 us
+[2026-10-24 17:28:27] === [4/12] variant=merge cache=nodrop map=8k bs=4k rep=1 ===
+    -> 2087.4 MiB/s, 534366 IOPS, clat mean 58.9 us
+[2026-10-24 17:30:37] === [5/12] variant=merge cache=nodrop map=8k bs=16k rep=1 ===
+    -> 2232.6 MiB/s, 142889 IOPS, clat mean 222.5 us
+[2026-10-24 17:32:48] === [6/12] variant=merge cache=nodrop map=8k bs=32k rep=1 ===
+    -> 2232.7 MiB/s, 71446 IOPS, clat mean 446.0 us
+[2026-10-24 17:34:58] === [7/12] variant=merge cache=nodrop map=16k bs=4k rep=1 ===
+    -> 2092.7 MiB/s, 535737 IOPS, clat mean 58.8 us
+[2026-10-24 17:37:08] === [8/12] variant=merge cache=nodrop map=16k bs=16k rep=1 ===
+    -> 2232.6 MiB/s, 142884 IOPS, clat mean 222.5 us
+[2026-10-24 17:39:19] === [9/12] variant=merge cache=nodrop map=16k bs=32k rep=1 ===
+    -> 2232.6 MiB/s, 71443 IOPS, clat mean 446.0 us
+[2026-10-24 17:41:29] === [10/12] variant=merge cache=nodrop map=32k bs=4k rep=1 ===
+    -> 2081.6 MiB/s, 532894 IOPS, clat mean 59.1 us
+[2026-10-24 17:43:40] === [11/12] variant=merge cache=nodrop map=32k bs=16k rep=1 ===
+    -> 2232.2 MiB/s, 142862 IOPS, clat mean 222.5 us
+[2026-10-24 17:45:50] === [12/12] variant=merge cache=nodrop map=32k bs=32k rep=1 ===
+    -> 2232.2 MiB/s, 71431 IOPS, clat mean 446.1 us
+environment snapshot -> /home/dccearth/jsw/nvmevirt/exp/results/seq4x3_k147_20261025/env_after_merge
+[2026-10-24 17:48:00] finished: /home/dccearth/jsw/nvmevirt/exp/results/seq4x3_k147_20261025/merge

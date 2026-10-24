@@ -1,0 +1,58 @@
+[17152.625360] KSC2026-MARK map4k_blk32k_walon insmod 1792869438182234539
+[17152.638450] NVMeVirt: Version 1.10 for >> Samsung 970 Pro SSD <<
+[17152.638458] NVMeVirt: Storage: 0x300100000-0x600000000 (12287 MiB)
+[17152.648964] NVMeVirt: Total Capacity(GiB,MiB)=3,3072 chs=2 luns=4 lines=384 blk-size(MiB,KiB)=2,2048 line-size(MiB,KiB)=8,8192
+[17152.648969] NVMeVirt: KSC2026: mapping unit=4096 B, flash page=32768 B, oneshot page=32768 B, pgs_per_blk=512, blks_per_pl=384, write buffer=1048576 B
+[17152.658675] NVMeVirt: [chmodel_init] bandwidth 800 max_credits 26 tx_time 152
+[17152.665530] NVMeVirt: [chmodel_init] bandwidth 800 max_credits 26 tx_time 152
+[17152.665541] NVMeVirt: [chmodel_init] bandwidth 3360 max_credits 110 tx_time 36
+[17152.666941] NVMeVirt: pqueue: Copyright (c) 2014, Volkan Yazıcı <volkan.yazici@gmail.com>. All rights reserved.
+[17152.666943] NVMeVirt: Init FTL instance with 2 channels (786432 pages)
+[17152.673719] NVMeVirt: [chmodel_init] bandwidth 800 max_credits 26 tx_time 152
+[17152.680494] NVMeVirt: [chmodel_init] bandwidth 800 max_credits 26 tx_time 152
+[17152.680505] NVMeVirt: [chmodel_init] bandwidth 3360 max_credits 110 tx_time 36
+[17152.681890] NVMeVirt: Init FTL instance with 2 channels (786432 pages)
+[17152.688656] NVMeVirt: [chmodel_init] bandwidth 800 max_credits 26 tx_time 152
+[17152.695340] NVMeVirt: [chmodel_init] bandwidth 800 max_credits 26 tx_time 152
+[17152.695350] NVMeVirt: [chmodel_init] bandwidth 3360 max_credits 110 tx_time 36
+[17152.696755] NVMeVirt: Init FTL instance with 2 channels (786432 pages)
+[17152.703455] NVMeVirt: [chmodel_init] bandwidth 800 max_credits 26 tx_time 152
+[17152.710216] NVMeVirt: [chmodel_init] bandwidth 800 max_credits 26 tx_time 152
+[17152.710227] NVMeVirt: [chmodel_init] bandwidth 3360 max_credits 110 tx_time 36
+[17152.711664] NVMeVirt: Init FTL instance with 2 channels (786432 pages)
+[17152.711668] NVMeVirt: FTL physical space: 12883853312, logical space: 12040984403 (physical/logical * 100 = 107)
+[17152.711670] NVMeVirt: KSC2026: WBUF_FIX=1 GC_STATS=1
+[17152.711670] NVMeVirt: ns 0/1: size 11483 MiB
+[17152.711703] PCI host bridge to bus 0001:10
+[17152.711704] pci_bus 0001:10: root bus resource [io  0x0000-0xffff]
+[17152.711706] pci_bus 0001:10: root bus resource [mem 0x00000000-0x3fffffffffff]
+[17152.711707] pci_bus 0001:10: root bus resource [bus 00-ff]
+[17152.711713] pci 0001:10:00.0: [0c51:0110] type 00 class 0x010802 PCIe Endpoint
+[17152.711715] pci 0001:10:00.0: BAR 0 [mem 0x300000000-0x300003fff 64bit]
+[17152.711717] pci 0001:10:00.0: enabling Extended Tags
+[17152.711817] NVMeVirt: Virtual PCI bus created (node 0)
+[17152.712018] NVMeVirt: nvmev_io_worker_0 started on cpu 4 (node 0)
+[17152.712544] NVMeVirt: nvmev_io_worker_1 started on cpu 5 (node 0)
+[17152.712554] NVMeVirt: nvmev_dispatcher started on cpu 3 (node 0)
+[17152.712625] nvme nvme1: pci function 0001:10:00.0
+[17152.716219] nvme nvme1: 1/0/0 default/read/poll queues
+[17152.717171] NVMeVirt: Virtual NVMe device created
+[17153.738913] KSC2026-MARK map4k_blk32k_walon mkfs
+[17153.862574] EXT4-fs (nvme1n1): mounted filesystem 9c457298-8f7a-465d-bdf6-57cabc53c187 r/w with ordered data mode. Quota mode: none.
+[17153.910403] KSC2026-MARK map4k_blk32k_walon load-start
+[17164.862685] NVMeVirt: KSC2026: first GC part=3 victim line=25 vpc=0 ipc=2048 free_lines=2 host_pgs=778240
+[17164.882536] NVMeVirt: KSC2026: first GC part=0 victim line=25 vpc=0 ipc=2048 free_lines=2 host_pgs=778240
+[17164.884284] NVMeVirt: KSC2026: first GC part=1 victim line=25 vpc=0 ipc=2048 free_lines=2 host_pgs=778240
+[17164.884510] NVMeVirt: KSC2026: first GC part=2 victim line=25 vpc=0 ipc=2048 free_lines=2 host_pgs=778240
+[17166.281829] KSC2026-MARK map4k_blk32k_walon load-end
+[17166.300777] KSC2026-MARK map4k_blk32k_walon run-start
+[17766.365041] KSC2026-MARK map4k_blk32k_walon run-end
+[17766.383537] KSC2026-MARK map4k_blk32k_walon umount
+[17766.400304] EXT4-fs (nvme1n1): unmounting filesystem 9c457298-8f7a-465d-bdf6-57cabc53c187.
+[17766.405168] KSC2026-MARK map4k_blk32k_walon rmmod
+[17766.468791] pci_bus 0001:10: busn_res: [bus 10-ff] is released
+[17766.468820] NVMeVirt: KSC2026: stats part=0 host_pgs=1694764 gc_pgs=126522 gc_cnt=509 free_lines=3
+[17766.468822] NVMeVirt: KSC2026: stats part=1 host_pgs=1694376 gc_pgs=130861 gc_cnt=511 free_lines=3
+[17766.468822] NVMeVirt: KSC2026: stats part=2 host_pgs=1694201 gc_pgs=128766 gc_cnt=510 free_lines=3
+[17766.468823] NVMeVirt: KSC2026: stats part=3 host_pgs=1698860 gc_pgs=127169 gc_cnt=511 free_lines=2
+[17766.535926] NVMeVirt: Virtual NVMe device closed

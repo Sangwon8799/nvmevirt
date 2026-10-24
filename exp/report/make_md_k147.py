@@ -90,8 +90,9 @@ def fio_section(title, exp_name, variants, note):
                   grid(vr, "map", "bs", "gc_onset_s", maps, bss, 2, "매핑", "bs"), "",
                   f"**{v}** — WAF_total (NAND 바이트 ÷ 호스트 바이트, 120 초 전체)\n",
                   grid(vr, "map", "bs", "waf_total", maps, bss, 2, "매핑", "bs"), "",
-                  f"**{v}** — 평균 / p99 완료 지연 (µs)\n",
+                  f"**{v}** — 평균 완료 지연 (µs)\n",
                   grid(vr, "map", "bs", "clat_mean_us", maps, bss, 0, "매핑", "bs"), "",
+                  f"**{v}** — p99 완료 지연 (µs)\n",
                   grid(vr, "map", "bs", "clat_p99_us", maps, bss, 0, "매핑", "bs"), ""]
         warn = [r for r in vr if r.get("kernel_warn") not in ("0", "", None) or r.get("chmodel_msgs") not in ("0", "", None)]
         parts.append(f"이상 신호: kernel_warn·chmodel_msgs 가 0 이 아닌 회차 {len(warn)} 개"
@@ -154,16 +155,27 @@ def rocksdb_section():
         parts += [f"**WAL {wal} — TPS (ops/s)**\n", grid(wr, "map_unit", "block_size", "tps_ops_s", maps, blks, 0, "매핑", "block"), "",
                   f"**WAL {wal} — READ p99 (µs)**\n", grid(wr, "map_unit", "block_size", "read_p99_us", maps, blks, 0, "매핑", "block"), "",
                   f"**WAL {wal} — UPDATE p99 (µs)**\n", grid(wr, "map_unit", "block_size", "update_p99_us", maps, blks, 0, "매핑", "block"), "",
-                  f"**WAL {wal} — READ / UPDATE 평균 지연 (µs)**\n",
+                  f"**WAL {wal} — READ 평균 지연 (µs)**\n",
                   grid(wr, "map_unit", "block_size", "read_avg_us", maps, blks, 1, "매핑", "block"), "",
+                  f"**WAL {wal} — UPDATE 평균 지연 (µs)**\n",
                   grid(wr, "map_unit", "block_size", "update_avg_us", maps, blks, 1, "매핑", "block"), "",
-                  f"**WAL {wal} — run 동안 장치 읽기 MiB/s / 평균 읽기 요청 KiB / 장치 쓰기 MiB/s**\n",
+                  f"**WAL {wal} — run 동안 장치 읽기 (MiB/s)**\n",
                   grid(wr, "map_unit", "block_size", "run_dev_read_MiB_s", maps, blks, 1, "매핑", "block"), "",
+                  f"**WAL {wal} — run 동안 평균 읽기 요청 크기 (KiB)**\n",
                   grid(wr, "map_unit", "block_size", "run_dev_read_avg_req_KiB", maps, blks, 2, "매핑", "block"), "",
+                  f"**WAL {wal} — run 동안 장치 쓰기 (MiB/s)**\n",
                   grid(wr, "map_unit", "block_size", "run_dev_write_MiB_s", maps, blks, 1, "매핑", "block"), "",
-                  f"**WAL {wal} — 적재 시간 (초) / GC 횟수(세션 전체) / WAF(세션 전체)**\n",
+                  f"**WAL {wal} — run 동안 RocksDB compaction 쓰기 (GB, LOG 이벤트 합)**\n",
+                  grid([dict(r, cw=(float(r["rocksdb_run_compaction_write_bytes"]) / 1e9
+                                    if r.get("rocksdb_run_compaction_write_bytes") not in (None, "") else None)) for r in wr],
+                       "map_unit", "block_size", "cw", maps, blks, 2, "매핑", "block"), "",
+                  f"**WAL {wal} — run 동안 CPU 0–2 사용률 (%)**\n",
+                  grid(wr, "map_unit", "block_size", "run_cpu0_2_busy_pct", maps, blks, 1, "매핑", "block"), "",
+                  f"**WAL {wal} — 적재 시간 (초)**\n",
                   grid(wr, "map_unit", "block_size", "load_wall_s", maps, blks, 1, "매핑", "block"), "",
+                  f"**WAL {wal} — NVMeVirt GC 횟수 (mkfs + load + run 전체)**\n",
                   grid(wr, "map_unit", "block_size", "ftl_gc_cnt", maps, blks, 0, "매핑", "block"), "",
+                  f"**WAL {wal} — WAF (NAND 쓰기 ÷ 호스트 쓰기, mkfs + load + run 전체)**\n",
                   grid(wr, "map_unit", "block_size", "ftl_waf_session", maps, blks, 2, "매핑", "block"), ""]
     # WAL on / off ratio
     ratio = []
