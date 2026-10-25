@@ -59,7 +59,7 @@
 > 1. WA disable/enable은 RocksDB의 WAL(Write-Ahead Log)을 끄고 켜는 것을 말씀하신 건가요? … → **wal**
 > 2. BL Size는 RocksDB의 block_size 옵션(SST 블록 크기, 기본 4KB)을 4/8/16KB로 바꾸는 것으로 이해했는데 맞을까요? → **맞을듯**
 > 3. FTL Size가 … FTL 매핑 단위(mapping size unit)를 말씀하신 걸까요? … 총 18회로 이해했습니다. → **맞음**
-> 4. YCSB-A는 연구실에서 쓰는 db_bench YCSB로 돌리면 될까요, 아니면 정식 YCSB를 써야 할까요? … → **최신 버전, 정식 ycsb**
+> 4. YCSB-A는 연구실에서 쓰는 db_bench YCSB(ycsb_load/ycsb_run)로 돌리면 될까요, 아니면 정식 YCSB를 써야 할까요? 맞춰야 하는 RocksDB 버전이 있는지도 궁금합니다. → **최신 버전, 정식 ycsb**
 > 5. 10분은 … run 단계만 10분으로 맞추면 될까요? p99는 read와 update를 따로 정리해 드리면 될까요? → **직접 정하면 될듯?**
 > 아 그리고 만약에 시간되면 32kb도 추가해서 ㄹ하면좋을듯?? 설정은 따로 정리 해서 안줘도 되고 그냥 결과 나오면 값만 표로 공유해주면 될듯 ㅎㅎ
 > (사용자) 그래서 32KB 실험도 추가로 진행하면 될 것 같아.
@@ -114,8 +114,14 @@ RocksDB
 
 ### 1.8 시험 실행 뒤 질문 (01:31:06)
 3M 건 적재가 12.5 초(240K ops/s)로 끝나 compaction 이 약 6 GB 밀린 채(L0 파일 21 개, 쓰기 지연) run 이 시작되고,
-run 처음 약 10 초가 130–200 ops/s 였다(§4). 「측정 전에 밀린 compaction 을 끝낼까?」 → **적재 직후 바로 측정**(YCSB 기본 절차).
+run 처음 4 초가 130–200 ops/s, 5–9 초가 약 2,700 ops/s 였다(§4; 질문할 때는 「처음 10초」라고 적었다). 「측정 전에 밀린 compaction 을 끝낼까?」 → **적재 직후 바로 측정**(YCSB 기본 절차).
 그래서 run 단계는 load 가 끝난 직후 새 JVM 으로 시작한다(대기 단계 없음).
+
+### 1.9 실험 중 (01:48 – 01:59)
+- 01:48:45 「한글로 알려줘」(Claude 가 진행 보고를 영어로 써서) → 다시 한국어로 보고.
+- 01:50:40 「나한테 더 물어볼거 있어?」 → 없음. 끝날 때 GitHub push 여부와 sudo 규칙 삭제만 확인하기로 함.
+- 01:51:31 **「알아서 진행한 뒤 끝나면 알려줘.」** → 이후 묻지 않고 분석·공유본(csv·json)·이 기록·인계 묶음(LATEST.tgz)까지 마친 뒤 보고.
+- 01:56:41 「지금 진행 상황 알려줘」, 01:58:32 「10시간 정도 더 걸린다는거지?」(→ 실제로는 약 7 시간: Claude 의 처음 예상 12:00 이 틀렸다고 정정, 완료 예상 09:00, 정리 포함 10:00), 01:59:12 「알겠어, 끝나면 알려줘」.
 
 ## 2. 환경
 
@@ -195,7 +201,7 @@ insmod, rmmod, fio, dmesg, nvme, `cat /proc/iomem`, `tee /dev/kmsg`, `tee /proc/
 |---|---|---|
 | `results/pre_k147_trial/merge` | fio 순차 merge 매핑 8K bs 4K, 10 초 | 147 용 모듈 적재, fio 동작 (2,114.8 MiB/s) |
 | `results/pre_k147_trial_rdb/wbuffix` | RocksDB 매핑 4K block 4K WAL off/on, 10 만 건, run 20 초 | sudo mkfs/mount/umount 규칙 일치, 파싱·검사 동작, WAL off 에서 레코드 유실 없음 |
-| `results/pre_k147_trial_rdb_full/wbuffix` | 매핑 32K block 4K WAL on, **300 만 건**, run 60 초 | 적재 12.5 초, DB 3.53 GB(장치의 31 %), 첫 GC 는 load 중(시작 후 10.9 초) |
+| `results/pre_k147_trial_rdb_full/wbuffix` | 매핑 32K block 4K WAL on, **300 만 건**, run 60 초 | 적재 12.5 초, DB 3.53 GB(장치 12.04 GB 의 29 %), 첫 GC 는 load 중(시작 후 10.9 초) |
 
 full 시험에서 본 것: load 가 240K ops/s 로 끝나 compaction 이 밀린 채(L0 21 개, 「Stalling writes because we have 21 level-0 files」,
 예상 미처리 compaction 5.9 GB) run 이 시작되어 run 1–4 초 130–200 ops/s, 5–9 초 약 2,700, 11–17 초 약 13,000, 이후 7,500 → 4,900 → 3,600 ops/s.
@@ -209,9 +215,9 @@ full 시험에서 본 것: load 가 240K ops/s 로 끝나 compaction 이 밀린 
 | 01:24 – 01:27 | 시험 실행 3 개(§4) |
 | 01:29:45 | tmux 세션 `ksc_k147` 에서 `bash run_all_k147.sh 20261025` 시작 (커밋 bab6eef) |
 | 01:29:45 – 01:55:50 | ① 랜덤 쓰기 rand4x3_k147 12 회 |
-| 01:37 | 첫 검토 워크플로를 멈추고 규칙을 좁혀 다시 시작(§11). 남은 프로세스 없음 확인 |
+| 01:32 | 첫 검토 워크플로(01:32:22 시작)를 01:32:35 에 멈추고 규칙을 좁혀 01:32:52 에 다시 시작(§11). 남은 프로세스 없음 확인 |
 | 01:55:50 – 02:21:55 | ② 순차 쓰기 seq4x3_k147 wbuffix 12 회 |
-| 02:10 | 검토 반영 커밋 3fe1c6d (RocksDB 스크립트만). 새 안전장치가 fio 실행 중 시작을 거부하는 것을 실제로 확인 |
+| 02:09 – 02:10 | 검토 반영 커밋 3fe1c6d (02:09; RocksDB 스크립트, link_runs.py·make_handoff.sh 수정, 보고 스크립트와 이 기록 초안 추가. fio 회차 스크립트 run_experiment.sh·common.sh·jobs 는 그대로). 02:10 에 새 안전장치가 fio 실행 중 시작을 거부하는 것을 실제로 확인 |
 | 02:21:55 – 02:48:00 | ② 순차 쓰기 seq4x3_k147 merge 12 회 |
 | 02:48:00 – 03:05:24 | ③ 랜덤 쓰기 bs 추가 randbs_k147 8 회 |
 | 03:05:24 – 03:05:30 | fio 분석(analyze.py × 3), 보기 rand4x5_k147 (20 회 링크), 보기 분석 |
@@ -730,7 +736,7 @@ READ/UPDATE 가 OK 가 아닌 응답을 받은 회차: 0 개. kernel_warn 이 0 
 <!-- BEGIN MANUAL: findings -->
 ## 7. 관찰과 해석
 
-모든 값은 조건마다 1 회 측정이다. 이전 fio 실험(커널 142, 3 회 반복)의 반복 간 대역폭 변동계수는 0.1–0.4 % 였지만,
+모든 값은 조건마다 1 회 측정이다. 이전 fio 실험(커널 142, 3 회 반복)의 반복 간 대역폭 변동계수는 최대 0.4 %(조건별 0.001–0.40 %, 중앙값 0.04 %)였지만,
 RocksDB 는 반복 측정이 없어 회차 간 잡음의 크기를 모른다. 아래 「차이」는 그 점을 감안해 읽는다.
 
 ### 7.1 fio 재측정 (커널 147)
@@ -740,7 +746,7 @@ RocksDB 는 반복 측정이 없어 회차 간 잡음의 크기를 모른다. �
 - **랜덤 쓰기(매핑 4 × bs 5)**: 결과는 bs/매핑 비율로 거의 정해진다. 비율 1(4K/4K, 8K/8K, 16K/16K, 32K/32K) 326.5·328.9·330.9·336.6,
   비율 1/2(8K/4K, 16K/8K, 32K/16K) 148.6·149.0·150.6, 비율 1/4(16K/4K, 32K/8K) 88.4·89.6, 비율 1/8(32K/4K) 47.3 MiB/s.
   비율 2 는 354.5–382.5, 비율 4 이상은 419.8–425.1 MiB/s. 새로 잰 매핑 8K 도 같은 규칙을 따른다.
-  bs < 매핑이면 WAF_total 이 매핑/bs 배 커진다(8K/4K 8.95, 16K/4K 13.62, 32K/4K 25.06; bs ≥ 매핑은 3.68–4.01).
+  bs < 매핑이면 쓰기마다 매핑 단위 전체를 써서 WAF_total = (매핑/bs) × WAF_gc 가 된다(8K/4K 8.95 = 2 × 4.48, 16K/4K 13.62 = 4 × 3.41, 32K/4K 25.06 = 8 × 3.13; bs = 매핑 대비로는 약 2.3·3.6·6.6 배; bs ≥ 매핑은 3.68–4.01).
 - **순차 쓰기**: wbuffix 는 bs ≥ 매핑이면 2,081.6–2,232.7 MiB/s(WAF 1.00), bs < 매핑이면 185.6–352.6 MiB/s(WAF 3.63–9.96)로 크게 떨어진다.
   merge 모델은 모든 조합 2,076.3–2,232.7 MiB/s 로 손실이 없다(이전 결론과 같음: NVMeVirt 는 매핑 단위보다 작은 쓰기를 합치지 않는다).
 
@@ -762,9 +768,9 @@ RocksDB 는 반복 측정이 없어 회차 간 잡음의 크기를 모른다. �
 - **UPDATE ≈ READ.** YCSB 의 update 는 Get + Put 이고 Put 은 memtable 에 쓰므로, UPDATE 지연은 READ 보다 평균 1.4–4.5 µs, p99 −6 ~ +13 µs 차이뿐이다.
 - **시간에 따라 변함.** run 처리량은 60–90 초 주기의 톱니 모양(compaction 주기)이고 점점 떨어진다: 처음 60 초 5,436–7,641, 마지막 60 초 2,596–5,832 ops/s
   (마지막/처음 −15 ~ −53 %). 10 분 평균은 실행 시간에 따라 달라지는 값이다. `fig_tps_timeseries.png` 참고.
-- **적재 직후 측정의 영향**(사용자 결정에 따라 대기 단계 없이 측정): 모든 회차에서 run 처음 3–4 초는 114–436 ops/s 로 낮고(load 직후 밀린 compaction, JVM 시작),
-  5 초째에 1,590–5,081 ops/s, 12–18 초에 1 초 처리량 최고치 11,052–19,845 ops/s 에 이른다(`fig_tps_timeseries.png` 는 10 초 이동평균). 처음 4 초가 600 초 평균을 낮춘 몫은 0.55–0.64 % 다.
-  RocksDB 의 stall 기록은 WAL on 4 회에 1 번씩뿐이다.
+- **적재 직후 측정의 영향**(사용자 결정에 따라 대기 단계 없이 측정): 모든 회차에서 run 처음 3 초는 114–443 ops/s 로 낮고(8 회는 4 초째도 202–957 ops/s; load 직후 밀린 compaction, JVM 시작),
+  5 초째에 1,590–4,757 ops/s, 12–18 초에 1 초 처리량 최고치 11,052–19,845 ops/s 에 이른다(`fig_tps_timeseries.png` 는 10 초 이동평균). 처음 4 초가 600 초 평균을 낮춘 몫은 0.55–0.64 % 다.
+  run 단계 LOG 의 stall 기록은 WAL on 4 회에 1 번씩뿐이다(load 단계 LOG 에는 17 회에 22 건: WAL off 16 회 전부와 map16k_blk8k_walon; stop 기록은 0 건).
 - **NVMeVirt GC**: WAL off 는 첫 GC 가 run 시작 2.2–4.6 초 뒤, WAL on 은 load 중(시작 10.8–11.5 초 뒤)에 시작한다(WAL 이 load 동안 약 3.5 GB 를 더 씀).
   GC 횟수(세션 전체)는 WAL off 956–1,671, on 1,900–2,439.
 - **간섭 없음**: run 동안 CPU 0–2 사용률 2.1–3.5 %, CPU 압력 0.04–0.07 %. 이 워크로드(스레드 1)는 CPU 가 아니라 장치 지연이 정한다.
@@ -781,10 +787,11 @@ RocksDB 는 반복 측정이 없어 회차 간 잡음의 크기를 모른다. �
 | RocksDB 분석 표·그림 | `repo/exp/results/rocksdb_ycsba_k147_20261025/analysis/` (summary_runs.csv/.json, fig_tps_heatmap.png, fig_read_p99_heatmap.png, fig_update_p99_heatmap.png, fig_tps_vs_block.png, fig_tps_timeseries.png) |
 | **선배 전달용 복사본 (.csv / .json)** | `repo/exp/results/share_k147_20261025/` (README.md 에 파일·열 설명). 서버에는 같은 내용의 zip `~/jsw/handoff/ksc2026_k147_share_20261025.zip` |
 | 이 기록 | `EXPERIMENT_LOG_K147_ROCKSDB.md` (묶음 루트, 원본 `repo/EXPERIMENT_LOG_K147_ROCKSDB.md`) |
+| 인계 묶음 | 서버 `~/jsw/handoff/LATEST.tgz` → `ksc2026_handoff_<KST YYYYMMDD_HHMM>_k147.tgz` (`bash exp/report/make_handoff.sh k147`, 이 기록과 스크립트 목록(§9)이 묶음 루트·repo/ 에 있음) |
 
 ## 9. 실험에 사용한 스크립트와 파일 (사용자 요청 목록)
 
-경로는 `repo/` 기준. 커밋은 실험 시작 시점 `bab6eef`(+ `e67701d`).
+경로는 `repo/` 기준. 커밋: 실험 시작 시점은 `bab6eef`(01:29:45 KST). 2 분 뒤의 `e67701d` 는 run_rocksdb_ycsb.sh 만 바꿨다. fio 회차 스크립트(run_experiment.sh·common.sh·jobs·collect_env.sh·build_modules.sh)는 10-08 판 그대로이고, run_all_k147.sh·analyze.py·plot.py 는 `bab6eef` 판이다 (fio 44 회의 meta.txt git_head 는 bab6eef 1·e67701d 18·3fe1c6d 25 회지만 fio 드라이버는 세 커밋에서 같다). RocksDB 32 회(run_rocksdb_ycsb.sh·rocksdb/*)와 rand4x5 보기(link_runs.py)는 검토 반영 커밋 `3fe1c6d`(02:09 KST) 판으로 돌았다(회차 meta.txt 와 wbuffix/git_head.txt). 보고 스크립트의 최종판은 make_share_k147.py·make_md_k147.py·share_k147_README.md·make_gallery.py 가 이 기록과 같은 마지막 커밋, make_handoff.sh 가 `3fe1c6d` 다.
 
 | 파일 | 역할 | 이번에 |
 |---|---|---|
@@ -794,9 +801,10 @@ RocksDB 는 반복 측정이 없어 회차 간 잡음의 크기를 모른다. �
 | `exp/jobs/randwrite.fio.in`, `exp/jobs/seqwrite.fio.in` | fio 작업 템플릿 | 그대로 |
 | `exp/collect_env.sh` | 환경 스냅샷(env_before / env_after_*) | 그대로 |
 | `exp/build_modules.sh` | NVMeVirt 모듈 빌드(변형 × 매핑 단위) | 그대로(10-24 23:32 에 147 용으로 실행) |
-| `exp/link_runs.py` | 여러 실험의 회차를 심볼릭 링크로 묶은 보기(rand4x5) | 그대로 |
+| `exp/link_runs.py` | 여러 실험의 회차를 심볼릭 링크로 묶은 보기(rand4x5) | FAILED 회차도 링크하도록 수정(3fe1c6d, 검토 pipeline-4). 03:05 에 수정본으로 rand4x5 보기 생성 |
 | `exp/analyze.py` | fio 결과 표(summary_runs/agg.csv)와 그림 | 그림 제목이 실행 시간·회차 수를 데이터에서 읽도록 수정(60 s·n=3 고정 → 120 s·single run) |
-| `exp/plot.py` | fio 추가 그림 | 축 이름의 「60 s」 를 「run」 으로 |
+| `exp/plot.py` | fio 추가 그림(`plot.py all --exp results/<실험>` → `results/<실험>/plots/`) | 축 이름의 「60 s」 를 「run」 으로 |
+| `exp/make_gallery.py` | 결과 폴더별 그림 갤러리 HTML(`results/<실험>/gallery_<실험>.html`, git·인계 묶음에서 제외) | 그림 설명을 실행 시간·회차 수에 맞게 일반화(60 s 고정 → 「60 s 또는 120 s」, 1 회 측정이면 오차막대 없음), RocksDB 그림 묶음과 k147 실험 제목 추가 |
 | `exp/run_rocksdb_ycsb.sh` | **RocksDB 회차 드라이버** (§3.2 절차). 환경 변수 `RDB_MAPS RDB_BLOCKS RDB_WALS RECORDS RUN_SEC THREADS` | 새로 작성 |
 | `exp/rocksdb/options.ini.in` | RocksDB 옵션 파일 템플릿(`@BLOCK_SIZE@`) | 새로 작성 |
 | `exp/rocksdb/ycsb_parse.py` | 회차 하나 → `result.json`, `run_status.csv` + 검사 | 새로 작성 |
@@ -808,14 +816,16 @@ RocksDB 는 반복 측정이 없어 회차 간 잡음의 크기를 모른다. �
 | `exp/ycsb/ycsb-rocksdb-11.8.1.patch`, `exp/ycsb/README.md` | 정식 YCSB rocksdb 바인딩 패치와 빌드 방법 | 10-24 작성 |
 | `exp/report/nvmevirt-exp.sudoers` | sudo 규칙 원본 | 10-24 mkfs/mount 규칙 추가 |
 | `nvmevirt/` (conv_ftl.c, conv_ftl.h, ssd_config.h, ssd.c, Kbuild) | NVMeVirt 소스와 KSC2026 수정(WBUF_FIX, GC_STATS, WBUF_MERGE) | 그대로 |
-| 서버 밖 저장소: `/home/dccearth/jsw/YCSB` (패치 적용), `/home/dccearth/jsw/ycsb-dist/…` (실행 파일), `/home/dccearth/jsw/rocksdb` (11.8.1 소스 빌드, 실험에는 미사용) | | |
+| nvmevirt 저장소 밖(같은 실험 서버 dccearth, 인계 묶음에는 없음): `/home/dccearth/jsw/YCSB` (패치 적용, 브랜치 ksc2026-rocksdb-11.8.1 커밋 8cd243b4 — 묶음의 `repo/exp/ycsb/ycsb-rocksdb-11.8.1.patch` 로 재현), `/home/dccearth/jsw/ycsb-dist/…` (실행 파일), `/home/dccearth/jsw/rocksdb` (11.8.1 소스 빌드, 실험에는 미사용) | | |
 
 ## 10. 재현 방법 (실험 서버 기준, 기록용)
 ```bash
 cd /home/dccearth/jsw/nvmevirt/exp
-bash build_modules.sh wbuffix && bash build_modules.sh merge      # 커널이 바뀌었을 때만
+bash build_modules.sh wbuffix && MAPS="4k 8k 16k 32k" bash build_modules.sh merge      # 커널이 바뀌었을 때만
 # sudo 규칙 설치(사용자): sudo install -m 0440 -o root -g root report/nvmevirt-exp.sudoers /etc/sudoers.d/nvmevirt-exp ; sudo mkdir -p /mnt/jsw_nvmevirt
 tmux new -s ksc_k147 'bash run_all_k147.sh 20261025'
+for e in rand4x3 seq4x3 randbs rand4x5; do ./.venv/bin/python plot.py all --exp results/${e}_k147_20261025; done
+for e in rand4x3 seq4x3 randbs rand4x5 rocksdb_ycsba; do ./.venv/bin/python make_gallery.py results/${e}_k147_20261025; done
 python3 report/make_share_k147.py 20261025
 python3 report/make_md_k147.py 20261025
 bash report/make_handoff.sh k147
@@ -824,11 +834,11 @@ bash report/make_handoff.sh k147
 <!-- BEGIN MANUAL: verification -->
 ## 11. 검증
 
-- **실행 전 검토 워크플로 wf_a7fea7e7-59c** (2026-10-25 01:38 – 02:10 KST, 에이전트 8: 4 영역 검토 → 영역별 반박 검증).
-  첫 시도 wf_78a6eb90-b8a 는 01:37 에 바로 멈췄다: 검토자가 Java·그림 그리기를 돌리면 fio 가 쓰는 CPU 0–2 를 방해할 수 있어,
+- **실행 전 검토 워크플로 wf_a7fea7e7-59c** (2026-10-25 01:32 – 02:05 KST, 에이전트 8: 4 영역 검토 → 영역별 반박 검증; 반영·커밋 02:09, 안전장치 시험 02:10).
+  첫 시도 wf_78a6eb90-b8a 는 01:32 에 시작해 13 초 만에 멈췄다: 검토자가 Java·그림 그리기를 돌리면 fio 가 쓰는 CPU 0–2 를 방해할 수 있어,
   「코드 읽기 + 1 초 미만 파서 시험만」으로 규칙을 좁혀 다시 돌렸다(멈춘 시점에 남은 프로세스 없음 확인).
   - 발견 19 개 중 16 개가 사실로 확인(중요도: medium 2, 나머지 low), 3 개는 반박됨. 측정값(TPS, p99)을 틀리게 만드는 결함은 없었다.
-  - 반영(커밋 3fe1c6d, 02:1x KST, RocksDB 단계 시작 전, 파일마다 임시 파일 → 원자적 교체; fio 가 쓰는 run_experiment.sh·common.sh·jobs 는 건드리지 않음):
+  - 반영(커밋 3fe1c6d, 02:09 KST, RocksDB 단계 시작 전, 파일마다 임시 파일 → 원자적 교체; fio 가 쓰는 run_experiment.sh·common.sh·jobs 는 건드리지 않음):
     - safety-1 (medium): 두 번째 인스턴스가 fio 실행 중에 rmmod 할 수 있음 → `flock` 한 인스턴스만 + `run_experiment.sh` 실행 중이면 거부(30 초 대기 후).
       02:10 KST 에 실제로 실행해 「run_experiment.sh (fio) is running on NVMeVirt — refusing」으로 아무것도 건드리지 않고 멈추는 것을 확인.
     - safety-2: 중단 시 trap 이 YCSB 종료를 기다리지 않고 umount → YCSB 가 끝날 때까지(최대 120 초) 기다린 뒤 umount·rmmod.

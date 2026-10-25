@@ -140,6 +140,8 @@ def rocksdb_part():
                         w.writeheader()
                         w.writerows(st)
             text_log_to_csv(rdir / "blkstat_1s.txt", dst / "device_blkstat_1s.csv", BLK_COLS)
+            # phase boundaries (before_mkfs, before_load, after_load, before_run, after_run, after_umount) with the same counters
+            text_log_to_csv(rdir / "blkstat_phases.txt", dst / "device_blkstat_phases.csv", ["phase"] + BLK_COLS)
             n += 1
     return n
 

@@ -18,7 +18,7 @@ import sys
 from pathlib import Path
 
 PCT_RE = re.compile(r"^(\d+(?:\.\d+)?)(?:th)?PercentileLatency\(us\)$")
-SEC_RE = re.compile(r"^\[([A-Z0-9_-]+)\], ([^,]+), (.+)$")
+SEC_RE = re.compile(r"^\[([^\]]+)\], ([^,]+), (.+)$")   # any section, incl. JVM GC lines like [TOTAL_GC_TIME_%_G1_Old_Generation]
 STATUS_RE = re.compile(r"^\S+ \S+ (\d+) sec: (\d+) operations; ([\d.]+) current ops/sec;(.*)$")
 STATUS_OP_RE = re.compile(r"\[([A-Z_-]+): ([^\]]*)\]")
 MARK_RE = re.compile(r"^\[\s*([\d.]+)\] KSC2026-MARK (\S+) (\S+)")

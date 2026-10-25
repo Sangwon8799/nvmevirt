@@ -3,8 +3,32 @@
   "runtime_ms": 8231,
   "throughput_ops_s": 364475.7623618029
  },
+ "TOTAL_GCS_G1_Young_Generation": {
+  "Count": 102
+ },
+ "TOTAL_GC_TIME_G1_Young_Generation": {
+  "Time(ms)": 55
+ },
+ "TOTAL_GC_TIME_%_G1_Young_Generation": {
+  "Time(%)": 0.6682055643299721
+ },
+ "TOTAL_GCS_G1_Old_Generation": {
+  "Count": 0
+ },
+ "TOTAL_GC_TIME_G1_Old_Generation": {
+  "Time(ms)": 0
+ },
+ "TOTAL_GC_TIME_%_G1_Old_Generation": {
+  "Time(%)": 0.0
+ },
+ "TOTAL_GCs": {
+  "Count": 102
+ },
  "TOTAL_GC_TIME": {
   "Time(ms)": 55
+ },
+ "TOTAL_GC_TIME_%": {
+  "Time(%)": 0.6682055643299721
  },
  "CLEANUP": {
   "ops": 1,
