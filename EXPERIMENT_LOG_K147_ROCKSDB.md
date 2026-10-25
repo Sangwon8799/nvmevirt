@@ -24,7 +24,7 @@
   - fio: 커널 147 결과가 142 결과를 재현했다(같은 33 조합의 처음 60 초 평균 대역폭 차이 평균 0.10 %, 최대 1.06 %). 매핑 8K 를 새로 쟀다.
 - 실험 동안 서버 상태: RocksDB run 동안 CPU 0–2 사용률 2.1–3.5 %, CPU 압력(PSI some) 0.04–0.07 % → 다른 작업의 간섭 없음.
 - sudo 규칙: 사용자가 삭제했다(2026-10-25 15:20:05 KST 보고, `/etc/sudoers.d/` 에 README 만 남은 것 확인). 가상 SSD 는 내려져 있고 마운트된 것도 없다.
-- 저장소: 2026-10-25 15:2x KST 에 GitHub main 으로 push(사용자 ssh -A 접속, §12). 남은 일 없음.
+- 저장소: 2026-10-25 15:24 KST 에 GitHub main 으로 push(bc31375..8d3e348, 사용자 ssh -A 접속; 이 기록의 마지막 커밋도 이어서 push, §12). 남은 일 없음.
 <!-- END MANUAL: status -->
 
 ## 1. 사용자 지시와 결정 (시간순, 원문 인용)
@@ -863,5 +863,5 @@ bash report/make_handoff.sh k147
 
 ## 12. 마무리
 - sudo 규칙: 사용자가 `sudo rm /etc/sudoers.d/nvmevirt-exp` 로 삭제(15:20:05 KST 보고). 다시 실험하려면 `repo/exp/report/nvmevirt-exp.sudoers` 를 사용자가 설치한다.
-- GitHub push: 사용자가 15:23:02 KST 에 「ssh -A 접속했어. GitHub push 해줘.」 → origin/main(bc31375) 위로 커밋 becebf1 … 을 push 했다(결과 커밋과 확인은 아래 줄).
+- GitHub push: 사용자가 15:23:02 KST 에 「ssh -A 접속했어. GitHub push 해줘.」 → origin/main(bc31375) 위로 커밋 8 개(becebf1 … 8d3e348)를 push 했다(15:24 KST, `bc31375..8d3e348  main -> main`, `git ls-remote` 로 원격 main = 8d3e348 확인). 이 기록의 push 결과를 적은 커밋도 이어서 push 했다(15:24 KST).
 - 서버의 `exp/results/ftl.tgz`(15:16 KST, 공유본 폴더를 묶은 tar, 627 개 파일)는 Claude 가 만든 것이 아니다(사용자가 만든 것으로 보임). git 에 넣지 않았고 건드리지 않았다.
