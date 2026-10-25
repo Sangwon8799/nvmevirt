@@ -23,8 +23,8 @@
     READ p99 는 511–756 µs, UPDATE p99 는 READ p99 와 −6 ~ +13 µs 차이.
   - fio: 커널 147 결과가 142 결과를 재현했다(같은 33 조합의 처음 60 초 평균 대역폭 차이 평균 0.10 %, 최대 1.06 %). 매핑 8K 를 새로 쟀다.
 - 실험 동안 서버 상태: RocksDB run 동안 CPU 0–2 사용률 2.1–3.5 %, CPU 압력(PSI some) 0.04–0.07 % → 다른 작업의 간섭 없음.
-- 저장소: 로컬 커밋이 GitHub origin/main(bc31375)보다 앞서 있다(push 안 함 — 사용자 ssh-agent 필요, §12).
-- 남은 일: sudo 규칙 삭제(사용자), GitHub push 여부 확인(사용자).
+- sudo 규칙: 사용자가 삭제했다(2026-10-25 15:20:05 KST 보고, `/etc/sudoers.d/` 에 README 만 남은 것 확인). 가상 SSD 는 내려져 있고 마운트된 것도 없다.
+- 저장소: 2026-10-25 15:2x KST 에 GitHub main 으로 push(사용자 ssh -A 접속, §12). 남은 일 없음.
 <!-- END MANUAL: status -->
 
 ## 1. 사용자 지시와 결정 (시간순, 원문 인용)
@@ -122,6 +122,12 @@ run 처음 4 초가 130–200 ops/s, 5–9 초가 약 2,700 ops/s 였다(§4; �
 - 01:50:40 「나한테 더 물어볼거 있어?」 → 없음. 끝날 때 GitHub push 여부와 sudo 규칙 삭제만 확인하기로 함.
 - 01:51:31 **「알아서 진행한 뒤 끝나면 알려줘.」** → 이후 묻지 않고 분석·공유본(csv·json)·이 기록·인계 묶음(LATEST.tgz)까지 마친 뒤 보고.
 - 01:56:41 「지금 진행 상황 알려줘」, 01:58:32 「10시간 정도 더 걸린다는거지?」(→ 실제로는 약 7 시간: Claude 의 처음 예상 12:00 이 틀렸다고 정정, 완료 예상 09:00, 정리 포함 10:00), 01:59:12 「알겠어, 끝나면 알려줘」.
+
+### 1.10 실험이 끝난 뒤 (2026-10-25)
+- 09:10 경 Claude 가 완료 보고(결과 요약, 공유본 zip·TPS 그림 첨부, sudo 규칙 삭제 명령, push 여부 질문).
+- 15:20:05 「sudo 규칙 지웠어. 각 실험 당 진행 시간은 어떻게 돼?」 → 삭제 확인. 실험별 시간: 랜덤 12 회 26 분 5 초, 순차 wbuffix 12 회 26 분 5 초,
+  순차 merge 12 회 26 분 5 초, 랜덤 bs 추가 8 회 17 분 24 초(fio 회차당 약 130 초), RocksDB 32 회 5 시간 28 분 17 초(회차당 613–618 초), 전체 7 시간 4 분 3 초.
+- 15:23:02 「ssh -A 접속했어. GitHub push 해줘.」 → §12.
 
 ## 2. 환경
 
@@ -855,6 +861,7 @@ bash report/make_handoff.sh k147
   - 반박됨(결함 아님): parsing-5, method-3, method-6. method-6 의 권고(WAL 이 켜져 있으면 CF 가 2 개라 memtable flush 전마다 닫힌 WAL 파일을 fsync 한다)는 옵션 파일 주석에 한 줄 보탰다.
 <!-- END MANUAL: verification -->
 
-## 12. 남은 일
-- sudo 규칙 삭제(사용자): `sudo rm /etc/sudoers.d/nvmevirt-exp`
-- GitHub push(사용자 ssh-agent 연결 필요): 로컬 커밋이 origin/main(bc31375)보다 앞서 있다.
+## 12. 마무리
+- sudo 규칙: 사용자가 `sudo rm /etc/sudoers.d/nvmevirt-exp` 로 삭제(15:20:05 KST 보고). 다시 실험하려면 `repo/exp/report/nvmevirt-exp.sudoers` 를 사용자가 설치한다.
+- GitHub push: 사용자가 15:23:02 KST 에 「ssh -A 접속했어. GitHub push 해줘.」 → origin/main(bc31375) 위로 커밋 becebf1 … 을 push 했다(결과 커밋과 확인은 아래 줄).
+- 서버의 `exp/results/ftl.tgz`(15:16 KST, 공유본 폴더를 묶은 tar, 627 개 파일)는 Claude 가 만든 것이 아니다(사용자가 만든 것으로 보임). git 에 넣지 않았고 건드리지 않았다.
